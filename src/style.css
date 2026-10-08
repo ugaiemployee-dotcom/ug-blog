@@ -552,3 +552,17 @@ a.trow:hover{border-color:var(--violet);box-shadow:0 6px 18px rgba(93,22,233,.1)
 .tline a:hover b{color:var(--violet)}
 .tools-sib{margin-bottom:40px}
 @media(max-width:480px){.trows{grid-template-columns:1fr}}
+
+/* ===== v14: ভেতরের পাতার ব্যানার — গ্রেডিয়েন্ট, মাঝখানে লোগোর জলছাপ, ডানদিকে মেন্টরের জলছাপ ===== */
+.hero{background:
+  url(wm-mentor.webp) right 0 bottom/auto 104% no-repeat,
+  url(wm-logo.webp) 60% 50%/auto 185% no-repeat,
+  radial-gradient(60% 120% at 12% 0%,rgba(255,255,255,.14) 0%,rgba(255,255,255,0) 60%),
+  radial-gradient(50% 110% at 88% 100%,rgba(240,190,92,.20) 0%,rgba(240,190,92,0) 62%),
+  linear-gradient(120deg,#6A22F5 0%,var(--violet) 34%,var(--violet-deep) 68%,#3A0CA3 100%)}
+.hero p{max-width:600px}
+@media(max-width:900px){.hero{background:
+  url(wm-logo.webp) 88% 50%/auto 150% no-repeat,
+  radial-gradient(60% 120% at 12% 0%,rgba(255,255,255,.14) 0%,rgba(255,255,255,0) 60%),
+  radial-gradient(50% 110% at 88% 100%,rgba(240,190,92,.20) 0%,rgba(240,190,92,0) 62%),
+  linear-gradient(120deg,#6A22F5 0%,var(--violet) 34%,var(--violet-deep) 68%,#3A0CA3 100%)}}
