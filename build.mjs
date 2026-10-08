@@ -204,7 +204,20 @@ for (let page = 1; page <= pages; page++) {
         { "@type": "FAQPage", mainEntity: cfg.homeFaq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
         { "@type": "Blog", name: cfg.siteName, url: `${SITE}/`, inLanguage: "bn", publisher: { "@id": ORG["@id"] }, blogPost: posts.slice(0, 10).map((p) => ({ "@type": "BlogPosting", headline: p.title, url: `${SITE}/posts/${p.slug}/`, datePublished: isoDate(p.date) })) },
       ] : [],
-      body: `${page === 1 ? `<section class="hero hero-home"><div class="wrap"><div class="hero-text"><span class="eyebrow">${esc(cfg.heroEyebrow || cfg.brand + " ব্লগ")}</span><h1>${esc(cfg.tagline)}</h1><p>${esc(cfg.heroText)}</p><div class="hero-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-ghost" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></div></div>${existsSync("assets/mentor-about.webp") ? `<a class="hero-mentor" href="./about/"><img src="./assets/mentor-about.webp" alt="${esc(cfg.mentorName)}, ${esc(cfg.mentorTitle)}" width="860" height="800" fetchpriority="high"><span><b>${esc(cfg.mentorName)}</b>${esc(cfg.mentorTitle)}</span></a>` : ""}</div></section>
+      body: `${page === 1 ? `<section class="desk"><div class="wrap">
+<div class="desk-text">
+<span class="crown"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 18h18v2H3zm0-2l-1-9 5.5 4L12 4l4.5 7L22 7l-1 9z"/></svg>${esc(cfg.heroBadge)}</span>
+<h1>${cfg.heroTitleHtml}</h1>
+<p>${esc(cfg.heroText)}</p>
+<form class="desk-search" action="./search/" method="get"><input type="search" name="q" placeholder="কী শিখতে চান? যেমন: ChatGPT" aria-label="ব্লগে খুঁজুন"><button type="submit">খুঁজুন</button></form>
+<div class="desk-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-line" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></div>
+</div>
+<div class="desk-stack" aria-label="আজকের AI ডেস্ক"><span class="desk-label"><i></i>আজকের AI ডেস্ক</span>
+${posts.slice(0, 3).map((p, i) => `<a class="stack-card c${i}" href="./posts/${p.slug}/">${p.cover ? `<img src="./${esc(p.cover)}" alt="" width="1200" height="630" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}>` : `<div class="ph"><b>${esc(catName(p.category))}</b><span>${esc(p.title)}</span></div>`}<div><span class="tag">${esc(catName(p.category))}</span><b>${esc(p.title)}</b></div></a>`).join("")}
+</div>
+</div>
+<div class="ticker" aria-hidden="true"><div class="ticker-track">${[0, 1].map(() => TOOLS.filter((t) => t.icon).slice(0, 26).map((t) => `<span><img src="./${t.icon}" alt="" width="20" height="20" loading="lazy">${esc(t.name)}</span>`).join("")).join("")}</div></div>
+</section>
 <section class="trust"><div class="wrap">${(cfg.stats || []).map((x) => `<div><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join("")}</div></section>
 <section class="topics"><div class="wrap"><h2 class="section-title">যা নিয়ে পড়বেন</h2><div class="topic-grid">${Object.entries(cfg.categories).map(([k, v]) => `<a class="topic" href="./category/${k}/"><i>${catIcon(k)}</i><b>${esc(v)}</b><span>${esc(cfg.categoryText?.[k] || "")}</span><em>${posts.some((p) => p.category === k) ? `${bnNum(posts.filter((p) => p.category === k).length)}টি পোস্ট →` : "শিগগিরই আসছে"}</em></a>`).join("")}</div></div></section>` : ""}
 <div class="wrap">${chips(root)}
@@ -212,6 +225,7 @@ ${page === 1 && posts[0] ? `<h2 class="section-title">সর্বশেষ</h2>
 ${rest.length || page > 1 ? `<h2 class="section-title">${page === 1 ? "আরও পোস্ট" : `পুরনো পোস্ট, পাতা ${bnNum(page)}`}</h2>${grid(rest, root)}` : ""}
 ${!posts.length ? grid([], root) : ""}
 ${pager(root === "./" ? "./" : "../../", page, pages)}</div>
+${page === 1 && hasMentor ? `<section class="mentor-band"><div class="wrap"><img src="./assets/mentor-about.webp" alt="${esc(cfg.mentorName)}" width="860" height="800" loading="lazy"><div><span class="eyebrow">মেন্টর</span><h2>${esc(cfg.mentorName)}</h2><b>${esc(cfg.mentorTitle)}</b><p>${esc(cfg.mentorBio)}</p><a class="btn-lg" href="./about/">আমাদের কথা পড়ুন</a></div></div></section>` : ""}
 ${promo()}
 ${page === 1 ? `<section class="seo-block"><div class="wrap"><div class="prose">${cfg.homeSeoHtml}</div>
 <div class="tool-cloud"><h2 class="section-title">টুল অনুযায়ী পড়ুন</h2><div class="tools-row">${TOOLS.filter((t) => posts.some((p) => p.tools.includes(t))).map((t) => toolChip(t, root)).join("") || "<span>শিগগিরই আসছে</span>"}</div></div>
