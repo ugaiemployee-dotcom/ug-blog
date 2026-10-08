@@ -82,7 +82,7 @@ ${cfg.googleSiteVerification ? `<meta name="google-site-verification" content="$
 <meta name="theme-color" content="#5D16E9">
 ${extraHead}
 <link rel="alternate" type="application/rss+xml" title="${esc(cfg.siteName)}" href="${root}feed.xml">
-<link rel="icon" href="${root}assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="${root}assets/${hasLogo ? "logo.webp" : "favicon.svg"}" type="${hasLogo ? "image/webp" : "image/svg+xml"}">
 <link rel="preload" href="${root}assets/fonts/hind-siliguri-bengali-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${root}assets/style.css">
 ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(/</g, "\\u003c")}</script>`).join("\n")}
