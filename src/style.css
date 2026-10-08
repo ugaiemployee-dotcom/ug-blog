@@ -417,3 +417,29 @@ a.tool:hover{border-color:var(--violet);color:var(--violet)}
 @media(max-width:959px){.alpona{width:175%;opacity:.42}}
 .alpona{width:178%;opacity:.44}
 .desk-text{position:relative;z-index:2}
+
+/* ---- v9: what makes UG different ---- */
+.diff{padding:40px 0 8px}
+.diff .section-title{margin-top:0}
+.diff-lead{margin:-6px 0 20px;font-size:19px;color:var(--muted);max-width:720px}
+.diff-table{border:1px solid var(--violet-line);border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 14px 34px rgba(93,22,233,.08)}
+.diff-row{display:grid;grid-template-columns:.7fr 1fr 1.25fr;align-items:stretch;border-top:1px solid var(--violet-line)}
+.diff-row:first-child{border-top:0}
+.diff-row>*{padding:15px 18px;font-size:17px;line-height:1.55}
+.diff-row b{font-size:15.5px;color:var(--muted);font-weight:700;background:var(--bg-alt)}
+.diff-row .no{color:var(--muted)}
+.diff-row .no::before{content:"✕";color:#B9B2CC;font-weight:700;margin-right:8px}
+.diff-row .yes{background:linear-gradient(135deg,var(--violet),var(--violet-deep));color:#fff;font-weight:600}
+.diff-row .yes::before{content:"✓";display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--gold-light);color:var(--ink);font-size:12px;font-weight:700;margin-right:9px;vertical-align:2px}
+.diff-head>*{font-size:15px;font-weight:700;padding:11px 18px}
+.diff-head span:nth-child(2){color:var(--muted);background:#fff}
+.diff-head span:nth-child(3){background:var(--violet-deep);color:var(--gold-light);display:flex;align-items:center;gap:7px}
+.diff-head span:first-child{background:var(--bg-alt)}
+.diff-cta{margin-top:20px}
+@media(max-width:720px){
+  .diff-row{grid-template-columns:1fr}
+  .diff-head{display:none}
+  .diff-row b{padding:10px 16px 2px;background:#fff;color:var(--violet);font-size:14px}
+  .diff-row .no{padding:2px 16px 8px;font-size:15.5px}
+  .diff-row .yes{margin:0 10px 12px;border-radius:14px;padding:12px 14px}
+}

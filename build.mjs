@@ -247,6 +247,10 @@ ${posts.slice(0, 2).map((p) => `<a href="./posts/${p.slug}/"><span class="tag">$
 <div class="ticker" aria-hidden="true"><div class="ticker-track">${[0, 1].map(() => TOOLS.filter((t) => t.icon).slice(0, 26).map((t) => `<span><img src="./${t.icon}" alt="" width="20" height="20" loading="lazy">${esc(t.name)}</span>`).join("")).join("")}</div></div>
 </section>
 <section class="trust"><div class="wrap">${(cfg.stats || []).map((x) => `<div><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join("")}</div></section>
+<section class="diff"><div class="wrap"><h2 class="section-title">${esc(cfg.diff.title)}</h2><p class="diff-lead">${esc(cfg.diff.lead)}</p>
+<div class="diff-table" role="table"><div class="diff-row diff-head" role="row"><span></span><span>সাধারণ AI কোর্স</span><span><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M3 18h18v2H3zm0-2l-1-9 5.5 4L12 4l4.5 7L22 7l-1 9z"/></svg>${esc(cfg.brand)}</span></div>
+${cfg.diff.rows.map((r) => `<div class="diff-row" role="row"><b>${esc(r[0])}</b><span class="no">${esc(r[1])}</span><span class="yes">${esc(r[2])}</span></div>`).join("")}</div>
+<div class="diff-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে নিজে দেখে নিন</a></div></div></section>
 <section class="topics"><div class="wrap"><h2 class="section-title">যা নিয়ে পড়বেন</h2><div class="topic-grid">${Object.entries(cfg.categories).map(([k, v]) => `<a class="topic" href="./category/${k}/"><i>${catIcon(k)}</i><b>${esc(v)}</b><span>${esc(cfg.categoryText?.[k] || "")}</span><em>${posts.some((p) => p.category === k) ? `${bnNum(posts.filter((p) => p.category === k).length)}টি পোস্ট →` : "শিগগিরই আসছে"}</em></a>`).join("")}</div></div></section>` : ""}
 <div class="wrap">${chips(root)}
 ${page === 1 && posts[0] ? `<h2 class="section-title">সর্বশেষ</h2>${card(posts[0], root, true)}` : ""}
