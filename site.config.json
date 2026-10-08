@@ -1,0 +1,19 @@
+{
+  "siteUrl": "https://ugaiemployee-dotcom.github.io/ug-blog",
+  "siteName": "Unique Gurukul ব্লগ",
+  "brand": "Unique Gurukul",
+  "tagline": "সহজ বাংলায় AI-এর নতুন খবর, টুল আর শেখার গাইড",
+  "description": "Unique Gurukul ব্লগ: নতুন AI টুল, ভাইব কোডিং, অটোমেশন আর AI দিয়ে আয়ের খবর ও গাইড, সহজ বাংলায়।",
+  "logoUrl": "https://uniquegurukul.app/images/uniqui_blue_logo.webp",
+  "mainSiteUrl": "https://uniquegurukul.app",
+  "ctaTitle": "AI শিখে নিজের আয়ের পথ তৈরি করুন",
+  "ctaText": "Unique Gurukul-এর ক্লাসে হাতে-কলমে শিখুন AI টুল, ওয়েবসাইট বানানো আর অটোমেশন।",
+  "ctaButton": "কোর্স দেখুন",
+  "ctaUrl": "https://uniquegurukul.app",
+  "categories": {
+    "ai-tools": "AI টুল",
+    "vibe-coding": "ভাইব কোডিং",
+    "automation": "অটোমেশন",
+    "ai-income": "AI দিয়ে আয়"
+  }
+}
