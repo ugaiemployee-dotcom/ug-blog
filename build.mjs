@@ -145,10 +145,9 @@ ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(
 <body>
 <a class="skip" href="#main">মূল লেখায় যান</a>
 <div class="progress" aria-hidden="true"><i></i></div>
-<div class="topbar"><div class="wrap"><span>🎓 AI শিখে আয় শুরু করতে চান? ৪ দিনের ফ্রি ক্লাসে যোগ দিন</span><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে নাম লেখান →</a></div></div>
 <header class="site-header"><div class="wrap">
 <a class="brand" href="${root}">${logo ? `<img src="${esc(logo)}" alt="${esc(cfg.brand)} লোগো" width="42" height="42" onerror="this.remove()">` : ""}<span>${esc(cfg.brand)}<small>ব্লগ</small></span></a>
-<nav class="nav" aria-label="মূল মেনু">${nav}<a class="cat-link" href="${root}our-tools/">আমাদের টুল</a><a class="cat-link" href="${root}about/">আমাদের কথা</a><a class="search-link" href="${root}search/" aria-label="খুঁজুন"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a><a class="btn btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস</a><a class="btn" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></nav>
+<nav class="nav" aria-label="মূল মেনু">${nav}<a class="cat-link" href="${root}our-tools/">আমাদের টুল</a><a class="cat-link" href="${root}about/">আমাদের কথা</a><a class="search-link" href="${root}search/" aria-label="খুঁজুন"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a><a class="btn btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস</a></nav>
 </div></header>
 <main id="main">
 ${body}
@@ -158,16 +157,21 @@ ${body}
 <div class="f-col"><b>বিভাগ</b>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}</div>
 <div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}our-tools/">আমাদের AI টুল</a><a href="${root}about/">আমাদের কথা</a><a href="${root}feed.xml">RSS ফিড</a></div>
 </div><div class="f-bottom"><div class="wrap">© ${new Date().getFullYear()} ${esc(cfg.brand)} · সব অধিকার সংরক্ষিত</div></div></footer>
-<a class="sticky-cta" href="${esc(cfg.freeClassUrl)}">🎓 ৪ দিনের ফ্রি AI ক্লাসে যোগ দিন →</a>
 <script>window.UG=${JSON.stringify({ u: cfg.supabaseUrl || "", k: cfg.supabaseKey || "", free: host(cfg.freeClassUrl), main: host(cfg.mainSiteUrl) })};</script>
 <script src="${root}assets/site.js" defer></script>
 </body>
 </html>`;
 }
 
+// কার্ডের ছবি: আসল ছবি থাকলে সেটা, না থাকলে ব্র্যান্ড-কার্ড
+const picOf = (p, root) => {
+  const src = p.photo || p.cover;
+  return src ? (/^https?:/.test(src) ? src : root + src.replace(/^\/+/, "")) : null;
+};
 function card(p, root, big = false) {
-  const thumb = p.cover
-    ? `<img src="${esc(/^https?:/.test(p.cover) ? p.cover : root + p.cover.replace(/^\/+/, ""))}" alt="${esc(p.cover_alt || p.title)}" ${big ? 'fetchpriority="high"' : 'loading="lazy"'} width="1200" height="630">`
+  const pic = picOf(p, root);
+  const thumb = pic
+    ? `<img src="${esc(pic)}" alt="${esc(p.photo_alt || p.cover_alt || p.title)}" ${big ? 'fetchpriority="high"' : 'loading="lazy"'} width="1200" height="630">`
     : `<div class="ph"><b>${esc(catName(p.category))}</b><span>${esc(p.title)}</span></div>`;
   return `<a class="card${big ? " card-big" : ""}" href="${root}posts/${p.slug}/">
 <div class="thumb">${thumb}</div>
@@ -182,6 +186,12 @@ ${p.tools.length ? `<div class="tools-row">${p.tools.map((t) => toolChip(t, root
 
 const chips = (root, active) =>
   `<div class="chips"><a class="chip${active ? "" : " active"}" href="${root}">সব পোস্ট</a>${Object.entries(cfg.categories).map(([k, v]) => `<a class="chip${active === k ? " active" : ""}" href="${root}category/${k}/">${esc(v)}</a>`).join("")}</div>`;
+
+// পাশের তালিকার ছোট সারি
+const row = (p, root) => {
+  const pic = picOf(p, root);
+  return `<a class="nrow" href="${root}posts/${p.slug}/">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" width="240" height="126">` : `<i class="nrow-ph"></i>`}<div><span class="tag">${esc(catName(p.category))}</span><b>${esc(p.title)}</b><time datetime="${p.date}">${bnDate(p.date)}</time></div></a>`;
+};
 
 const grid = (items, root) =>
   items.length ? `<div class="grid">${items.map((p) => card(p, root)).join("\n")}</div>` : `<div class="empty">এই বিভাগে এখনও কোনো পোস্ট নেই। শিগগিরই আসছে।</div>`;
@@ -212,10 +222,12 @@ writeFileSync(join(OUT, ".nojekyll"), "");
 if (existsSync("CNAME")) cpSync("CNAME", join(OUT, "CNAME"));
 
 // home + pagination
-const pages = Math.max(1, Math.ceil(Math.max(0, posts.length - 1) / PER_PAGE));
+const HEAD = 5; // প্রথম পাতায়: ১টা বড় খবর + পাশে ৪টা
+const pages = Math.max(1, Math.ceil(Math.max(0, posts.length - HEAD) / PER_PAGE));
+const todayBn = new Intl.DateTimeFormat("bn-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(new Date());
 for (let page = 1; page <= pages; page++) {
   const root = page === 1 ? "./" : "../../";
-  const rest = posts.slice(1 + (page - 1) * PER_PAGE, 1 + page * PER_PAGE);
+  const rest = posts.slice(HEAD + (page - 1) * PER_PAGE, HEAD + page * PER_PAGE);
   const url = page === 1 ? `${SITE}/` : `${SITE}/page/${page}/`;
   write(
     page === 1 ? "index.html" : `page/${page}/index.html`,
@@ -252,17 +264,16 @@ ${posts.slice(0, 2).map((p) => `<a href="./posts/${p.slug}/"><span class="tag">$
 <div class="ticker" aria-hidden="true"><div class="ticker-track">${[0, 1].map(() => TOOLS.filter((t) => t.icon).slice(0, 26).map((t) => `<span><img src="./${t.icon}" alt="" width="20" height="20" loading="lazy">${esc(t.name)}</span>`).join("")).join("")}</div></div>
 </section>
 <section class="trust"><div class="wrap">${(cfg.stats || []).map((x) => `<div><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join("")}</div></section>
-<section class="diff"><div class="wrap"><h2 class="section-title">${esc(cfg.diff.title)}</h2><p class="diff-lead">${esc(cfg.diff.lead)}</p>
-<div class="diff-table" role="table"><div class="diff-row diff-head" role="row"><span></span><span>সাধারণ AI কোর্স</span><span><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M3 18h18v2H3zm0-2l-1-9 5.5 4L12 4l4.5 7L22 7l-1 9z"/></svg>${esc(cfg.brand)}</span></div>
-${cfg.diff.rows.map((r) => `<div class="diff-row" role="row"><b>${esc(r[0])}</b><span class="no">${esc(r[1])}</span><span class="yes">${esc(r[2])}</span></div>`).join("")}</div>
-<div class="diff-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে নিজে দেখে নিন</a></div></div></section>
-${ownSection("./", false)}
-<section class="topics"><div class="wrap"><h2 class="section-title">যা নিয়ে পড়বেন</h2><div class="topic-grid">${Object.entries(cfg.categories).map(([k, v]) => `<a class="topic" href="./category/${k}/"><i>${catIcon(k)}</i><b>${esc(v)}</b><span>${esc(cfg.categoryText?.[k] || "")}</span><em>${posts.some((p) => p.category === k) ? `${bnNum(posts.filter((p) => p.category === k).length)}টি পোস্ট →` : "শিগগিরই আসছে"}</em></a>`).join("")}</div></div></section>` : ""}
-<div class="wrap">${chips(root)}
-${page === 1 && posts[0] ? `<h2 class="section-title">সর্বশেষ</h2>${card(posts[0], root, true)}` : ""}
-${rest.length || page > 1 ? `<h2 class="section-title">${page === 1 ? "আরও পোস্ট" : `পুরনো পোস্ট, পাতা ${bnNum(page)}`}</h2>${grid(rest, root)}` : ""}
+` : ""}
+<div class="wrap">
+${page === 1 && posts[0] ? `<section class="news" id="news"><div class="news-head"><h2 class="section-title">আজকের AI খবর</h2><span class="news-date"><i></i>${todayBn}</span></div>
+${chips(root)}
+<div class="news-grid">${card(posts[0], root, true)}${posts.length > 1 ? `<div class="news-side"><b class="news-side-title">সর্বশেষ আপডেট</b>${posts.slice(1, HEAD).map((p) => row(p, root)).join("")}</div>` : ""}</div></section>` : chips(root)}
+${rest.length || page > 1 ? `<h2 class="section-title">${page === 1 ? "আরও খবর ও গাইড" : `পুরনো পোস্ট, পাতা ${bnNum(page)}`}</h2>${grid(rest, root)}` : ""}
 ${!posts.length ? grid([], root) : ""}
 ${pager(root === "./" ? "./" : "../../", page, pages)}</div>
+${page === 1 ? `<section class="topics"><div class="wrap"><h2 class="section-title">যা নিয়ে পড়বেন</h2><div class="topic-grid">${Object.entries(cfg.categories).map(([k, v]) => `<a class="topic" href="./category/${k}/"><i>${catIcon(k)}</i><b>${esc(v)}</b><span>${esc(cfg.categoryText?.[k] || "")}</span><em>${posts.some((p) => p.category === k) ? `${bnNum(posts.filter((p) => p.category === k).length)}টি পোস্ট →` : "শিগগিরই আসছে"}</em></a>`).join("")}</div></div></section>
+<section class="about-strip"><div class="wrap"><div><b>${esc(cfg.brand)} কারা?</b><p>${esc(cfg.diff.lead)} ২০১৭ সাল থেকে ${esc(cfg.studentCount)} শিক্ষার্থী আমাদের সাথে শিখেছেন।</p></div><div class="about-links"><a href="./about/">কেন আমরা আলাদা →</a><a href="./our-tools/">আমাদের ${bnNum(40)}+ নিজস্ব AI টুল →</a></div></div></section>` : ""}
 ${page === 1 && hasMentor ? `<section class="mentor-band"><div class="wrap"><img src="./assets/mentor-about.webp" alt="${esc(cfg.mentorName)}" width="860" height="800" loading="lazy"><div><span class="eyebrow">মেন্টর</span><h2>${esc(cfg.mentorName)}</h2><b>${esc(cfg.mentorTitle)}</b><p>${esc(cfg.mentorBio)}</p><a class="btn-lg" href="./about/">আমাদের কথা পড়ুন</a></div></div></section>` : ""}
 ${promo()}
 ${page === 1 ? `<section class="seo-block"><div class="wrap"><div class="prose">${cfg.homeSeoHtml}</div>
@@ -295,13 +306,11 @@ ${promo()}`,
 for (const p of posts) {
   const root = "../../";
   const url = `${SITE}/posts/${p.slug}/`;
-  const coverSrc = p.cover ? (/^https?:/.test(p.cover) ? p.cover : root + p.cover.replace(/^\/+/, "")) : null;
+  const coverSrc = picOf(p, root);
   const related = [...posts.filter((x) => x.slug !== p.slug && x.category === p.category), ...posts.filter((x) => x.slug !== p.slug && x.category !== p.category)].slice(0, 3);
-  // লেখার মাঝখানে (দ্বিতীয় h2-এর আগে) ফ্রি ক্লাসের ছোট ব্যানার
-  const inline = `<aside class="inline-cta"><span>🎓 এই ধরনের টুল হাতে-কলমে শিখতে চান?</span><a href="${esc(cfg.freeClassUrl)}">৪ দিনের ফ্রি ক্লাসে যোগ দিন →</a></aside>`;
   let n = 0;
   const heads = [];
-  const bodyHtml = p.body_html.replace(/<h2>([\s\S]*?)<\/h2>/g, (m, t) => { n++; heads.push(text(t)); return `${n === 2 ? inline : ""}<h2 id="s${n}">${t}</h2>`; });
+  const bodyHtml = p.body_html.replace(/<h2>([\s\S]*?)<\/h2>/g, (m, t) => { n++; heads.push(text(t)); return `<h2 id="s${n}">${t}</h2>`; });
   const toc = heads.length >= 4 ? `<nav class="toc" aria-label="সূচিপত্র"><b>এই লেখায় যা আছে</b><ol>${heads.map((h, i) => `<li><a href="#s${i + 1}">${esc(h)}</a></li>`).join("")}</ol></nav>` : "";
   write(
     `posts/${p.slug}/index.html`,
@@ -326,7 +335,7 @@ for (const p of posts) {
           articleSection: catName(p.category),
           keywords: p.tags.join(", "),
           wordCount: text(p.body_html).split(" ").length,
-          image: [abs(p.cover || "assets/og-default.png")],
+          image: [...(p.photo ? [abs(p.photo)] : []), abs(p.cover || "assets/og-default.png")],
           author: { "@type": "Person", name: cfg.mentorName, jobTitle: cfg.mentorTitle, url: `${SITE}/about/`, worksFor: { "@id": ORG["@id"] } },
           publisher: { "@id": ORG["@id"] },
         },
@@ -337,10 +346,9 @@ for (const p of posts) {
 <div class="meta"><a class="tag" href="${root}category/${p.category}/">${esc(catName(p.category))}</a><time datetime="${p.date}">${bnDate(p.date)}</time><span>${bnNum(p.minutes)} মিনিটে পড়ুন</span></div>
 <h1>${esc(p.title)}</h1>
 <p class="lead">${esc(p.excerpt)}</p>
-${coverSrc ? `<div class="cover"><img src="${esc(coverSrc)}" alt="${esc(p.cover_alt || p.title)}" width="1200" height="630" fetchpriority="high"></div>` : ""}
+${coverSrc ? `<div class="cover"><img src="${esc(coverSrc)}" alt="${esc(p.photo_alt || p.cover_alt || p.title)}" width="1200" height="630" fetchpriority="high"></div>` : ""}
 ${p.tools.length ? `<div class="tools-row tools-top"><span>এই পোস্টে:</span>${p.tools.map((t) => toolChip(t, root)).join("")}</div>` : ""}
 ${p.key_points.length ? `<section class="glance"><h2>${catIcon(p.category)} এক নজরে</h2><ul>${p.key_points.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></section>` : ""}
-${p.photo ? `<figure class="photo"><img src="${root}${esc(p.photo)}" alt="${esc(p.photo_alt || p.title)}" loading="lazy"></figure>` : ""}
 ${p.quick_facts.length ? `<section class="facts" aria-label="দ্রুত তথ্য">${p.quick_facts.map((f) => `<div><span>${esc(f.label)}</span><b>${esc(f.value)}</b></div>`).join("")}</section>` : ""}
 ${toc}
 <div class="prose">${bodyHtml}</div>
@@ -418,6 +426,12 @@ write(
     jsonLd: [crumbs([["ব্লগ", `${SITE}/`], ["আমাদের কথা", `${SITE}/about/`]]), { "@type": "AboutPage", name: `${cfg.brand} সম্পর্কে`, url: `${SITE}/about/`, inLanguage: "bn", about: { "@id": ORG["@id"] } }, { "@type": "Person", name: cfg.mentorName, jobTitle: cfg.mentorTitle, description: cfg.mentorBio, worksFor: { "@id": ORG["@id"] } }],
     body: `<section class="hero hero-sm"><div class="wrap"><span class="eyebrow">আমাদের কথা</span><h1>${esc(cfg.brand)} সম্পর্কে</h1><p>${esc(cfg.aboutDescription)}</p></div></section>
 <article class="article">${existsSync("assets/mentor-about.webp") ? `<figure class="about-photo"><img src="../assets/mentor-about.webp" alt="${esc(cfg.mentorName)}, ${esc(cfg.mentorTitle)}" width="860" height="800"><figcaption><b>${esc(cfg.mentorName)}</b>${esc(cfg.mentorTitle)}</figcaption></figure>` : ""}<div class="prose">${cfg.aboutHtml}</div>
+</article>
+<section class="diff"><div class="wrap"><h2 class="section-title">${esc(cfg.diff.title)}</h2><p class="diff-lead">${esc(cfg.diff.lead)}</p>
+<div class="diff-table" role="table"><div class="diff-row diff-head" role="row"><span></span><span>সাধারণ AI কোর্স</span><span><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M3 18h18v2H3zm0-2l-1-9 5.5 4L12 4l4.5 7L22 7l-1 9z"/></svg>${esc(cfg.brand)}</span></div>
+${cfg.diff.rows.map((r) => `<div class="diff-row" role="row"><b>${esc(r[0])}</b><span class="no">${esc(r[1])}</span><span class="yes">${esc(r[2])}</span></div>`).join("")}</div>
+<div class="diff-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে নিজে দেখে নিন</a></div></div></section>
+<article class="article">
 ${authorBox("../")}
 <aside class="cta"><h2>${esc(cfg.ctaTitle)}</h2><p>${esc(cfg.ctaText)}</p><div class="cta-row"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-white" href="${esc(cfg.mainSiteUrl)}">সব কোর্স দেখুন</a></div></aside></article>`,
   })
