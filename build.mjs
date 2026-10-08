@@ -56,6 +56,11 @@ const CAT_ICON = {
 };
 const catIcon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">${CAT_ICON[k] || CAT_ICON["ai-tools"]}</svg>`;
 
+// ---- Unique Gurukul-এর নিজস্ব AI টুল ----
+const OWN = existsSync("data/own-tools.json") ? JSON.parse(readFileSync("data/own-tools.json", "utf8")) : [];
+const ownCard = (t) => `<a class="own" href="${esc(t.url)}?utm_source=blog&utm_medium=own-tools" target="_blank" rel="noopener"><div class="own-top"><i aria-hidden="true">${esc(t.name.replace(/^AI /, "")[0])}</i><div><span class="tag">${esc(t.category)}</span><b>${esc(t.name)}</b></div></div><em>${esc(t.tagline)}</em><p>${esc(t.desc)}</p><ul>${t.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul><span class="more">টুলটা দেখুন →</span></a>`;
+const ownSection = (root, full) => OWN.length ? `<section class="own-tools"><div class="wrap"><h2 class="section-title">Unique Gurukul-এর নিজস্ব AI টুল</h2><p class="diff-lead">বিভিন্ন বিভাগে আমাদের ৪০টিরও বেশি নিজস্ব AI টুল আছে, আরও তৈরি হচ্ছে। তার মধ্যে কয়েকটা:</p><div class="own-grid">${OWN.map(ownCard).join("")}<div class="own own-more"><b>আরও টুল আসছে</b><p>বাকি টুলগুলো একে একে এখানে যোগ হবে। ক্লাসে এই টুলগুলো হাতে-কলমে ব্যবহার করা শেখানো হয়।</p>${full ? `<a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a>` : `<a class="btn-lg" href="${root}our-tools/">সব টুল দেখুন</a>`}</div></div></div></section>` : "";
+
 // ---- load posts ----
 const posts = [];
 const seen = new Set();
@@ -143,7 +148,7 @@ ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(
 <div class="topbar"><div class="wrap"><span>🎓 AI শিখে আয় শুরু করতে চান? ৪ দিনের ফ্রি ক্লাসে যোগ দিন</span><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে নাম লেখান →</a></div></div>
 <header class="site-header"><div class="wrap">
 <a class="brand" href="${root}">${logo ? `<img src="${esc(logo)}" alt="${esc(cfg.brand)} লোগো" width="42" height="42" onerror="this.remove()">` : ""}<span>${esc(cfg.brand)}<small>ব্লগ</small></span></a>
-<nav class="nav" aria-label="মূল মেনু">${nav}<a class="cat-link" href="${root}about/">আমাদের কথা</a><a class="search-link" href="${root}search/" aria-label="খুঁজুন"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a><a class="btn btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস</a><a class="btn" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></nav>
+<nav class="nav" aria-label="মূল মেনু">${nav}<a class="cat-link" href="${root}our-tools/">আমাদের টুল</a><a class="cat-link" href="${root}about/">আমাদের কথা</a><a class="search-link" href="${root}search/" aria-label="খুঁজুন"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a><a class="btn btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস</a><a class="btn" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></nav>
 </div></header>
 <main id="main">
 ${body}
@@ -151,7 +156,7 @@ ${body}
 <footer class="site-footer"><div class="wrap">
 <div class="f-col f-about"><b>${esc(cfg.brand)}</b><p>${esc(cfg.footerAbout)}</p></div>
 <div class="f-col"><b>বিভাগ</b>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}</div>
-<div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}about/">আমাদের কথা</a><a href="${root}feed.xml">RSS ফিড</a></div>
+<div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}our-tools/">আমাদের AI টুল</a><a href="${root}about/">আমাদের কথা</a><a href="${root}feed.xml">RSS ফিড</a></div>
 </div><div class="f-bottom"><div class="wrap">© ${new Date().getFullYear()} ${esc(cfg.brand)} · সব অধিকার সংরক্ষিত</div></div></footer>
 <a class="sticky-cta" href="${esc(cfg.freeClassUrl)}">🎓 ৪ দিনের ফ্রি AI ক্লাসে যোগ দিন →</a>
 <script>window.UG=${JSON.stringify({ u: cfg.supabaseUrl || "", k: cfg.supabaseKey || "", free: host(cfg.freeClassUrl), main: host(cfg.mainSiteUrl) })};</script>
@@ -251,6 +256,7 @@ ${posts.slice(0, 2).map((p) => `<a href="./posts/${p.slug}/"><span class="tag">$
 <div class="diff-table" role="table"><div class="diff-row diff-head" role="row"><span></span><span>সাধারণ AI কোর্স</span><span><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M3 18h18v2H3zm0-2l-1-9 5.5 4L12 4l4.5 7L22 7l-1 9z"/></svg>${esc(cfg.brand)}</span></div>
 ${cfg.diff.rows.map((r) => `<div class="diff-row" role="row"><b>${esc(r[0])}</b><span class="no">${esc(r[1])}</span><span class="yes">${esc(r[2])}</span></div>`).join("")}</div>
 <div class="diff-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে নিজে দেখে নিন</a></div></div></section>
+${ownSection("./", false)}
 <section class="topics"><div class="wrap"><h2 class="section-title">যা নিয়ে পড়বেন</h2><div class="topic-grid">${Object.entries(cfg.categories).map(([k, v]) => `<a class="topic" href="./category/${k}/"><i>${catIcon(k)}</i><b>${esc(v)}</b><span>${esc(cfg.categoryText?.[k] || "")}</span><em>${posts.some((p) => p.category === k) ? `${bnNum(posts.filter((p) => p.category === k).length)}টি পোস্ট →` : "শিগগিরই আসছে"}</em></a>`).join("")}</div></div></section>` : ""}
 <div class="wrap">${chips(root)}
 ${page === 1 && posts[0] ? `<h2 class="section-title">সর্বশেষ</h2>${card(posts[0], root, true)}` : ""}
@@ -386,6 +392,21 @@ write(
   })
 );
 
+// নিজস্ব টুলের পাতা
+if (OWN.length) write(
+  "our-tools/index.html",
+  layout({
+    root: "../",
+    title: `${cfg.brand}-এর নিজস্ব AI টুল: বাংলায় AI টুলের তালিকা`,
+    description: `${cfg.brand}-এর নিজস্ব AI টুল: ${OWN.map((t) => t.name).join(", ")} ও আরও অনেক। বাংলায় লিড খোঁজা, ব্র্যান্ডিং, ভয়েস, কনটেন্ট আর নোট বানানোর টুল।`,
+    canonical: `${SITE}/our-tools/`,
+    jsonLd: [crumbs([["ব্লগ", `${SITE}/`], ["আমাদের AI টুল", `${SITE}/our-tools/`]]), { "@type": "ItemList", name: `${cfg.brand}-এর নিজস্ব AI টুল`, itemListElement: OWN.map((t, i) => ({ "@type": "ListItem", position: i + 1, item: { "@type": "SoftwareApplication", name: t.name, applicationCategory: "BusinessApplication", operatingSystem: "Web", url: t.url, description: t.desc, inLanguage: "bn", publisher: { "@id": ORG["@id"] } } })) }],
+    body: `<section class="hero hero-sm"><div class="wrap"><span class="eyebrow">আমাদের AI টুল</span><h1>${esc(cfg.brand)}-এর নিজস্ব AI টুল</h1><p>আমরা শুধু অন্যের টুল শেখাই না, নিজেরাও বানাই। এই টুলগুলো বাংলাভাষীদের কাজের কথা ভেবে তৈরি।</p></div></section>
+${ownSection("../", true)}
+${promo()}`,
+  })
+);
+
 // about
 write(
   "about/index.html",
@@ -420,6 +441,7 @@ write(
 const urls = [
   { loc: `${SITE}/`, lastmod: posts[0]?.date },
   { loc: `${SITE}/about/` },
+  ...(OWN.length ? [{ loc: `${SITE}/our-tools/` }] : []),
   ...Object.keys(cfg.categories).map((k) => ({ loc: `${SITE}/category/${k}/`, lastmod: posts.find((p) => p.category === k)?.date })),
   ...toolPages.map((t) => ({ loc: `${SITE}/tool/${t.key}/`, lastmod: t.lastmod })),
   ...posts.map((p) => ({ loc: `${SITE}/posts/${p.slug}/`, lastmod: p.updated || p.date, image: p.cover ? abs(p.cover) : null })),

@@ -443,3 +443,27 @@ a.tool:hover{border-color:var(--violet);color:var(--violet)}
   .diff-row .no{padding:2px 16px 8px;font-size:15.5px}
   .diff-row .yes{margin:0 10px 12px;border-radius:14px;padding:12px 14px}
 }
+
+/* ---- v10: our own AI tools ---- */
+.own-tools{padding:36px 0 8px}
+.own-tools .section-title{margin-top:0}
+.own-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.own{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--ink);background:#fff;border:1px solid var(--violet-line);border-radius:20px;padding:20px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s,border-color .15s}
+.own::before{content:"";position:absolute;left:0;top:0;right:0;height:5px;background:linear-gradient(90deg,var(--violet),var(--gold-light))}
+a.own:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 16px 34px rgba(93,22,233,.15)}
+.own-top{display:flex;align-items:center;gap:12px;margin-bottom:2px}
+.own-top i{flex:0 0 50px;height:50px;border-radius:15px;background:linear-gradient(135deg,var(--violet),var(--violet-deep));color:#fff;font-style:normal;font-weight:700;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(93,22,233,.3);border-bottom:3px solid var(--gold-light)}
+.own-top b{display:block;font-size:21px;line-height:1.3;margin-top:2px}
+.own em{font-style:normal;font-weight:700;color:var(--violet-deep);font-size:16.5px;line-height:1.5}
+.own p{margin:0;font-size:15.5px;color:var(--muted);line-height:1.6}
+.own ul{margin:4px 0 6px;padding:0;list-style:none;flex:1}
+.own li{position:relative;padding:2px 0 2px 24px;font-size:15px;line-height:1.55}
+.own li::before{content:"✓";position:absolute;left:0;top:4px;width:17px;height:17px;border-radius:50%;background:var(--gold-light);color:var(--ink);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.own .more{font-size:15px;font-weight:700;color:var(--violet)}
+.own-more{background:var(--bg-alt);border-style:dashed;justify-content:center;gap:10px}
+.own-more::before{display:none}
+.own-more b{font-size:22px}
+.own-more .btn-lg{align-self:flex-start;font-size:16px;padding:9px 22px}
+@media(max-width:1100px){.nav .cat-link{padding:8px 8px;font-size:15px}}
+.nav .cat-link{white-space:nowrap;display:none}
+@media(min-width:1180px){.nav .cat-link{display:inline-block}}
