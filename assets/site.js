@@ -77,3 +77,14 @@
   };
   if ("IntersectionObserver" in window) { var io = new IntersectionObserver(function (e) { if (e[0].isIntersecting) { io.disconnect(); run(); } }); io.observe(box); } else run();
 })();
+(function () {
+  var who = document.getElementById("who"); if (!who) return;
+  var tabs = who.querySelectorAll("[data-who]"), panels = who.querySelectorAll("[data-panel]"), auto = true, idx = 0;
+  var pick = function (k) {
+    tabs.forEach(function (t) { t.setAttribute("aria-selected", t.getAttribute("data-who") === k); });
+    panels.forEach(function (p) { p.classList.toggle("on", p.getAttribute("data-panel") === k); });
+  };
+  tabs.forEach(function (t, i) { t.addEventListener("click", function () { auto = false; idx = i; pick(t.getAttribute("data-who")); }); });
+  who.addEventListener("pointerenter", function () { auto = false; });
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(function () { if (!auto) return; idx = (idx + 1) % tabs.length; pick(tabs[idx].getAttribute("data-who")); }, 4200);
+})();

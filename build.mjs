@@ -28,6 +28,26 @@ const toolChip = (t, root, link = true) => {
   const inner = `${t.icon ? `<img src="${root}${t.icon}" alt="" width="18" height="18" loading="lazy">` : `<i aria-hidden="true">${esc(t.name[0])}</i>`}${esc(t.name)}`;
   return link ? `<a class="tool" href="${root}tool/${t.key}/">${inner}</a>` : `<span class="tool">${inner}</span>`;
 };
+// আলপনা + সার্কিট: বাংলার আলপনার নকশা, যার পাপড়ির ডগা থেকে সার্কিটের রেখা বেরোয়
+function alpona() {
+  const P = (n, r, fn) => Array.from({ length: n }, (_, i) => fn((360 / n) * i, i)).join("");
+  const petal = (len, w) => `M0 0 C ${w} ${-len * 0.35}, ${w} ${-len * 0.8}, 0 ${-len} C ${-w} ${-len * 0.8}, ${-w} ${-len * 0.35}, 0 0Z`;
+  return `<svg class="alpona" viewBox="-300 -300 600 600" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<g class="al-a" stroke="#5D16E9" stroke-width="2.2">
+<circle r="34"/><circle r="52" stroke-dasharray="2 9"/>
+${P(8, 0, (a) => `<path transform="rotate(${a}) translate(0 -52)" d="${petal(86, 30)}"/>`)}
+${P(8, 0, (a) => `<path transform="rotate(${a + 22.5}) translate(0 -70)" d="${petal(58, 18)}"/>`)}
+<circle r="150"/>
+${P(16, 0, (a) => `<path transform="rotate(${a}) translate(0 -150)" d="M-29 0 A29 29 0 0 1 29 0"/>`)}
+</g>
+<g class="al-b" stroke="#C9922A" stroke-width="2.2">
+${P(8, 0, (a) => `<circle transform="rotate(${a})" cx="0" cy="-96" r="5" fill="#F0BE5C"/>`)}
+${P(16, 0, (a) => `<circle transform="rotate(${a + 11.25})" cx="0" cy="-166" r="3.5" fill="#F0BE5C"/>`)}
+</g>
+<g class="al-c" stroke="#5D16E9" stroke-width="1.8">
+${P(8, 0, (a, i) => `<g transform="rotate(${a + 22.5})"><path d="M0 -180 V-${218 + (i % 2) * 22} h${i % 2 ? 26 : -26} v-${24 + (i % 3) * 8}"/><rect x="${(i % 2 ? 26 : -26) - 5}" y="-${247 + (i % 2) * 22 + (i % 3) * 8}" width="10" height="10" rx="2" fill="#5D16E9"/><circle cx="0" cy="-180" r="4" fill="#fff"/></g>`)}
+</g></g></svg>`;
+}
 const CAT_ICON = {
   "ai-tools": '<path d="M12 2l2.4 6.2L21 9l-5 4.3L17.5 20 12 16.4 6.5 20 8 13.3 3 9l6.6-.8z"/>',
   "vibe-coding": '<path d="M8 6l-6 6 6 6M16 6l6 6-6 6M14 3l-4 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -213,14 +233,11 @@ for (let page = 1; page <= pages; page++) {
 <div class="desk-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-line" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></div>
 </div>
 <div class="desk-demo">
-${["gemini", "claude", "copilot", "perplexity"].map((k, i) => { const t = TOOLS.find((x) => x.key === k && x.icon); return t ? `<span class="orb o${i}" aria-hidden="true"><img src="./${t.icon}" alt="" width="26" height="26"></span>` : ""; }).join("")}
-<div class="chat" aria-label="AI দিয়ে কী করা যায় তার উদাহরণ">
-<div class="chat-head"><i></i><i></i><i></i><b>AI সহকারী</b><span>ডেমো</span></div>
-<div class="chat-body" id="chat" data-demo='${esc(JSON.stringify(cfg.chatDemo))}'>
-<div class="msg me">${esc(cfg.chatDemo[0].q)}</div>
-<div class="msg ai">${esc(cfg.chatDemo[0].a)}</div>
-</div>
-<div class="chat-input"><span>বাংলায় লিখুন, AI উত্তর দেবে</span><em>➤</em></div>
+${alpona()}
+<div class="who" id="who">
+<div class="who-head"><b>আপনি কে? বেছে নিন</b><span>AI আপনার জন্য কী করবে, দেখুন</span></div>
+<div class="who-tabs" role="tablist">${cfg.personas.map((x, i) => `<button type="button" role="tab" aria-selected="${i === 0}" data-who="${x.key}"><i>${x.emoji}</i>${esc(x.label)}</button>`).join("")}</div>
+${cfg.personas.map((x, i) => `<div class="who-panel${i === 0 ? " on" : ""}" data-panel="${x.key}" role="tabpanel"><p class="who-lead">${esc(x.label)} হিসেবে AI দিয়ে আপনি পারবেন:</p><ul>${x.uses.map((u) => `<li>${esc(u)}</li>`).join("")}</ul><div class="who-prompt"><span>এখনই চেষ্টা করুন, এই প্রম্পটটা ChatGPT-তে দিন</span><q>${esc(x.prompt)}</q><button type="button" data-copy="${esc(x.prompt)}">প্রম্পট কপি করুন</button></div></div>`).join("")}
 </div>
 <div class="desk-latest"><span class="desk-label"><i></i>আজকের AI ডেস্ক</span>
 ${posts.slice(0, 2).map((p) => `<a href="./posts/${p.slug}/"><span class="tag">${esc(catName(p.category))}</span><b>${esc(p.title)}</b><em>→</em></a>`).join("")}
