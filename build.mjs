@@ -212,8 +212,19 @@ for (let page = 1; page <= pages; page++) {
 <form class="desk-search" action="./search/" method="get"><input type="search" name="q" placeholder="কী শিখতে চান? যেমন: ChatGPT" aria-label="ব্লগে খুঁজুন"><button type="submit">খুঁজুন</button></form>
 <div class="desk-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-line" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></div>
 </div>
-<div class="desk-stack" aria-label="আজকের AI ডেস্ক"><span class="desk-label"><i></i>আজকের AI ডেস্ক</span>
-${posts.slice(0, 3).map((p, i) => `<a class="stack-card c${i}" href="./posts/${p.slug}/">${p.cover ? `<img src="./${esc(p.cover)}" alt="" width="1200" height="630" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}>` : `<div class="ph"><b>${esc(catName(p.category))}</b><span>${esc(p.title)}</span></div>`}<div><span class="tag">${esc(catName(p.category))}</span><b>${esc(p.title)}</b></div></a>`).join("")}
+<div class="desk-demo">
+${["gemini", "claude", "copilot", "perplexity"].map((k, i) => { const t = TOOLS.find((x) => x.key === k && x.icon); return t ? `<span class="orb o${i}" aria-hidden="true"><img src="./${t.icon}" alt="" width="26" height="26"></span>` : ""; }).join("")}
+<div class="chat" aria-label="AI দিয়ে কী করা যায় তার উদাহরণ">
+<div class="chat-head"><i></i><i></i><i></i><b>AI সহকারী</b><span>ডেমো</span></div>
+<div class="chat-body" id="chat" data-demo='${esc(JSON.stringify(cfg.chatDemo))}'>
+<div class="msg me">${esc(cfg.chatDemo[0].q)}</div>
+<div class="msg ai">${esc(cfg.chatDemo[0].a)}</div>
+</div>
+<div class="chat-input"><span>বাংলায় লিখুন, AI উত্তর দেবে</span><em>➤</em></div>
+</div>
+<div class="desk-latest"><span class="desk-label"><i></i>আজকের AI ডেস্ক</span>
+${posts.slice(0, 2).map((p) => `<a href="./posts/${p.slug}/"><span class="tag">${esc(catName(p.category))}</span><b>${esc(p.title)}</b><em>→</em></a>`).join("")}
+</div>
 </div>
 </div>
 <div class="ticker" aria-hidden="true"><div class="ticker-track">${[0, 1].map(() => TOOLS.filter((t) => t.icon).slice(0, 26).map((t) => `<span><img src="./${t.icon}" alt="" width="20" height="20" loading="lazy">${esc(t.name)}</span>`).join("")).join("")}</div></div>

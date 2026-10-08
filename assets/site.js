@@ -49,3 +49,31 @@
   };
   addEventListener("scroll", tick, { passive: true }); tick();
 })();
+(function () {
+  var box = document.getElementById("chat");
+  if (!box || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var demo; try { demo = JSON.parse(box.getAttribute("data-demo")); } catch (e) { return; }
+  if (!demo || !demo.length) return;
+  var i = 0, wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  var type = async function (el, text, speed) {
+    var chars = Array.from(text), caret = document.createElement("span"); caret.className = "caret";
+    el.textContent = ""; el.appendChild(caret);
+    for (var k = 0; k < chars.length; k++) { caret.insertAdjacentText("beforebegin", chars[k]); await wait(speed); }
+    caret.remove();
+  };
+  var run = async function () {
+    await wait(3200);
+    for (;;) {
+      i = (i + 1) % demo.length;
+      box.innerHTML = "";
+      var q = document.createElement("div"); q.className = "msg me"; box.appendChild(q);
+      await type(q, demo[i].q, 38);
+      await wait(350);
+      var d = document.createElement("div"); d.className = "msg ai dots"; d.innerHTML = "<b></b><b></b><b></b>"; box.appendChild(d);
+      await wait(1100);
+      d.className = "msg ai"; await type(d, demo[i].a, 16);
+      await wait(4200);
+    }
+  };
+  if ("IntersectionObserver" in window) { var io = new IntersectionObserver(function (e) { if (e[0].isIntersecting) { io.disconnect(); run(); } }); io.observe(box); } else run();
+})();
