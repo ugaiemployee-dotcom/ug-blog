@@ -57,5 +57,24 @@
     }
   ],
   "supabaseUrl": "https://wiynqetgssigxyjvdvqh.supabase.co",
-  "supabaseKey": "sb_publishable_86BM_KR8dDc25zUKK8fqXQ_jFrRCMJ0"
+  "supabaseKey": "sb_publishable_86BM_KR8dDc25zUKK8fqXQ_jFrRCMJ0",
+  "heroEyebrow": "পশ্চিমবঙ্গের AI ট্রেনিং অ্যাকাডেমি · Unique Gurukul",
+  "stats": [
+    {
+      "value": "২০১৭",
+      "label": "সাল থেকে শেখাচ্ছি"
+    },
+    {
+      "value": "৩০,০০০+",
+      "label": "শিক্ষার্থী"
+    },
+    {
+      "value": "১০০% বাংলায়",
+      "label": "ক্লাস ও গাইড"
+    },
+    {
+      "value": "৪ দিন",
+      "label": "ফ্রি AI ক্লাস"
+    }
+  ]
 }

@@ -119,6 +119,7 @@ ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(
 </head>
 <body>
 <a class="skip" href="#main">মূল লেখায় যান</a>
+<div class="progress" aria-hidden="true"><i></i></div>
 <div class="topbar"><div class="wrap"><span>🎓 AI শিখে আয় শুরু করতে চান? ৪ দিনের ফ্রি ক্লাসে যোগ দিন</span><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে নাম লেখান →</a></div></div>
 <header class="site-header"><div class="wrap">
 <a class="brand" href="${root}">${logo ? `<img src="${esc(logo)}" alt="${esc(cfg.brand)} লোগো" width="42" height="42" onerror="this.remove()">` : ""}<span>${esc(cfg.brand)}<small>ব্লগ</small></span></a>
@@ -132,6 +133,7 @@ ${body}
 <div class="f-col"><b>বিভাগ</b>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}</div>
 <div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}about/">আমাদের কথা</a><a href="${root}feed.xml">RSS ফিড</a></div>
 </div><div class="f-bottom"><div class="wrap">© ${new Date().getFullYear()} ${esc(cfg.brand)} · সব অধিকার সংরক্ষিত</div></div></footer>
+<a class="sticky-cta" href="${esc(cfg.freeClassUrl)}">🎓 ৪ দিনের ফ্রি AI ক্লাসে যোগ দিন →</a>
 <script>window.UG=${JSON.stringify({ u: cfg.supabaseUrl || "", k: cfg.supabaseKey || "", free: host(cfg.freeClassUrl), main: host(cfg.mainSiteUrl) })};</script>
 <script src="${root}assets/site.js" defer></script>
 </body>
@@ -202,7 +204,9 @@ for (let page = 1; page <= pages; page++) {
         { "@type": "FAQPage", mainEntity: cfg.homeFaq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
         { "@type": "Blog", name: cfg.siteName, url: `${SITE}/`, inLanguage: "bn", publisher: { "@id": ORG["@id"] }, blogPost: posts.slice(0, 10).map((p) => ({ "@type": "BlogPosting", headline: p.title, url: `${SITE}/posts/${p.slug}/`, datePublished: isoDate(p.date) })) },
       ] : [],
-      body: `${page === 1 ? `<section class="hero"><div class="wrap"><span class="eyebrow">${esc(cfg.brand)} ব্লগ</span><h1>${esc(cfg.tagline)}</h1><p>${esc(cfg.heroText)}</p><div class="hero-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-ghost" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></div></div></section>` : ""}
+      body: `${page === 1 ? `<section class="hero hero-home"><div class="wrap"><div class="hero-text"><span class="eyebrow">${esc(cfg.heroEyebrow || cfg.brand + " ব্লগ")}</span><h1>${esc(cfg.tagline)}</h1><p>${esc(cfg.heroText)}</p><div class="hero-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-ghost" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></div></div>${existsSync("assets/mentor-about.webp") ? `<a class="hero-mentor" href="./about/"><img src="./assets/mentor-about.webp" alt="${esc(cfg.mentorName)}, ${esc(cfg.mentorTitle)}" width="860" height="800" fetchpriority="high"><span><b>${esc(cfg.mentorName)}</b>${esc(cfg.mentorTitle)}</span></a>` : ""}</div></section>
+<section class="trust"><div class="wrap">${(cfg.stats || []).map((x) => `<div><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join("")}</div></section>
+<section class="topics"><div class="wrap"><h2 class="section-title">যা নিয়ে পড়বেন</h2><div class="topic-grid">${Object.entries(cfg.categories).map(([k, v]) => `<a class="topic" href="./category/${k}/"><i>${catIcon(k)}</i><b>${esc(v)}</b><span>${esc(cfg.categoryText?.[k] || "")}</span><em>${posts.some((p) => p.category === k) ? `${bnNum(posts.filter((p) => p.category === k).length)}টি পোস্ট →` : "শিগগিরই আসছে"}</em></a>`).join("")}</div></div></section>` : ""}
 <div class="wrap">${chips(root)}
 ${page === 1 && posts[0] ? `<h2 class="section-title">সর্বশেষ</h2>${card(posts[0], root, true)}` : ""}
 ${rest.length || page > 1 ? `<h2 class="section-title">${page === 1 ? "আরও পোস্ট" : `পুরনো পোস্ট, পাতা ${bnNum(page)}`}</h2>${grid(rest, root)}` : ""}
@@ -244,7 +248,9 @@ for (const p of posts) {
   // লেখার মাঝখানে (দ্বিতীয় h2-এর আগে) ফ্রি ক্লাসের ছোট ব্যানার
   const inline = `<aside class="inline-cta"><span>🎓 এই ধরনের টুল হাতে-কলমে শিখতে চান?</span><a href="${esc(cfg.freeClassUrl)}">৪ দিনের ফ্রি ক্লাসে যোগ দিন →</a></aside>`;
   let n = 0;
-  const bodyHtml = p.body_html.replace(/<h2>/g, (m) => (++n === 2 ? inline + m : m));
+  const heads = [];
+  const bodyHtml = p.body_html.replace(/<h2>([\s\S]*?)<\/h2>/g, (m, t) => { n++; heads.push(text(t)); return `${n === 2 ? inline : ""}<h2 id="s${n}">${t}</h2>`; });
+  const toc = heads.length >= 4 ? `<nav class="toc" aria-label="সূচিপত্র"><b>এই লেখায় যা আছে</b><ol>${heads.map((h, i) => `<li><a href="#s${i + 1}">${esc(h)}</a></li>`).join("")}</ol></nav>` : "";
   write(
     `posts/${p.slug}/index.html`,
     layout({
@@ -284,6 +290,7 @@ ${p.tools.length ? `<div class="tools-row tools-top"><span>এই পোস্�
 ${p.key_points.length ? `<section class="glance"><h2>${catIcon(p.category)} এক নজরে</h2><ul>${p.key_points.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></section>` : ""}
 ${p.photo ? `<figure class="photo"><img src="${root}${esc(p.photo)}" alt="${esc(p.photo_alt || p.title)}" loading="lazy"></figure>` : ""}
 ${p.quick_facts.length ? `<section class="facts" aria-label="দ্রুত তথ্য">${p.quick_facts.map((f) => `<div><span>${esc(f.label)}</span><b>${esc(f.value)}</b></div>`).join("")}</section>` : ""}
+${toc}
 <div class="prose">${bodyHtml}</div>
 ${p.faq.length ? `<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${p.faq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section>` : ""}
 ${shareRow(url, p.title)}

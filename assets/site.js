@@ -40,3 +40,12 @@
     q.focus();
   }
 })();
+(function () {
+  var bar = document.querySelector(".progress i"), cta = document.querySelector(".sticky-cta"), art = document.querySelector(".article .prose");
+  var tick = function () {
+    var h = document.documentElement, max = h.scrollHeight - innerHeight, y = scrollY || h.scrollTop;
+    if (bar) bar.style.width = (art && max > 0 ? Math.min(100, (y / max) * 100) : 0) + "%";
+    if (cta) cta.classList.toggle("show", y > 500 && y < max - 500);
+  };
+  addEventListener("scroll", tick, { passive: true }); tick();
+})();
