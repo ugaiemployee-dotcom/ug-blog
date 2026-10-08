@@ -3,17 +3,33 @@
   "siteName": "Unique Gurukul ব্লগ",
   "brand": "Unique Gurukul",
   "tagline": "সহজ বাংলায় AI-এর নতুন খবর, টুল আর শেখার গাইড",
-  "description": "Unique Gurukul ব্লগ: নতুন AI টুল, ভাইব কোডিং, অটোমেশন আর AI দিয়ে আয়ের খবর ও গাইড, সহজ বাংলায়।",
-  "logoUrl": "https://uniquegurukul.app/images/uniqui_blue_logo.webp",
+  "description": "নতুন AI টুল, ভাইব কোডিং, অটোমেশন আর AI দিয়ে আয়ের খবর ও গাইড, সহজ বাংলায়। Unique Gurukul-এর অফিসিয়াল ব্লগ।",
+  "heroText": "রোজ বাছাই করা AI খবর: কী এল, আপনার কী কাজে লাগবে, আর কীভাবে শুরু করবেন।",
+  "footerAbout": "পশ্চিমবঙ্গের AI ও কম্পিউটার ট্রেনিং অ্যাকাডেমি। ২০১৭ সাল থেকে ৩০,০০০-এর বেশি শিক্ষার্থীকে হাতে-কলমে শেখাচ্ছে।",
+  "founded": "2017",
+  "studentCount": "৩০,০০০-এর বেশি",
   "mainSiteUrl": "https://uniquegurukul.app",
+  "freeClassUrl": "https://uniquegurukul.co.in",
+  "logoSourceUrl": "https://uniquegurukul.app/images/uniqui_blue_logo.webp",
+  "feedUrl": "https://wiynqetgssigxyjvdvqh.supabase.co/functions/v1/news-employee?action=feed",
+  "googleSiteVerification": "",
+  "mentorName": "Sanajit Mondal",
+  "mentorTitle": "প্রতিষ্ঠাতা ও প্রধান মেন্টর, Unique Gurukul",
+  "mentorBio": "স্কুল শিক্ষক, Vibe Coding ও Automation বিশেষজ্ঞ। ২০১৭ সালে Unique Gurukul প্রতিষ্ঠা করেন; এ পর্যন্ত ৩০,০০০-এর বেশি ছাত্র।",
   "ctaTitle": "AI শিখে নিজের আয়ের পথ তৈরি করুন",
-  "ctaText": "Unique Gurukul-এর ক্লাসে হাতে-কলমে শিখুন AI টুল, ওয়েবসাইট বানানো আর অটোমেশন।",
-  "ctaButton": "কোর্স দেখুন",
-  "ctaUrl": "https://uniquegurukul.app",
+  "ctaText": "আগে ৪ দিনের ফ্রি ক্লাসে যোগ দিয়ে দেখুন। ভালো লাগলে Unique Gurukul-এর কোর্সে হাতে-কলমে শিখুন AI টুল, ওয়েবসাইট বানানো আর অটোমেশন।",
+  "aboutDescription": "Unique Gurukul পশ্চিমবঙ্গের একটি AI ও কম্পিউটার ট্রেনিং অ্যাকাডেমি। এই ব্লগে আমরা AI-এর দরকারি খবর সহজ বাংলায় পৌঁছে দিই।",
+  "aboutHtml": "<h2>Unique Gurukul কী</h2><p>Unique Gurukul পশ্চিমবঙ্গের একটি AI ও কম্পিউটার ট্রেনিং অ্যাকাডেমি। ২০১৭ সালে শুরু, এ পর্যন্ত ৩০,০০০-এর বেশি শিক্ষার্থী এখানে শিখেছেন। আমরা শেখাই AI টুলের ব্যবহার, কোড না জেনে ওয়েবসাইট বানানো (Vibe Coding), অটোমেশন আর অনলাইনে কাজ শুরুর উপায়।</p><h2>এই ব্লগ কেন</h2><p>AI-এর প্রায় সব খবর ইংরেজিতে আসে, আর তার বেশিরভাগই সাধারণ মানুষের কাজে লাগে না। এই ব্লগে আমরা রোজ বাছাই করা কয়েকটা খবর সহজ বাংলায় লিখি: কী এল, আপনার কী কাজে লাগবে, আর কীভাবে শুরু করবেন।</p><h2>কীভাবে খবর বাছা হয়</h2><ul><li>নির্ভরযোগ্য উৎস থেকে খবর সংগ্রহ করা হয়</li><li>শুধু সেই খবর রাখা হয় যা শিক্ষার্থী বা নতুন ফ্রিল্যান্সারের সত্যিই কাজে লাগে</li><li>প্রকাশের আগে প্রতিটা পোস্ট যাচাই করা হয়</li></ul><h2>যোগাযোগ</h2><p>কোর্স ও বিস্তারিত: <a href=\"https://uniquegurukul.app\">uniquegurukul.app</a><br>ফ্রি ক্লাস: <a href=\"https://uniquegurukul.co.in\">uniquegurukul.co.in</a><br>ইমেইল: <a href=\"mailto:info@uniquegurukul.app\">info@uniquegurukul.app</a></p>",
   "categories": {
     "ai-tools": "AI টুল",
     "vibe-coding": "ভাইব কোডিং",
     "automation": "অটোমেশন",
     "ai-income": "AI দিয়ে আয়"
+  },
+  "categoryText": {
+    "ai-tools": "লেখা, ছবি, ভিডিও আর ভয়েসের নতুন AI টুল ও ফিচারের খবর।",
+    "vibe-coding": "কোড না জেনে AI দিয়ে ওয়েবসাইট, অ্যাপ আর গেম বানানোর খবর ও উপায়।",
+    "automation": "রোজকার কাজ নিজে থেকে চালানোর টুল, AI এজেন্ট আর কৌশল।",
+    "ai-income": "AI দিয়ে ফ্রিল্যান্সিং ও নিজের কাজ শুরুর সুযোগ।"
   }
 }
