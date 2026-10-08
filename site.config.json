@@ -55,5 +55,7 @@
       "q": "Unique Gurukul-এর কোর্সের বিস্তারিত কোথায় পাব?",
       "a": "সব কোর্স ও বিস্তারিত তথ্য মূল ওয়েবসাইট uniquegurukul.app-এ আছে।"
     }
-  ]
+  ],
+  "supabaseUrl": "https://wiynqetgssigxyjvdvqh.supabase.co",
+  "supabaseKey": "sb_publishable_86BM_KR8dDc25zUKK8fqXQ_jFrRCMJ0"
 }

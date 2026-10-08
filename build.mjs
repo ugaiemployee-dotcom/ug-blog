@@ -68,11 +68,18 @@ if (existsSync("posts")) {
     posts.push(p);
   }
 }
-posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.slug.localeCompare(b.slug)));
+posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.slug.localeCompare(a.slug)));
 
 // ---- shared pieces ----
 const ORG = { "@type": "EducationalOrganization", "@id": `${cfg.mainSiteUrl}/#org`, name: cfg.brand, url: cfg.mainSiteUrl, logo: logoAbs, foundingDate: cfg.founded, founder: { "@type": "Person", name: cfg.mentorName }, sameAs: [cfg.freeClassUrl], email: cfg.email, address: { "@type": "PostalAddress", streetAddress: cfg.address?.street, addressLocality: cfg.address?.locality, addressRegion: "West Bengal", postalCode: cfg.address?.pin, addressCountry: "IN" }, areaServed: [{ "@type": "State", name: "West Bengal" }, { "@type": "Country", name: "India" }], knowsLanguage: ["bn", "en"], description: cfg.orgDescription };
 const crumbs = (items) => ({ "@type": "BreadcrumbList", itemListElement: items.map(([name, item], i) => ({ "@type": "ListItem", position: i + 1, name, item })) });
+
+const hasMentor = existsSync("assets/mentor.webp");
+const authorBox = (root) => `<div class="author">${hasMentor ? `<img class="avatar" src="${root}assets/mentor.webp" alt="${esc(cfg.mentorName)}" width="72" height="72" loading="lazy">` : `<div class="avatar" aria-hidden="true">${esc(cfg.mentorName.split(" ").map((w) => w[0]).join("").slice(0, 2))}</div>`}<div><b>${esc(cfg.mentorName)}</b><span>${esc(cfg.mentorTitle)}</span><p>${esc(cfg.mentorBio)}</p><a href="${root}about/">আরও জানুন →</a></div></div>`;
+const shareRow = (url, title) => {
+  const u = encodeURIComponent(url), t = encodeURIComponent(title);
+  return `<div class="share"><span>শেয়ার করুন:</span><a class="s-wa" href="https://wa.me/?text=${t}%20${u}" target="_blank" rel="noopener">WhatsApp</a><a class="s-tg" href="https://t.me/share/url?url=${u}&text=${t}" target="_blank" rel="noopener">Telegram</a><a class="s-fb" href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener">Facebook</a><button type="button" class="s-copy" data-copy="${esc(url)}">লিংক কপি</button></div>`;
+};
 
 function layout({ root, title, description, canonical, ogImage, ogType = "website", jsonLd = [], body, extraHead = "", noindex = false }) {
   const img = abs(ogImage || "assets/og-default.png");
@@ -115,7 +122,7 @@ ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(
 <div class="topbar"><div class="wrap"><span>🎓 AI শিখে আয় শুরু করতে চান? ৪ দিনের ফ্রি ক্লাসে যোগ দিন</span><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে নাম লেখান →</a></div></div>
 <header class="site-header"><div class="wrap">
 <a class="brand" href="${root}">${logo ? `<img src="${esc(logo)}" alt="${esc(cfg.brand)} লোগো" width="42" height="42" onerror="this.remove()">` : ""}<span>${esc(cfg.brand)}<small>ব্লগ</small></span></a>
-<nav class="nav" aria-label="মূল মেনু">${nav}<a class="cat-link" href="${root}about/">আমাদের কথা</a><a class="btn btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস</a><a class="btn" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></nav>
+<nav class="nav" aria-label="মূল মেনু">${nav}<a class="cat-link" href="${root}about/">আমাদের কথা</a><a class="search-link" href="${root}search/" aria-label="খুঁজুন"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a><a class="btn btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস</a><a class="btn" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></nav>
 </div></header>
 <main id="main">
 ${body}
@@ -125,6 +132,8 @@ ${body}
 <div class="f-col"><b>বিভাগ</b>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}</div>
 <div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}about/">আমাদের কথা</a><a href="${root}feed.xml">RSS ফিড</a></div>
 </div><div class="f-bottom"><div class="wrap">© ${new Date().getFullYear()} ${esc(cfg.brand)} · সব অধিকার সংরক্ষিত</div></div></footer>
+<script>window.UG=${JSON.stringify({ u: cfg.supabaseUrl || "", k: cfg.supabaseKey || "", free: host(cfg.freeClassUrl), main: host(cfg.mainSiteUrl) })};</script>
+<script src="${root}assets/site.js" defer></script>
 </body>
 </html>`;
 }
@@ -277,8 +286,9 @@ ${p.photo ? `<figure class="photo"><img src="${root}${esc(p.photo)}" alt="${esc(
 ${p.quick_facts.length ? `<section class="facts" aria-label="দ্রুত তথ্য">${p.quick_facts.map((f) => `<div><span>${esc(f.label)}</span><b>${esc(f.value)}</b></div>`).join("")}</section>` : ""}
 <div class="prose">${bodyHtml}</div>
 ${p.faq.length ? `<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${p.faq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section>` : ""}
+${shareRow(url, p.title)}
 ${p.tags.length ? `<div class="tags">${p.tags.map((t) => `<span>#${esc(t)}</span>`).join("")}</div>` : ""}
-<div class="author"><div class="avatar" aria-hidden="true">${esc(cfg.mentorName.split(" ").map((w) => w[0]).join("").slice(0, 2))}</div><div><b>${esc(cfg.mentorName)}</b><span>${esc(cfg.mentorTitle)}</span><p>${esc(cfg.mentorBio)}</p></div></div>
+${authorBox(root)}
 <aside class="cta"><h2>${esc(cfg.ctaTitle)}</h2><p>${esc(cfg.ctaText)}</p><div class="cta-row"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-white" href="${esc(cfg.mainSiteUrl)}">সব কোর্স দেখুন</a></div></aside>
 </article>
 ${related.length ? `<section class="related"><h2 class="section-title">আরও পড়ুন</h2><div class="grid">${related.map((x) => card(x, root)).join("\n")}</div></section>` : ""}`,
@@ -308,6 +318,21 @@ ${promo()}`,
   );
 }
 
+// search
+write("search.json", JSON.stringify(posts.map((p) => ({ s: p.slug, t: p.title, e: p.excerpt, c: catName(p.category), d: bnDate(p.date), k: [...p.tags, ...p.tools.map((t) => t.name)].join(" ") }))));
+write(
+  "search/index.html",
+  layout({
+    root: "../",
+    title: `খুঁজুন | ${cfg.siteName}`,
+    description: `${cfg.siteName}-এর সব পোস্টের মধ্যে খুঁজুন।`,
+    canonical: `${SITE}/search/`,
+    noindex: true,
+    body: `<section class="hero hero-sm"><div class="wrap"><h1>ব্লগে খুঁজুন</h1><form class="search-form" onsubmit="return false"><input id="q" type="search" placeholder="যেমন: ChatGPT, ওয়েবসাইট, অটোমেশন" autocomplete="off" aria-label="খোঁজার শব্দ লিখুন"></form></div></section>
+<div class="wrap"><div id="results" class="search-results" data-root="../"><p class="empty">উপরে খোঁজার শব্দ লিখুন।</p></div></div>`,
+  })
+);
+
 // about
 write(
   "about/index.html",
@@ -318,8 +343,8 @@ write(
     canonical: `${SITE}/about/`,
     jsonLd: [crumbs([["ব্লগ", `${SITE}/`], ["আমাদের কথা", `${SITE}/about/`]]), { "@type": "AboutPage", name: `${cfg.brand} সম্পর্কে`, url: `${SITE}/about/`, inLanguage: "bn", about: { "@id": ORG["@id"] } }, { "@type": "Person", name: cfg.mentorName, jobTitle: cfg.mentorTitle, description: cfg.mentorBio, worksFor: { "@id": ORG["@id"] } }],
     body: `<section class="hero hero-sm"><div class="wrap"><span class="eyebrow">আমাদের কথা</span><h1>${esc(cfg.brand)} সম্পর্কে</h1><p>${esc(cfg.aboutDescription)}</p></div></section>
-<article class="article"><div class="prose">${cfg.aboutHtml}</div>
-<div class="author"><div class="avatar" aria-hidden="true">${esc(cfg.mentorName.split(" ").map((w) => w[0]).join("").slice(0, 2))}</div><div><b>${esc(cfg.mentorName)}</b><span>${esc(cfg.mentorTitle)}</span><p>${esc(cfg.mentorBio)}</p></div></div>
+<article class="article">${existsSync("assets/mentor-about.webp") ? `<figure class="about-photo"><img src="../assets/mentor-about.webp" alt="${esc(cfg.mentorName)}, ${esc(cfg.mentorTitle)}" width="860" height="800"><figcaption><b>${esc(cfg.mentorName)}</b>${esc(cfg.mentorTitle)}</figcaption></figure>` : ""}<div class="prose">${cfg.aboutHtml}</div>
+${authorBox("../")}
 <aside class="cta"><h2>${esc(cfg.ctaTitle)}</h2><p>${esc(cfg.ctaText)}</p><div class="cta-row"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-white" href="${esc(cfg.mainSiteUrl)}">সব কোর্স দেখুন</a></div></aside></article>`,
   })
 );
