@@ -3,372 +3,624 @@
   "key": "chatgpt",
   "name": "ChatGPT",
   "match": "chatgpt|gpt-?\\d|openai",
-  "icon": null
+  "icon": null,
+  "cat": "chat",
+  "desc": "OpenAI-এর চ্যাট সহকারী। লেখা, পড়াশোনা, ছবি তৈরি আর কোডের কাজে সবচেয়ে বেশি ব্যবহার হয়।"
  },
  {
   "key": "gemini",
   "name": "Gemini",
   "match": "gemini|bard",
-  "icon": "assets/icons/gemini.svg"
+  "icon": "assets/icons/gemini.svg",
+  "cat": "chat",
+  "desc": "Google-এর AI সহকারী। Gmail, Docs আর Android ফোনের সাথে জুড়ে কাজ করে।"
  },
  {
   "key": "claude",
   "name": "Claude",
   "match": "claude|anthropic",
-  "icon": "assets/icons/claude.svg"
+  "icon": "assets/icons/claude.svg",
+  "cat": "chat",
+  "desc": "Anthropic-এর AI সহকারী। লম্বা লেখা, ফাইল পড়া আর কোডের কাজে ব্যবহার হয়।"
  },
  {
   "key": "copilot",
   "name": "Copilot",
   "match": "copilot",
-  "icon": "assets/icons/copilot.svg"
+  "icon": "assets/icons/copilot.svg",
+  "cat": "chat",
+  "desc": "Microsoft-এর AI সহকারী। Windows, Word, Excel আর Edge-এর ভেতরে থাকে।"
  },
  {
   "key": "perplexity",
   "name": "Perplexity",
   "match": "perplexity",
-  "icon": "assets/icons/perplexity.svg"
+  "icon": "assets/icons/perplexity.svg",
+  "cat": "chat",
+  "desc": "প্রশ্ন করলে ইন্টারনেট খুঁজে সূত্রসহ উত্তর দেয়, AI সার্চ ইঞ্জিনের মতো।"
  },
  {
   "key": "deepseek",
   "name": "DeepSeek",
   "match": "deepseek",
-  "icon": "assets/icons/deepseek.svg"
+  "icon": "assets/icons/deepseek.svg",
+  "cat": "chat",
+  "desc": "চিনের তৈরি AI চ্যাট সহকারী, যুক্তি আর কোডের কাজে পরিচিত।"
  },
  {
   "key": "mistral",
   "name": "Mistral",
   "match": "mistral",
-  "icon": "assets/icons/mistral.svg"
+  "icon": "assets/icons/mistral.svg",
+  "cat": "chat",
+  "desc": "ফ্রান্সের Mistral AI-এর মডেল আর Le Chat নামের চ্যাট সহকারী।"
  },
  {
   "key": "grok",
   "name": "Grok",
   "match": "\\bgrok\\b|\\bxai\\b",
-  "icon": null
+  "icon": null,
+  "cat": "chat",
+  "desc": "xAI-এর চ্যাট সহকারী, X (আগের Twitter)-এর সাথে জোড়া।"
  },
  {
   "key": "qwen",
   "name": "Qwen",
   "match": "qwen",
-  "icon": "assets/icons/qwen.svg"
+  "icon": "assets/icons/qwen.svg",
+  "cat": "chat",
+  "desc": "Alibaba-র AI মডেল পরিবার, চ্যাট আর কোডের কাজে ব্যবহার হয়।"
  },
  {
   "key": "meta-ai",
   "name": "Meta AI",
   "match": "meta ai|llama",
-  "icon": "assets/icons/meta-ai.svg"
+  "icon": "assets/icons/meta-ai.svg",
+  "cat": "chat",
+  "desc": "Meta-র AI সহকারী। WhatsApp, Instagram আর Facebook-এর ভেতরেই পাওয়া যায়।"
  },
  {
   "key": "notebooklm",
   "name": "NotebookLM",
   "match": "notebooklm",
-  "icon": "assets/icons/notebooklm.svg"
+  "icon": "assets/icons/notebooklm.svg",
+  "cat": "write",
+  "desc": "নিজের নোট বা PDF দিলে তা থেকে সারাংশ, প্রশ্নোত্তর আর অডিও আলোচনা বানায়।"
  },
  {
   "key": "huggingface",
   "name": "Hugging Face",
   "match": "hugging ?face",
-  "icon": "assets/icons/huggingface.svg"
+  "icon": "assets/icons/huggingface.svg",
+  "cat": "chat",
+  "desc": "খোলা AI মডেলের সবচেয়ে বড় ভাণ্ডার, যেখান থেকে মডেল নামানো আর চালানো যায়।"
  },
  {
   "key": "ollama",
   "name": "Ollama",
   "match": "ollama",
-  "icon": "assets/icons/ollama.svg"
+  "icon": "assets/icons/ollama.svg",
+  "cat": "chat",
+  "desc": "নিজের কম্পিউটারে, ইন্টারনেট ছাড়াই AI মডেল চালানোর টুল।"
  },
  {
   "key": "midjourney",
   "name": "Midjourney",
   "match": "midjourney",
-  "icon": null
+  "icon": null,
+  "cat": "image",
+  "desc": "লেখা থেকে শিল্পের মতো সুন্দর ছবি বানানোর জনপ্রিয় টুল।"
  },
  {
   "key": "sora",
   "name": "Sora",
   "match": "\\bsora\\b",
-  "icon": null
+  "icon": null,
+  "cat": "video",
+  "desc": "OpenAI-এর ভিডিও তৈরির মডেল, লেখা থেকে ছোট ভিডিও বানায়।"
  },
  {
   "key": "veo",
   "name": "Veo",
   "match": "\\bveo\\b|google flow",
-  "icon": null
+  "icon": null,
+  "cat": "video",
+  "desc": "Google-এর ভিডিও তৈরির মডেল, শব্দসহ ভিডিও বানাতে পারে।"
  },
  {
   "key": "nano-banana",
   "name": "Nano Banana",
   "match": "nano banana|imagen",
-  "icon": null
+  "icon": null,
+  "cat": "image",
+  "desc": "Google-এর ছবি তৈরি ও ছবি বদলানোর মডেল, Gemini-র ভেতরে চলে।"
  },
  {
   "key": "runway",
   "name": "Runway",
   "match": "runway",
-  "icon": null
+  "icon": null,
+  "cat": "video",
+  "desc": "ভিডিও তৈরি আর সম্পাদনার AI টুল, ভিডিও নির্মাতাদের মধ্যে জনপ্রিয়।"
  },
  {
   "key": "elevenlabs",
   "name": "ElevenLabs",
   "match": "elevenlabs|eleven labs",
-  "icon": "assets/icons/elevenlabs.svg"
+  "icon": "assets/icons/elevenlabs.svg",
+  "cat": "voice",
+  "desc": "লেখা থেকে মানুষের মতো কণ্ঠ বানায়, কণ্ঠের নকলও করতে পারে।"
  },
  {
   "key": "suno",
   "name": "Suno",
   "match": "\\bsuno\\b",
-  "icon": "assets/icons/suno.svg"
+  "icon": "assets/icons/suno.svg",
+  "cat": "voice",
+  "desc": "লিখে বললে কথা আর সুরসহ পুরো গান বানিয়ে দেয়।"
  },
  {
   "key": "canva",
   "name": "Canva",
   "match": "canva",
-  "icon": null
+  "icon": null,
+  "cat": "image",
+  "desc": "পোস্টার, সোশ্যাল পোস্ট আর প্রেজেন্টেশন বানানোর ডিজাইন টুল, ভেতরে AI ছবি ও লেখার সুবিধা আছে।"
  },
  {
   "key": "capcut",
   "name": "CapCut",
   "match": "capcut",
-  "icon": null
+  "icon": null,
+  "cat": "video",
+  "desc": "মোবাইলে ভিডিও কাটাছেঁড়ার অ্যাপ, ক্যাপশন আর এফেক্টে AI ব্যবহার করে।"
  },
  {
   "key": "heygen",
   "name": "HeyGen",
   "match": "heygen",
-  "icon": null
+  "icon": null,
+  "cat": "video",
+  "desc": "AI অবতার দিয়ে কথা-বলা ভিডিও বানায়, ক্যামেরার সামনে না গিয়েই।"
  },
  {
   "key": "flux",
   "name": "Flux",
   "match": "\\bflux\\b",
-  "icon": "assets/icons/flux.svg"
+  "icon": "assets/icons/flux.svg",
+  "cat": "image",
+  "desc": "Black Forest Labs-এর ছবি তৈরির মডেল, বাস্তবের মতো ছবির জন্য পরিচিত।"
  },
  {
   "key": "lovable",
   "name": "Lovable",
   "match": "lovable",
-  "icon": null
+  "icon": null,
+  "cat": "code",
+  "desc": "লিখে বললে পুরো ওয়েবসাইট বা অ্যাপ বানিয়ে দেয়, কোড না জেনেই।"
  },
  {
   "key": "cursor",
   "name": "Cursor",
   "match": "\\bcursor\\b",
-  "icon": "assets/icons/cursor.svg"
+  "icon": "assets/icons/cursor.svg",
+  "cat": "code",
+  "desc": "AI-জোড়া কোড এডিটর, যেখানে AI নিজে কোড লেখে আর ঠিক করে।"
  },
  {
   "key": "replit",
   "name": "Replit",
   "match": "replit",
-  "icon": "assets/icons/replit.svg"
+  "icon": "assets/icons/replit.svg",
+  "cat": "code",
+  "desc": "ব্রাউজারেই অ্যাপ বানানো আর চালানোর জায়গা, সাথে AI এজেন্ট।"
  },
  {
   "key": "bolt",
   "name": "Bolt",
   "match": "bolt\\.new|\\bbolt\\b",
-  "icon": null
+  "icon": null,
+  "cat": "code",
+  "desc": "ব্রাউজারে লিখে বললে ওয়েব অ্যাপ বানিয়ে চালিয়ে দেখায়।"
  },
  {
   "key": "v0",
   "name": "v0",
   "match": "\\bv0\\b",
-  "icon": "assets/icons/v0.svg"
+  "icon": "assets/icons/v0.svg",
+  "cat": "code",
+  "desc": "Vercel-এর টুল, লিখে বললে ওয়েবসাইটের পাতা আর ডিজাইন বানায়।"
  },
  {
   "key": "windsurf",
   "name": "Windsurf",
   "match": "windsurf",
-  "icon": "assets/icons/windsurf.svg"
+  "icon": "assets/icons/windsurf.svg",
+  "cat": "code",
+  "desc": "AI এজেন্টসহ কোড এডিটর, বড় প্রজেক্টে নিজে থেকে কাজ এগোয়।"
  },
  {
   "key": "github",
   "name": "GitHub",
   "match": "github",
-  "icon": "assets/icons/github.svg"
+  "icon": "assets/icons/github.svg",
+  "cat": "code",
+  "desc": "কোড রাখা আর দল মিলে কাজ করার জায়গা, সাথে Copilot নামের AI সহকারী।"
  },
  {
   "key": "vercel",
   "name": "Vercel",
   "match": "vercel",
-  "icon": "assets/icons/vercel.svg"
+  "icon": "assets/icons/vercel.svg",
+  "cat": "code",
+  "desc": "ওয়েবসাইট অনলাইনে তোলার (হোস্টিং) প্ল্যাটফর্ম।"
  },
  {
   "key": "supabase",
   "name": "Supabase",
   "match": "supabase",
-  "icon": "assets/icons/supabase.svg"
+  "icon": "assets/icons/supabase.svg",
+  "cat": "code",
+  "desc": "অ্যাপের ডেটাবেস, লগইন আর ফাইল রাখার তৈরি ব্যবস্থা।"
  },
  {
   "key": "firebase",
   "name": "Firebase",
   "match": "firebase",
-  "icon": "assets/icons/firebase.svg"
+  "icon": "assets/icons/firebase.svg",
+  "cat": "code",
+  "desc": "Google-এর অ্যাপ বানানোর প্ল্যাটফর্ম: ডেটাবেস, লগইন, হোস্টিং।"
  },
  {
   "key": "antigravity",
   "name": "Antigravity",
   "match": "antigravity",
-  "icon": null
+  "icon": null,
+  "cat": "code",
+  "desc": "Google-এর এজেন্ট-ভিত্তিক কোড বানানোর পরিবেশ।"
  },
  {
   "key": "playground",
   "name": "Google Playground",
   "match": "google.{0,12}playground|playground",
-  "icon": null
+  "icon": null,
+  "cat": "code",
+  "desc": "Google Labs-এর টুল, লিখে বললে ব্রাউজারে খেলার মতো গেম বানায়।"
  },
  {
   "key": "n8n",
   "name": "n8n",
   "match": "\\bn8n\\b",
-  "icon": "assets/icons/n8n.svg"
+  "icon": "assets/icons/n8n.svg",
+  "cat": "auto",
+  "desc": "আলাদা আলাদা অ্যাপ জুড়ে কাজ নিজে থেকে চালানোর অটোমেশন টুল, নিজের সার্ভারেও বসানো যায়।"
  },
  {
   "key": "zapier",
   "name": "Zapier",
   "match": "zapier",
-  "icon": "assets/icons/zapier.svg"
+  "icon": "assets/icons/zapier.svg",
+  "cat": "auto",
+  "desc": "কোড ছাড়া হাজারো অ্যাপ জুড়ে অটোমেশন বানানোর টুল।"
  },
  {
   "key": "make",
   "name": "Make",
   "match": "make\\.com",
-  "icon": "assets/icons/make.svg"
+  "icon": "assets/icons/make.svg",
+  "cat": "auto",
+  "desc": "ছবির মতো সাজিয়ে অটোমেশন বানানোর টুল।"
  },
  {
   "key": "notion",
   "name": "Notion",
   "match": "notion",
-  "icon": "assets/icons/notion.svg"
+  "icon": "assets/icons/notion.svg",
+  "cat": "write",
+  "desc": "নোট, কাজের তালিকা আর ডকুমেন্ট রাখার অ্যাপ, ভেতরে AI সহকারী।"
  },
  {
   "key": "airtable",
   "name": "Airtable",
   "match": "airtable",
-  "icon": "assets/icons/airtable.svg"
+  "icon": "assets/icons/airtable.svg",
+  "cat": "write",
+  "desc": "স্প্রেডশিটের মতো সহজ ডেটাবেস, ছোট অ্যাপ বানানো যায়।"
  },
  {
   "key": "google-sheets",
   "name": "Google Sheets",
   "match": "google sheets?",
-  "icon": "assets/icons/google-sheets.svg"
+  "icon": "assets/icons/google-sheets.svg",
+  "cat": "write",
+  "desc": "Google-এর স্প্রেডশিট, Gemini দিয়ে সূত্র আর বিশ্লেষণ করানো যায়।"
  },
  {
   "key": "google-docs",
   "name": "Google Docs",
   "match": "google docs?",
-  "icon": "assets/icons/google-docs.svg"
+  "icon": "assets/icons/google-docs.svg",
+  "cat": "write",
+  "desc": "Google-এর লেখার অ্যাপ, Gemini দিয়ে লেখা আর সারাংশ করা যায়।"
  },
  {
   "key": "gmail",
   "name": "Gmail",
   "match": "gmail",
-  "icon": "assets/icons/gmail.svg"
+  "icon": "assets/icons/gmail.svg",
+  "cat": "write",
+  "desc": "Google-এর ইমেইল, Gemini দিয়ে মেইল লেখা আর সারাংশ করা যায়।"
  },
  {
   "key": "google-drive",
   "name": "Google Drive",
   "match": "google drive",
-  "icon": "assets/icons/google-drive.svg"
+  "icon": "assets/icons/google-drive.svg",
+  "cat": "write",
+  "desc": "Google-এর ফাইল রাখার জায়গা।"
  },
  {
   "key": "chrome",
   "name": "Chrome",
   "match": "\\bchrome\\b",
-  "icon": "assets/icons/chrome.svg"
+  "icon": "assets/icons/chrome.svg",
+  "cat": "other",
+  "desc": "Google-এর ব্রাউজার, ভেতরে Gemini-র সুবিধা যোগ হচ্ছে।"
  },
  {
   "key": "telegram",
   "name": "Telegram",
   "match": "telegram",
-  "icon": "assets/icons/telegram.svg"
+  "icon": "assets/icons/telegram.svg",
+  "cat": "other",
+  "desc": "মেসেজিং অ্যাপ, বট বানিয়ে অটোমেশন চালানো যায়।"
  },
  {
   "key": "whatsapp",
   "name": "WhatsApp",
   "match": "whatsapp",
-  "icon": "assets/icons/whatsapp.svg"
+  "icon": "assets/icons/whatsapp.svg",
+  "cat": "other",
+  "desc": "মেসেজিং অ্যাপ, ব্যবসার জন্য চ্যাটবট আর অটোমেশন চলে।"
  },
  {
   "key": "youtube",
   "name": "YouTube",
   "match": "youtube",
-  "icon": "assets/icons/youtube.svg"
+  "icon": "assets/icons/youtube.svg",
+  "cat": "other",
+  "desc": "ভিডিও প্ল্যাটফর্ম, নির্মাতাদের জন্য AI টুল যোগ হচ্ছে।"
  },
  {
   "key": "instagram",
   "name": "Instagram",
   "match": "instagram",
-  "icon": "assets/icons/instagram.svg"
+  "icon": "assets/icons/instagram.svg",
+  "cat": "other",
+  "desc": "ছবি ও রিলের প্ল্যাটফর্ম।"
  },
  {
   "key": "facebook",
   "name": "Facebook",
   "match": "facebook",
-  "icon": "assets/icons/facebook.svg"
+  "icon": "assets/icons/facebook.svg",
+  "cat": "other",
+  "desc": "সোশ্যাল মিডিয়া প্ল্যাটফর্ম, পেজ আর বিজ্ঞাপনের কাজে লাগে।"
  },
  {
   "key": "wordpress",
   "name": "WordPress",
   "match": "wordpress",
-  "icon": "assets/icons/wordpress.svg"
+  "icon": "assets/icons/wordpress.svg",
+  "cat": "design",
+  "desc": "ব্লগ আর ওয়েবসাইট বানানোর সবচেয়ে প্রচলিত ব্যবস্থা।"
  },
  {
   "key": "shopify",
   "name": "Shopify",
   "match": "shopify",
-  "icon": "assets/icons/shopify.svg"
+  "icon": "assets/icons/shopify.svg",
+  "cat": "design",
+  "desc": "অনলাইন দোকান খোলার প্ল্যাটফর্ম।"
  },
  {
   "key": "figma",
   "name": "Figma",
   "match": "figma",
-  "icon": "assets/icons/figma.svg"
+  "icon": "assets/icons/figma.svg",
+  "cat": "design",
+  "desc": "অ্যাপ আর ওয়েবসাইটের ডিজাইন বানানোর টুল, সাথে AI সুবিধা।"
  },
  {
   "key": "framer",
   "name": "Framer",
   "match": "framer",
-  "icon": "assets/icons/framer.svg"
+  "icon": "assets/icons/framer.svg",
+  "cat": "design",
+  "desc": "কোড ছাড়া ওয়েবসাইট বানানোর ডিজাইন টুল।"
  },
  {
   "key": "webflow",
   "name": "Webflow",
   "match": "webflow",
-  "icon": "assets/icons/webflow.svg"
+  "icon": "assets/icons/webflow.svg",
+  "cat": "design",
+  "desc": "কোড ছাড়া পেশাদার ওয়েবসাইট বানানোর প্ল্যাটফর্ম।"
  },
  {
   "key": "grammarly",
   "name": "Grammarly",
   "match": "grammarly",
-  "icon": "assets/icons/grammarly.svg"
+  "icon": "assets/icons/grammarly.svg",
+  "cat": "write",
+  "desc": "ইংরেজি লেখার বানান, ব্যাকরণ আর ভাষা ঠিক করে দেয়।"
  },
  {
   "key": "android",
   "name": "Android",
   "match": "android",
-  "icon": "assets/icons/android.svg"
+  "icon": "assets/icons/android.svg",
+  "cat": "other",
+  "desc": "Google-এর মোবাইল অপারেটিং সিস্টেম।"
  },
  {
   "key": "nvidia",
   "name": "NVIDIA",
   "match": "nvidia",
-  "icon": "assets/icons/nvidia.svg"
+  "icon": "assets/icons/nvidia.svg",
+  "cat": "other",
+  "desc": "AI চালানোর চিপ বানায়, AI জগতের সবচেয়ে বড় হার্ডওয়্যার কোম্পানি।"
  },
  {
   "key": "unity",
   "name": "Unity",
   "match": "\\bunity\\b",
-  "icon": "assets/icons/unity.svg"
+  "icon": "assets/icons/unity.svg",
+  "cat": "code",
+  "desc": "গেম বানানোর জনপ্রিয় ইঞ্জিন।"
  },
  {
   "key": "windows",
   "name": "Windows",
   "match": "windows|microsoft",
-  "icon": null
+  "icon": null,
+  "cat": "other",
+  "desc": "Microsoft-এর কম্পিউটার অপারেটিং সিস্টেম, ভেতরে Copilot আছে।"
  },
  {
   "key": "python",
   "name": "Python",
   "match": "python",
-  "icon": "assets/icons/python.svg"
+  "icon": "assets/icons/python.svg",
+  "cat": "code",
+  "desc": "AI আর অটোমেশনের কাজে সবচেয়ে বেশি ব্যবহৃত প্রোগ্রামিং ভাষা।"
+ },
+ {
+  "key": "kling",
+  "name": "Kling",
+  "match": "kling",
+  "icon": null,
+  "cat": "video",
+  "desc": "চিনের Kuaishou-এর ভিডিও তৈরির মডেল, বাস্তবের মতো নড়াচড়ার জন্য পরিচিত।"
+ },
+ {
+  "key": "pika",
+  "name": "Pika",
+  "match": "pika ?labs|pika ai|\\bpika \\d",
+  "icon": null,
+  "cat": "video",
+  "desc": "লেখা বা ছবি থেকে ছোট মজার ভিডিও বানানোর টুল।"
+ },
+ {
+  "key": "luma",
+  "name": "Luma Dream Machine",
+  "match": "luma ai|dream machine|luma labs",
+  "icon": null,
+  "cat": "video",
+  "desc": "Luma AI-এর ভিডিও তৈরির টুল, ছবি থেকে ভিডিও বানাতে পারে।"
+ },
+ {
+  "key": "synthesia",
+  "name": "Synthesia",
+  "match": "synthesia",
+  "icon": null,
+  "cat": "video",
+  "desc": "AI অবতার দিয়ে প্রশিক্ষণ আর অফিসের ভিডিও বানায়।"
+ },
+ {
+  "key": "invideo",
+  "name": "InVideo",
+  "match": "invideo",
+  "icon": null,
+  "cat": "video",
+  "desc": "লিখে বললে ছবি, কণ্ঠ আর ক্যাপশনসহ পুরো ভিডিও সাজিয়ে দেয়।"
+ },
+ {
+  "key": "descript",
+  "name": "Descript",
+  "match": "descript",
+  "icon": null,
+  "cat": "video",
+  "desc": "লেখা সম্পাদনার মতো করে ভিডিও আর পডকাস্ট কাটাছেঁড়া করা যায়।"
+ },
+ {
+  "key": "dall-e",
+  "name": "DALL·E",
+  "match": "dall[-· ]?e",
+  "icon": null,
+  "cat": "image",
+  "desc": "OpenAI-এর ছবি তৈরির মডেল, ChatGPT-র ভেতরেই ব্যবহার করা যায়।"
+ },
+ {
+  "key": "ideogram",
+  "name": "Ideogram",
+  "match": "ideogram",
+  "icon": null,
+  "cat": "image",
+  "desc": "ছবির ভেতরে পরিষ্কার লেখা বসাতে পারে, পোস্টার আর লোগোর কাজে সুবিধা।"
+ },
+ {
+  "key": "leonardo",
+  "name": "Leonardo AI",
+  "match": "leonardo\\.?ai|leonardo ai",
+  "icon": null,
+  "cat": "image",
+  "desc": "ছবি তৈরির টুল, গেম আর ডিজাইনের কাজে জনপ্রিয়।"
+ },
+ {
+  "key": "stable-diffusion",
+  "name": "Stable Diffusion",
+  "match": "stable diffusion|stability ai",
+  "icon": null,
+  "cat": "image",
+  "desc": "খোলা ছবি তৈরির মডেল, নিজের কম্পিউটারেও চালানো যায়।"
+ },
+ {
+  "key": "firefly",
+  "name": "Adobe Firefly",
+  "match": "adobe firefly|firefly",
+  "icon": null,
+  "cat": "image",
+  "desc": "Adobe-র ছবি তৈরির AI, Photoshop-এর ভেতরেও কাজ করে।"
+ },
+ {
+  "key": "recraft",
+  "name": "Recraft",
+  "match": "recraft",
+  "icon": null,
+  "cat": "image",
+  "desc": "লোগো, আইকন আর ভেক্টর ছবি বানানোর AI টুল।"
+ },
+ {
+  "key": "udio",
+  "name": "Udio",
+  "match": "\\budio\\b",
+  "icon": null,
+  "cat": "voice",
+  "desc": "লিখে বললে গান বানানোর টুল।"
+ },
+ {
+  "key": "codex",
+  "name": "Codex",
+  "match": "openai codex|\\bcodex\\b",
+  "icon": null,
+  "cat": "code",
+  "desc": "OpenAI-এর কোড লেখার এজেন্ট, নিজে থেকে কোডের কাজ সেরে দেয়।"
+ },
+ {
+  "key": "manus",
+  "name": "Manus",
+  "match": "\\bmanus\\b",
+  "icon": null,
+  "cat": "auto",
+  "desc": "নিজে থেকে ধাপে ধাপে কাজ সেরে ফেলা AI এজেন্ট।"
+ },
+ {
+  "key": "gamma",
+  "name": "Gamma",
+  "match": "gamma\\.app|gamma ai|\\bgamma\\b",
+  "icon": null,
+  "cat": "write",
+  "desc": "লিখে বললে প্রেজেন্টেশন আর ডকুমেন্ট বানিয়ে দেয়।"
  }
 ]

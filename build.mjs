@@ -28,6 +28,22 @@ const toolChip = (t, root, link = true) => {
   const inner = `${t.icon ? `<img src="${root}${t.icon}" alt="" width="18" height="18" loading="lazy">` : `<i aria-hidden="true">${esc(t.name[0])}</i>`}${esc(t.name)}`;
   return link ? `<a class="tool" href="${root}tool/${t.key}/">${inner}</a>` : `<span class="tool">${inner}</span>`;
 };
+// ---- টুলের বিভাগ (ছবি, ভিডিও, চ্যাট...) ----
+const TCATS = cfg.toolCats || {};
+const toolsIn = (c) => TOOLS.filter((t) => t.cat === c);
+const postsOfTool = (t) => posts.filter((p) => p.tools.includes(t));
+const postsOfCat = (c) => posts.filter((p) => p.tools.some((t) => t.cat === c));
+const toolIcon = (t, root, size = 28) => t.icon ? `<img src="${root}${t.icon}" alt="" width="${size}" height="${size}" loading="lazy">` : `<i aria-hidden="true">${esc(t.name[0])}</i>`;
+// একটা টুলের সারি: নাম, এক লাইনের পরিচয়, আর আপডেট থাকলে তার লিংক
+const toolRow = (t, root) => {
+  const n = postsOfTool(t).length;
+  const inner = `<span class="tr-ic">${toolIcon(t, root)}</span><span class="tr-tx"><b>${esc(t.name)}</b><span>${esc(t.desc || "")}</span></span><em>${n ? `${bnNum(n)}টি আপডেট →` : "আপডেট এলে এখানে"}</em>`;
+  return n ? `<a class="trow" href="${root}tool/${t.key}/">${inner}</a>` : `<div class="trow trow-off">${inner}</div>`;
+};
+const catTiles = (root) => `<div class="tcat-grid">${Object.entries(TCATS).filter(([k]) => toolsIn(k).length).map(([k, v]) => `<a class="tcat" href="${root}tools/${k}/"><span class="tcat-ic">${toolsIn(k).slice(0, 4).map((t) => toolIcon(t, root, 22)).join("")}</span><b>${esc(v.name)}</b><span>${esc(v.text)}</span><em>${bnNum(toolsIn(k).length)}টি টুল${postsOfCat(k).length ? ` · ${bnNum(postsOfCat(k).length)}টি আপডেট` : ""} →</em></a>`).join("")}</div>`;
+// তারিখ ধরে আপডেটের তালিকা
+const timeline = (items, root) => `<ol class="tline">${items.map((p) => `<li><time datetime="${p.date}">${bnDate(p.date)}</time><a href="${root}posts/${p.slug}/"><b>${esc(p.title)}</b><span>${esc(p.excerpt)}</span></a></li>`).join("")}</ol>`;
+
 // আলপনা + সার্কিট: বাংলার আলপনার নকশা, যার পাপড়ির ডগা থেকে সার্কিটের রেখা বেরোয়
 function alpona() {
   const P = (n, r, fn) => Array.from({ length: n }, (_, i) => fn((360 / n) * i, i)).join("");
@@ -147,7 +163,7 @@ ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(
 <div class="progress" aria-hidden="true"><i></i></div>
 <header class="site-header"><div class="wrap">
 <a class="brand" href="${root}">${logo ? `<img src="${esc(logo)}" alt="${esc(cfg.brand)} লোগো" width="42" height="42" onerror="this.remove()">` : ""}<span>${esc(cfg.brand)}<small>ব্লগ</small></span></a>
-<nav class="nav" aria-label="মূল মেনু">${nav}<a class="cat-link" href="${root}our-tools/">আমাদের টুল</a><a class="cat-link" href="${root}about/">আমাদের কথা</a><a class="search-link" href="${root}search/" aria-label="খুঁজুন"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a><a class="btn btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস</a></nav>
+<nav class="nav" aria-label="মূল মেনু">${nav}<a class="cat-link" href="${root}tools/">সব AI টুল</a><a class="cat-link" href="${root}our-tools/">আমাদের টুল</a><a class="search-link" href="${root}search/" aria-label="খুঁজুন"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a><a class="btn btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস</a></nav>
 </div></header>
 <main id="main">
 ${body}
@@ -155,7 +171,7 @@ ${body}
 <footer class="site-footer"><div class="wrap">
 <div class="f-col f-about"><b>${esc(cfg.brand)}</b><p>${esc(cfg.footerAbout)}</p></div>
 <div class="f-col"><b>বিভাগ</b>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}</div>
-<div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}our-tools/">আমাদের AI টুল</a><a href="${root}about/">আমাদের কথা</a><a href="${root}feed.xml">RSS ফিড</a></div>
+<div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}tools/">সব AI টুলের তালিকা</a><a href="${root}our-tools/">আমাদের AI টুল</a><a href="${root}about/">আমাদের কথা</a><a href="${root}feed.xml">RSS ফিড</a></div>
 </div><div class="f-bottom"><div class="wrap">© ${new Date().getFullYear()} ${esc(cfg.brand)} · সব অধিকার সংরক্ষিত</div></div></footer>
 <script>window.UG=${JSON.stringify({ u: cfg.supabaseUrl || "", k: cfg.supabaseKey || "", free: host(cfg.freeClassUrl), main: host(cfg.mainSiteUrl) })};</script>
 <script src="${root}assets/site.js" defer></script>
@@ -272,6 +288,7 @@ ${chips(root)}
 ${rest.length || page > 1 ? `<h2 class="section-title">${page === 1 ? "আরও খবর ও গাইড" : `পুরনো পোস্ট, পাতা ${bnNum(page)}`}</h2>${grid(rest, root)}` : ""}
 ${!posts.length ? grid([], root) : ""}
 ${pager(root === "./" ? "./" : "../../", page, pages)}</div>
+${page === 1 && Object.keys(TCATS).length ? `<section class="tcats"><div class="wrap"><h2 class="section-title">কাজ অনুযায়ী AI টুল</h2><p class="tcats-lead">ছবি, ভিডিও, ভয়েস, অ্যাপ বানানো: যে কাজের টুল খুঁজছেন, সেই বিভাগে যান। প্রতিটা টুলের নতুন আপডেট তারিখ ধরে সাজানো।</p>${catTiles("./")}</div></section>` : ""}
 ${page === 1 ? `<section class="topics"><div class="wrap"><h2 class="section-title">যা নিয়ে পড়বেন</h2><div class="topic-grid">${Object.entries(cfg.categories).map(([k, v]) => `<a class="topic" href="./category/${k}/"><i>${catIcon(k)}</i><b>${esc(v)}</b><span>${esc(cfg.categoryText?.[k] || "")}</span><em>${posts.some((p) => p.category === k) ? `${bnNum(posts.filter((p) => p.category === k).length)}টি পোস্ট →` : "শিগগিরই আসছে"}</em></a>`).join("")}</div></div></section>
 <section class="about-strip"><div class="wrap"><div><b>${esc(cfg.brand)} কারা?</b><p>${esc(cfg.diff.lead)} ২০১৭ সাল থেকে ${esc(cfg.studentCount)} শিক্ষার্থী আমাদের সাথে শিখেছেন।</p></div><div class="about-links"><a href="./about/">কেন আমরা আলাদা →</a><a href="./our-tools/">আমাদের ${bnNum(40)}+ নিজস্ব AI টুল →</a></div></div></section>` : ""}
 ${page === 1 && hasMentor ? `<section class="mentor-band"><div class="wrap"><img src="./assets/mentor-about.webp" alt="${esc(cfg.mentorName)}" width="860" height="800" loading="lazy"><div><span class="eyebrow">মেন্টর</span><h2>${esc(cfg.mentorName)}</h2><b>${esc(cfg.mentorTitle)}</b><p>${esc(cfg.mentorBio)}</p><a class="btn-lg" href="./about/">আমাদের কথা পড়ুন</a></div></div></section>` : ""}
@@ -375,7 +392,9 @@ for (const t of TOOLS) {
   const items = posts.filter((p) => p.tools.includes(t));
   if (!items.length) continue;
   toolPages.push({ key: t.key, lastmod: items[0].date });
-  const desc = `${t.name} নিয়ে নতুন খবর, ফিচার আর ব্যবহারের গাইড সহজ বাংলায়। ${cfg.brand}-এর ব্লগে ${t.name}-এর সব আপডেট এক জায়গায়।`;
+  const desc = `${t.desc ? t.desc + " " : ""}${t.name}-এর নতুন ফিচার, আপডেট আর ব্যবহারের গাইড সহজ বাংলায়, তারিখ ধরে এক জায়গায়।`;
+  const tc = TCATS[t.cat];
+  const sibs = toolsIn(t.cat).filter((x) => x !== t && postsOfTool(x).length).slice(0, 8);
   write(
     `tool/${t.key}/index.html`,
     layout({
@@ -383,12 +402,54 @@ for (const t of TOOLS) {
       title: `${t.name} বাংলায়: খবর, নতুন ফিচার ও গাইড | ${cfg.brand}`,
       description: desc,
       canonical: `${SITE}/tool/${t.key}/`,
-      jsonLd: [crumbs([["ব্লগ", `${SITE}/`], [t.name, `${SITE}/tool/${t.key}/`]]), { "@type": "CollectionPage", name: `${t.name} বাংলায়`, url: `${SITE}/tool/${t.key}/`, inLanguage: "bn", about: { "@type": "SoftwareApplication", name: t.name } }],
+      jsonLd: [crumbs([["ব্লগ", `${SITE}/`], ...(tc ? [[tc.name, `${SITE}/tools/${t.cat}/`]] : []), [t.name, `${SITE}/tool/${t.key}/`]]), { "@type": "CollectionPage", name: `${t.name} বাংলায়`, url: `${SITE}/tool/${t.key}/`, inLanguage: "bn", about: { "@type": "SoftwareApplication", name: t.name } }],
       body: `<section class="hero hero-sm"><div class="wrap"><span class="eyebrow">টুল</span><h1>${esc(t.name)} বাংলায়</h1><p>${esc(desc)}</p></div></section>
-<div class="wrap"><h2 class="section-title">${esc(t.name)} নিয়ে সব পোস্ট</h2>${grid(items, "../../")}</div>
+<div class="wrap">${tc ? `<nav class="crumbs crumbs-top" aria-label="ব্রেডক্রাম্ব"><a href="../../">ব্লগ</a> › <a href="../../tools/">সব AI টুল</a> › <a href="../../tools/${t.cat}/">${esc(tc.name)}</a></nav>` : ""}
+<h2 class="section-title">${esc(t.name)}-এর আপডেট, তারিখ ধরে</h2>${timeline(items, "../../")}
+<h2 class="section-title">${esc(t.name)} নিয়ে সব পোস্ট</h2>${grid(items, "../../")}
+${sibs.length ? `<h2 class="section-title">একই ধরনের আরও টুল</h2><div class="tools-row tools-sib">${sibs.map((x) => toolChip(x, "../../")).join("")}</div>` : ""}</div>
 ${promo()}`,
     })
   );
+}
+
+// সব AI টুলের তালিকা + বিভাগের পাতা
+const tcatKeys = Object.keys(TCATS).filter((k) => toolsIn(k).length);
+if (tcatKeys.length) {
+  write(
+    "tools/index.html",
+    layout({
+      root: "../",
+      title: `সব AI টুলের তালিকা বাংলায়: ছবি, ভিডিও, ভয়েস, কোডিং | ${cfg.brand}`,
+      description: `ছবি তৈরি, ভিডিও তৈরি, ভয়েস, অ্যাপ বানানো আর অটোমেশনের ${bnNum(TOOLS.length)}টি AI টুল বিভাগ ধরে, প্রতিটার পরিচয় আর নতুন আপডেট সহজ বাংলায়।`,
+      canonical: `${SITE}/tools/`,
+      jsonLd: [crumbs([["ব্লগ", `${SITE}/`], ["সব AI টুল", `${SITE}/tools/`]]), { "@type": "CollectionPage", name: "সব AI টুলের তালিকা", url: `${SITE}/tools/`, inLanguage: "bn" }],
+      body: `<section class="hero hero-sm"><div class="wrap"><span class="eyebrow">AI টুলের তালিকা</span><h1>সব AI টুল, কাজ অনুযায়ী</h1><p>কোন কাজের জন্য কোন AI টুল, এক জায়গায়। প্রতিটা টুলের এক লাইনের পরিচয়, আর নতুন ফিচার এলে তার আপডেট।</p></div></section>
+<div class="wrap"><div class="chips tchips">${tcatKeys.map((k) => `<a class="chip" href="#${k}">${esc(TCATS[k].name)}</a>`).join("")}</div>
+${tcatKeys.map((k) => `<section class="tsec" id="${k}"><div class="tsec-head"><h2 class="section-title">${esc(TCATS[k].name)}</h2><a href="./${k}/">এই বিভাগের সব আপডেট →</a></div><p class="tcats-lead">${esc(TCATS[k].text)}</p><div class="trows">${toolsIn(k).map((t) => toolRow(t, "../")).join("")}</div></section>`).join("")}</div>
+${promo()}`,
+    })
+  );
+  for (const k of tcatKeys) {
+    const v = TCATS[k];
+    const items = postsOfCat(k);
+    write(
+      `tools/${k}/index.html`,
+      layout({
+        root: "../../",
+        title: `${v.name}: টুলের তালিকা ও নতুন আপডেট বাংলায় | ${cfg.brand}`,
+        description: `${v.text} ${toolsIn(k).slice(0, 5).map((t) => t.name).join(", ")} সহ ${bnNum(toolsIn(k).length)}টি টুলের পরিচয় আর নতুন আপডেট।`,
+        canonical: `${SITE}/tools/${k}/`,
+        jsonLd: [crumbs([["ব্লগ", `${SITE}/`], ["সব AI টুল", `${SITE}/tools/`], [v.name, `${SITE}/tools/${k}/`]]), { "@type": "ItemList", name: v.name, itemListElement: toolsIn(k).map((t, i) => ({ "@type": "ListItem", position: i + 1, item: { "@type": "SoftwareApplication", name: t.name, description: t.desc || undefined, applicationCategory: v.name } })) }],
+        body: `<section class="hero hero-sm"><div class="wrap"><span class="eyebrow">AI টুলের বিভাগ</span><h1>${esc(v.name)}</h1><p>${esc(v.text)}</p></div></section>
+<div class="wrap"><nav class="crumbs crumbs-top" aria-label="ব্রেডক্রাম্ব"><a href="../../">ব্লগ</a> › <a href="../">সব AI টুল</a></nav>
+<h2 class="section-title">এই বিভাগের টুল</h2><div class="trows">${toolsIn(k).map((t) => toolRow(t, "../../")).join("")}</div>
+<h2 class="section-title">নতুন আপডেট</h2>${items.length ? timeline(items, "../../") + grid(items.slice(0, 6), "../../") : `<div class="empty">এই বিভাগের টুলে নতুন কিছু এলেই এখানে তারিখ ধরে দেখাবে।</div>`}
+<div class="chips tchips">${tcatKeys.filter((x) => x !== k).map((x) => `<a class="chip" href="../${x}/">${esc(TCATS[x].name)}</a>`).join("")}</div></div>
+${promo()}`,
+      })
+    );
+  }
 }
 
 // search
@@ -463,6 +524,7 @@ const urls = [
   { loc: `${SITE}/about/` },
   ...(OWN.length ? [{ loc: `${SITE}/our-tools/` }] : []),
   ...Object.keys(cfg.categories).map((k) => ({ loc: `${SITE}/category/${k}/`, lastmod: posts.find((p) => p.category === k)?.date })),
+  ...(tcatKeys.length ? [{ loc: `${SITE}/tools/` }, ...tcatKeys.map((k) => ({ loc: `${SITE}/tools/${k}/`, lastmod: postsOfCat(k)[0]?.date }))] : []),
   ...toolPages.map((t) => ({ loc: `${SITE}/tool/${t.key}/`, lastmod: t.lastmod })),
   ...posts.map((p) => ({ loc: `${SITE}/posts/${p.slug}/`, lastmod: p.updated || p.date, image: p.cover ? abs(p.cover) : null })),
 ];

@@ -514,3 +514,41 @@ a.own:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 1
 .mentor-note span{display:block;font-size:13.5px;color:var(--muted);margin-bottom:6px}
 .mentor-note p{margin:0;font-size:17.5px;line-height:1.75}
 .prose ol>li,.prose ul>li{margin-bottom:8px}
+
+/* ===== v13: AI টুলের তালিকা, বিভাগ, তারিখ ধরে আপডেট ===== */
+.tcats{margin:8px 0 40px}
+.tcats-lead{color:var(--muted);margin:-6px 0 18px;max-width:760px}
+.tcat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.tcat{display:flex;flex-direction:column;gap:5px;text-decoration:none;color:var(--ink);background:#fff;border:1px solid var(--violet-line);border-radius:var(--radius);padding:18px 20px;box-shadow:0 2px 10px rgba(93,22,233,.05);transition:transform .15s,box-shadow .15s}
+.tcat:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(93,22,233,.13)}
+.tcat-ic{display:flex;gap:6px;margin-bottom:6px;min-height:34px}
+.tcat-ic img,.tcat-ic i{width:34px;height:34px;padding:6px;border-radius:10px;background:var(--bg-alt);border:1px solid var(--violet-line);box-sizing:border-box}
+.tcat-ic i{display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:14px;color:var(--violet);padding:0}
+.tcat b{font-size:19px;line-height:1.35}
+.tcat>span:not(.tcat-ic){font-size:15px;color:var(--muted);line-height:1.6;flex:1}
+.tcat em{font-style:normal;font-size:14px;font-weight:700;color:var(--violet);margin-top:6px}
+.tchips{margin:22px 0 4px}
+.tsec{margin:10px 0 34px;scroll-margin-top:90px}
+.tsec-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 16px}
+.tsec-head a{font-weight:700;color:var(--violet);text-decoration:none;font-size:15px}
+.trows{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;margin-bottom:26px}
+.trow{display:grid;grid-template-columns:48px 1fr;gap:4px 14px;align-items:center;background:#fff;border:1px solid var(--violet-line);border-radius:16px;padding:14px 16px;text-decoration:none;color:var(--ink)}
+a.trow:hover{border-color:var(--violet);box-shadow:0 6px 18px rgba(93,22,233,.1)}
+.tr-ic{grid-row:span 2;width:48px;height:48px;border-radius:13px;background:var(--bg-alt);border:1px solid var(--violet-line);display:flex;align-items:center;justify-content:center}
+.tr-ic i{font-style:normal;font-weight:700;font-size:20px;color:var(--violet)}
+.tr-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tr-tx b{font-size:17.5px}
+.tr-tx span{font-size:14.5px;color:var(--muted);line-height:1.55}
+.trow em{grid-column:2;font-style:normal;font-size:13.5px;font-weight:700;color:var(--violet)}
+.trow-off em{color:#9A96AC;font-weight:600}
+.crumbs-top{margin:22px 0 0}
+.tline{list-style:none;margin:0 0 30px;padding:0 0 0 18px;border-left:3px solid var(--violet-line)}
+.tline li{position:relative;padding:0 0 20px 18px}
+.tline li::before{content:"";position:absolute;left:-27.5px;top:6px;width:14px;height:14px;border-radius:50%;background:var(--violet);border:3px solid #fff;box-shadow:0 0 0 2px var(--violet-line)}
+.tline time{display:block;font-size:13.5px;font-weight:700;color:var(--gold)}
+.tline a{text-decoration:none;color:var(--ink);display:block}
+.tline a b{display:block;font-size:18px;line-height:1.4}
+.tline a span{display:block;font-size:15px;color:var(--muted);line-height:1.6}
+.tline a:hover b{color:var(--violet)}
+.tools-sib{margin-bottom:40px}
+@media(max-width:480px){.trows{grid-template-columns:1fr}}
