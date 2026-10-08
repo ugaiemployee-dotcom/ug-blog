@@ -18,6 +18,24 @@ const host = (u) => u.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 const hasLogo = existsSync("assets/logo.webp");
 const logoAbs = hasLogo ? abs("assets/logo.webp") : cfg.logoSourceUrl;
 
+// ---- AI tool library (icons + matching) ----
+const TOOLS = existsSync("data/tools.json") ? JSON.parse(readFileSync("data/tools.json", "utf8")).map((t) => ({ ...t, re: new RegExp(t.match, "i") })) : [];
+const toolsFor = (p) => {
+  const hay = `${p.title} ${(p.tags || []).join(" ")} ${text(p.body_html).slice(0, 700)}`;
+  return TOOLS.filter((t) => t.re.test(hay)).slice(0, 4);
+};
+const toolChip = (t, root, link = true) => {
+  const inner = `${t.icon ? `<img src="${root}${t.icon}" alt="" width="18" height="18" loading="lazy">` : `<i aria-hidden="true">${esc(t.name[0])}</i>`}${esc(t.name)}`;
+  return link ? `<a class="tool" href="${root}tool/${t.key}/">${inner}</a>` : `<span class="tool">${inner}</span>`;
+};
+const CAT_ICON = {
+  "ai-tools": '<path d="M12 2l2.4 6.2L21 9l-5 4.3L17.5 20 12 16.4 6.5 20 8 13.3 3 9l6.6-.8z"/>',
+  "vibe-coding": '<path d="M8 6l-6 6 6 6M16 6l6 6-6 6M14 3l-4 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  "automation": '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  "ai-income": '<path d="M3 17l6-6 4 4 8-8M15 7h6v6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+};
+const catIcon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">${CAT_ICON[k] || CAT_ICON["ai-tools"]}</svg>`;
+
 // ---- load posts ----
 const posts = [];
 const seen = new Set();
@@ -41,6 +59,11 @@ if (existsSync("posts")) {
     p.meta_description = p.meta_description || p.excerpt;
     p.tags = Array.isArray(p.tags) ? p.tags : [];
     if (p.cover && !/^https?:/.test(p.cover) && !existsSync(p.cover)) p.cover = null; // কার্ড এখনও তৈরি না হলে
+    if (p.photo && !existsSync(p.photo)) p.photo = null;
+    p.key_points = Array.isArray(p.key_points) ? p.key_points.filter(Boolean).slice(0, 5) : [];
+    p.quick_facts = Array.isArray(p.quick_facts) ? p.quick_facts.filter((f) => f && f.label && f.value).slice(0, 6) : [];
+    p.faq = Array.isArray(p.faq) ? p.faq.filter((f) => f && f.q && f.a).slice(0, 5) : [];
+    p.tools = toolsFor(p);
     p.minutes = Math.max(1, Math.round(text(p.body_html).split(" ").length / 180));
     posts.push(p);
   }
@@ -48,7 +71,7 @@ if (existsSync("posts")) {
 posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.slug.localeCompare(b.slug)));
 
 // ---- shared pieces ----
-const ORG = { "@type": "EducationalOrganization", "@id": `${cfg.mainSiteUrl}/#org`, name: cfg.brand, url: cfg.mainSiteUrl, logo: logoAbs, foundingDate: cfg.founded, founder: { "@type": "Person", name: cfg.mentorName }, sameAs: [cfg.freeClassUrl] };
+const ORG = { "@type": "EducationalOrganization", "@id": `${cfg.mainSiteUrl}/#org`, name: cfg.brand, url: cfg.mainSiteUrl, logo: logoAbs, foundingDate: cfg.founded, founder: { "@type": "Person", name: cfg.mentorName }, sameAs: [cfg.freeClassUrl], email: cfg.email, address: { "@type": "PostalAddress", streetAddress: cfg.address?.street, addressLocality: cfg.address?.locality, addressRegion: "West Bengal", postalCode: cfg.address?.pin, addressCountry: "IN" }, areaServed: [{ "@type": "State", name: "West Bengal" }, { "@type": "Country", name: "India" }], knowsLanguage: ["bn", "en"], description: cfg.orgDescription };
 const crumbs = (items) => ({ "@type": "BreadcrumbList", itemListElement: items.map(([name, item], i) => ({ "@type": "ListItem", position: i + 1, name, item })) });
 
 function layout({ root, title, description, canonical, ogImage, ogType = "website", jsonLd = [], body, extraHead = "", noindex = false }) {
@@ -116,6 +139,7 @@ function card(p, root, big = false) {
 <div class="meta"><span class="tag">${esc(catName(p.category))}</span><time datetime="${p.date}">${bnDate(p.date)}</time><span>${bnNum(p.minutes)} মিনিটে পড়ুন</span></div>
 <${big ? "h2" : "h3"}>${esc(p.title)}</${big ? "h2" : "h3"}>
 <p>${esc(p.excerpt)}</p>
+${p.tools.length ? `<div class="tools-row">${p.tools.map((t) => toolChip(t, root, false)).join("")}</div>` : ""}
 <span class="more">পুরোটা পড়ুন →</span>
 </div></a>`;
 }
@@ -166,6 +190,7 @@ for (let page = 1; page <= pages; page++) {
       canonical: url,
       jsonLd: page === 1 ? [
         { "@type": "WebSite", "@id": `${SITE}/#website`, name: cfg.siteName, url: `${SITE}/`, inLanguage: "bn", description: cfg.description, publisher: { "@id": ORG["@id"] } },
+        { "@type": "FAQPage", mainEntity: cfg.homeFaq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
         { "@type": "Blog", name: cfg.siteName, url: `${SITE}/`, inLanguage: "bn", publisher: { "@id": ORG["@id"] }, blogPost: posts.slice(0, 10).map((p) => ({ "@type": "BlogPosting", headline: p.title, url: `${SITE}/posts/${p.slug}/`, datePublished: isoDate(p.date) })) },
       ] : [],
       body: `${page === 1 ? `<section class="hero"><div class="wrap"><span class="eyebrow">${esc(cfg.brand)} ব্লগ</span><h1>${esc(cfg.tagline)}</h1><p>${esc(cfg.heroText)}</p><div class="hero-cta"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-ghost" href="${esc(cfg.mainSiteUrl)}">কোর্স দেখুন</a></div></div></section>` : ""}
@@ -174,7 +199,10 @@ ${page === 1 && posts[0] ? `<h2 class="section-title">সর্বশেষ</h2>
 ${rest.length || page > 1 ? `<h2 class="section-title">${page === 1 ? "আরও পোস্ট" : `পুরনো পোস্ট, পাতা ${bnNum(page)}`}</h2>${grid(rest, root)}` : ""}
 ${!posts.length ? grid([], root) : ""}
 ${pager(root === "./" ? "./" : "../../", page, pages)}</div>
-${promo()}`,
+${promo()}
+${page === 1 ? `<section class="seo-block"><div class="wrap"><div class="prose">${cfg.homeSeoHtml}</div>
+<div class="tool-cloud"><h2 class="section-title">টুল অনুযায়ী পড়ুন</h2><div class="tools-row">${TOOLS.filter((t) => posts.some((p) => p.tools.includes(t))).map((t) => toolChip(t, root)).join("") || "<span>শিগগিরই আসছে</span>"}</div></div>
+<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${cfg.homeFaq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section></div></section>` : ""}`,
     })
   );
 }
@@ -235,6 +263,7 @@ for (const p of posts) {
           author: { "@type": "Person", name: cfg.mentorName, jobTitle: cfg.mentorTitle, url: `${SITE}/about/`, worksFor: { "@id": ORG["@id"] } },
           publisher: { "@id": ORG["@id"] },
         },
+        ...(p.faq.length ? [{ "@type": "FAQPage", mainEntity: p.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) }] : []),
       ],
       body: `<article class="article">
 <nav class="crumbs" aria-label="ব্রেডক্রাম্ব"><a href="${root}">ব্লগ</a> › <a href="${root}category/${p.category}/">${esc(catName(p.category))}</a></nav>
@@ -242,12 +271,39 @@ for (const p of posts) {
 <h1>${esc(p.title)}</h1>
 <p class="lead">${esc(p.excerpt)}</p>
 ${coverSrc ? `<div class="cover"><img src="${esc(coverSrc)}" alt="${esc(p.cover_alt || p.title)}" width="1200" height="630" fetchpriority="high"></div>` : ""}
+${p.tools.length ? `<div class="tools-row tools-top"><span>এই পোস্টে:</span>${p.tools.map((t) => toolChip(t, root)).join("")}</div>` : ""}
+${p.key_points.length ? `<section class="glance"><h2>${catIcon(p.category)} এক নজরে</h2><ul>${p.key_points.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></section>` : ""}
+${p.photo ? `<figure class="photo"><img src="${root}${esc(p.photo)}" alt="${esc(p.photo_alt || p.title)}" loading="lazy"></figure>` : ""}
+${p.quick_facts.length ? `<section class="facts" aria-label="দ্রুত তথ্য">${p.quick_facts.map((f) => `<div><span>${esc(f.label)}</span><b>${esc(f.value)}</b></div>`).join("")}</section>` : ""}
 <div class="prose">${bodyHtml}</div>
+${p.faq.length ? `<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${p.faq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section>` : ""}
 ${p.tags.length ? `<div class="tags">${p.tags.map((t) => `<span>#${esc(t)}</span>`).join("")}</div>` : ""}
 <div class="author"><div class="avatar" aria-hidden="true">${esc(cfg.mentorName.split(" ").map((w) => w[0]).join("").slice(0, 2))}</div><div><b>${esc(cfg.mentorName)}</b><span>${esc(cfg.mentorTitle)}</span><p>${esc(cfg.mentorBio)}</p></div></div>
 <aside class="cta"><h2>${esc(cfg.ctaTitle)}</h2><p>${esc(cfg.ctaText)}</p><div class="cta-row"><a class="btn-lg btn-gold" href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসে যোগ দিন</a><a class="btn-lg btn-white" href="${esc(cfg.mainSiteUrl)}">সব কোর্স দেখুন</a></div></aside>
 </article>
 ${related.length ? `<section class="related"><h2 class="section-title">আরও পড়ুন</h2><div class="grid">${related.map((x) => card(x, root)).join("\n")}</div></section>` : ""}`,
+    })
+  );
+}
+
+// tool pages (শুধু যে টুলের অন্তত একটা পোস্ট আছে)
+const toolPages = [];
+for (const t of TOOLS) {
+  const items = posts.filter((p) => p.tools.includes(t));
+  if (!items.length) continue;
+  toolPages.push({ key: t.key, lastmod: items[0].date });
+  const desc = `${t.name} নিয়ে নতুন খবর, ফিচার আর ব্যবহারের গাইড সহজ বাংলায়। ${cfg.brand}-এর ব্লগে ${t.name}-এর সব আপডেট এক জায়গায়।`;
+  write(
+    `tool/${t.key}/index.html`,
+    layout({
+      root: "../../",
+      title: `${t.name} বাংলায়: খবর, নতুন ফিচার ও গাইড | ${cfg.brand}`,
+      description: desc,
+      canonical: `${SITE}/tool/${t.key}/`,
+      jsonLd: [crumbs([["ব্লগ", `${SITE}/`], [t.name, `${SITE}/tool/${t.key}/`]]), { "@type": "CollectionPage", name: `${t.name} বাংলায়`, url: `${SITE}/tool/${t.key}/`, inLanguage: "bn", about: { "@type": "SoftwareApplication", name: t.name } }],
+      body: `<section class="hero hero-sm"><div class="wrap"><span class="eyebrow">টুল</span><h1>${esc(t.name)} বাংলায়</h1><p>${esc(desc)}</p></div></section>
+<div class="wrap"><h2 class="section-title">${esc(t.name)} নিয়ে সব পোস্ট</h2>${grid(items, "../../")}</div>
+${promo()}`,
     })
   );
 }
@@ -287,6 +343,7 @@ const urls = [
   { loc: `${SITE}/`, lastmod: posts[0]?.date },
   { loc: `${SITE}/about/` },
   ...Object.keys(cfg.categories).map((k) => ({ loc: `${SITE}/category/${k}/`, lastmod: posts.find((p) => p.category === k)?.date })),
+  ...toolPages.map((t) => ({ loc: `${SITE}/tool/${t.key}/`, lastmod: t.lastmod })),
   ...posts.map((p) => ({ loc: `${SITE}/posts/${p.slug}/`, lastmod: p.updated || p.date, image: p.cover ? abs(p.cover) : null })),
 ];
 write(

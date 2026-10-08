@@ -1,0 +1,374 @@
+[
+ {
+  "key": "chatgpt",
+  "name": "ChatGPT",
+  "match": "chatgpt|gpt-?\\d|openai",
+  "icon": null
+ },
+ {
+  "key": "gemini",
+  "name": "Gemini",
+  "match": "gemini|bard",
+  "icon": "assets/icons/gemini.svg"
+ },
+ {
+  "key": "claude",
+  "name": "Claude",
+  "match": "claude|anthropic",
+  "icon": "assets/icons/claude.svg"
+ },
+ {
+  "key": "copilot",
+  "name": "Copilot",
+  "match": "copilot",
+  "icon": "assets/icons/copilot.svg"
+ },
+ {
+  "key": "perplexity",
+  "name": "Perplexity",
+  "match": "perplexity",
+  "icon": "assets/icons/perplexity.svg"
+ },
+ {
+  "key": "deepseek",
+  "name": "DeepSeek",
+  "match": "deepseek",
+  "icon": "assets/icons/deepseek.svg"
+ },
+ {
+  "key": "mistral",
+  "name": "Mistral",
+  "match": "mistral",
+  "icon": "assets/icons/mistral.svg"
+ },
+ {
+  "key": "grok",
+  "name": "Grok",
+  "match": "\\bgrok\\b|\\bxai\\b",
+  "icon": null
+ },
+ {
+  "key": "qwen",
+  "name": "Qwen",
+  "match": "qwen",
+  "icon": "assets/icons/qwen.svg"
+ },
+ {
+  "key": "meta-ai",
+  "name": "Meta AI",
+  "match": "meta ai|llama",
+  "icon": "assets/icons/meta-ai.svg"
+ },
+ {
+  "key": "notebooklm",
+  "name": "NotebookLM",
+  "match": "notebooklm",
+  "icon": "assets/icons/notebooklm.svg"
+ },
+ {
+  "key": "huggingface",
+  "name": "Hugging Face",
+  "match": "hugging ?face",
+  "icon": "assets/icons/huggingface.svg"
+ },
+ {
+  "key": "ollama",
+  "name": "Ollama",
+  "match": "ollama",
+  "icon": "assets/icons/ollama.svg"
+ },
+ {
+  "key": "midjourney",
+  "name": "Midjourney",
+  "match": "midjourney",
+  "icon": null
+ },
+ {
+  "key": "sora",
+  "name": "Sora",
+  "match": "\\bsora\\b",
+  "icon": null
+ },
+ {
+  "key": "veo",
+  "name": "Veo",
+  "match": "\\bveo\\b|google flow",
+  "icon": null
+ },
+ {
+  "key": "nano-banana",
+  "name": "Nano Banana",
+  "match": "nano banana|imagen",
+  "icon": null
+ },
+ {
+  "key": "runway",
+  "name": "Runway",
+  "match": "runway",
+  "icon": null
+ },
+ {
+  "key": "elevenlabs",
+  "name": "ElevenLabs",
+  "match": "elevenlabs|eleven labs",
+  "icon": "assets/icons/elevenlabs.svg"
+ },
+ {
+  "key": "suno",
+  "name": "Suno",
+  "match": "\\bsuno\\b",
+  "icon": "assets/icons/suno.svg"
+ },
+ {
+  "key": "canva",
+  "name": "Canva",
+  "match": "canva",
+  "icon": null
+ },
+ {
+  "key": "capcut",
+  "name": "CapCut",
+  "match": "capcut",
+  "icon": null
+ },
+ {
+  "key": "heygen",
+  "name": "HeyGen",
+  "match": "heygen",
+  "icon": null
+ },
+ {
+  "key": "flux",
+  "name": "Flux",
+  "match": "\\bflux\\b",
+  "icon": "assets/icons/flux.svg"
+ },
+ {
+  "key": "lovable",
+  "name": "Lovable",
+  "match": "lovable",
+  "icon": null
+ },
+ {
+  "key": "cursor",
+  "name": "Cursor",
+  "match": "\\bcursor\\b",
+  "icon": "assets/icons/cursor.svg"
+ },
+ {
+  "key": "replit",
+  "name": "Replit",
+  "match": "replit",
+  "icon": "assets/icons/replit.svg"
+ },
+ {
+  "key": "bolt",
+  "name": "Bolt",
+  "match": "bolt\\.new|\\bbolt\\b",
+  "icon": null
+ },
+ {
+  "key": "v0",
+  "name": "v0",
+  "match": "\\bv0\\b",
+  "icon": "assets/icons/v0.svg"
+ },
+ {
+  "key": "windsurf",
+  "name": "Windsurf",
+  "match": "windsurf",
+  "icon": "assets/icons/windsurf.svg"
+ },
+ {
+  "key": "github",
+  "name": "GitHub",
+  "match": "github",
+  "icon": "assets/icons/github.svg"
+ },
+ {
+  "key": "vercel",
+  "name": "Vercel",
+  "match": "vercel",
+  "icon": "assets/icons/vercel.svg"
+ },
+ {
+  "key": "supabase",
+  "name": "Supabase",
+  "match": "supabase",
+  "icon": "assets/icons/supabase.svg"
+ },
+ {
+  "key": "firebase",
+  "name": "Firebase",
+  "match": "firebase",
+  "icon": "assets/icons/firebase.svg"
+ },
+ {
+  "key": "antigravity",
+  "name": "Antigravity",
+  "match": "antigravity",
+  "icon": null
+ },
+ {
+  "key": "playground",
+  "name": "Google Playground",
+  "match": "google.{0,12}playground|playground",
+  "icon": null
+ },
+ {
+  "key": "n8n",
+  "name": "n8n",
+  "match": "\\bn8n\\b",
+  "icon": "assets/icons/n8n.svg"
+ },
+ {
+  "key": "zapier",
+  "name": "Zapier",
+  "match": "zapier",
+  "icon": "assets/icons/zapier.svg"
+ },
+ {
+  "key": "make",
+  "name": "Make",
+  "match": "make\\.com",
+  "icon": "assets/icons/make.svg"
+ },
+ {
+  "key": "notion",
+  "name": "Notion",
+  "match": "notion",
+  "icon": "assets/icons/notion.svg"
+ },
+ {
+  "key": "airtable",
+  "name": "Airtable",
+  "match": "airtable",
+  "icon": "assets/icons/airtable.svg"
+ },
+ {
+  "key": "google-sheets",
+  "name": "Google Sheets",
+  "match": "google sheets?",
+  "icon": "assets/icons/google-sheets.svg"
+ },
+ {
+  "key": "google-docs",
+  "name": "Google Docs",
+  "match": "google docs?",
+  "icon": "assets/icons/google-docs.svg"
+ },
+ {
+  "key": "gmail",
+  "name": "Gmail",
+  "match": "gmail",
+  "icon": "assets/icons/gmail.svg"
+ },
+ {
+  "key": "google-drive",
+  "name": "Google Drive",
+  "match": "google drive",
+  "icon": "assets/icons/google-drive.svg"
+ },
+ {
+  "key": "chrome",
+  "name": "Chrome",
+  "match": "\\bchrome\\b",
+  "icon": "assets/icons/chrome.svg"
+ },
+ {
+  "key": "telegram",
+  "name": "Telegram",
+  "match": "telegram",
+  "icon": "assets/icons/telegram.svg"
+ },
+ {
+  "key": "whatsapp",
+  "name": "WhatsApp",
+  "match": "whatsapp",
+  "icon": "assets/icons/whatsapp.svg"
+ },
+ {
+  "key": "youtube",
+  "name": "YouTube",
+  "match": "youtube",
+  "icon": "assets/icons/youtube.svg"
+ },
+ {
+  "key": "instagram",
+  "name": "Instagram",
+  "match": "instagram",
+  "icon": "assets/icons/instagram.svg"
+ },
+ {
+  "key": "facebook",
+  "name": "Facebook",
+  "match": "facebook",
+  "icon": "assets/icons/facebook.svg"
+ },
+ {
+  "key": "wordpress",
+  "name": "WordPress",
+  "match": "wordpress",
+  "icon": "assets/icons/wordpress.svg"
+ },
+ {
+  "key": "shopify",
+  "name": "Shopify",
+  "match": "shopify",
+  "icon": "assets/icons/shopify.svg"
+ },
+ {
+  "key": "figma",
+  "name": "Figma",
+  "match": "figma",
+  "icon": "assets/icons/figma.svg"
+ },
+ {
+  "key": "framer",
+  "name": "Framer",
+  "match": "framer",
+  "icon": "assets/icons/framer.svg"
+ },
+ {
+  "key": "webflow",
+  "name": "Webflow",
+  "match": "webflow",
+  "icon": "assets/icons/webflow.svg"
+ },
+ {
+  "key": "grammarly",
+  "name": "Grammarly",
+  "match": "grammarly",
+  "icon": "assets/icons/grammarly.svg"
+ },
+ {
+  "key": "android",
+  "name": "Android",
+  "match": "android",
+  "icon": "assets/icons/android.svg"
+ },
+ {
+  "key": "nvidia",
+  "name": "NVIDIA",
+  "match": "nvidia",
+  "icon": "assets/icons/nvidia.svg"
+ },
+ {
+  "key": "unity",
+  "name": "Unity",
+  "match": "\\bunity\\b",
+  "icon": "assets/icons/unity.svg"
+ },
+ {
+  "key": "windows",
+  "name": "Windows",
+  "match": "windows|microsoft",
+  "icon": null
+ },
+ {
+  "key": "python",
+  "name": "Python",
+  "match": "python",
+  "icon": "assets/icons/python.svg"
+ }
+]
