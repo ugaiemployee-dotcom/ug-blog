@@ -311,6 +311,12 @@ for (const p of posts) {
   let n = 0;
   const heads = [];
   const bodyHtml = p.body_html.replace(/<h2>([\s\S]*?)<\/h2>/g, (m, t) => { n++; heads.push(text(t)); return `<h2 id="s${n}">${t}</h2>`; });
+  // blockquote: মেন্টরের মতামত আলাদা বাক্সে, বাকি সব কপি করার মতো প্রম্পট
+  const richBody = bodyHtml.replace(/<blockquote>([\s\S]*?)<\/blockquote>/g, (m, inner) => {
+    const mentor = inner.match(/^\s*(?:<p>)?\s*<strong>মেন্টরের মতামত[^<]*<\/strong>\s*/);
+    if (mentor) return `<aside class="mentor-note">${hasMentor ? `<img src="${root}assets/mentor.webp" alt="${esc(cfg.mentorName)}" width="56" height="56" loading="lazy">` : ""}<div><b>মেন্টরের মতামত</b><span>${esc(cfg.mentorName)}, ${esc(cfg.mentorTitle)}</span><p>${inner.replace(mentor[0], "").replace(/<\/?p>/g, " ").trim()}</p></div></aside>`;
+    return `<div class="pbox"><span>কপি করে ব্যবহার করুন</span><q>${inner.replace(/<\/?p>/g, " ").trim()}</q><button type="button" data-copy="${esc(text(inner))}">প্রম্পট কপি করুন</button></div>`;
+  });
   const toc = heads.length >= 4 ? `<nav class="toc" aria-label="সূচিপত্র"><b>এই লেখায় যা আছে</b><ol>${heads.map((h, i) => `<li><a href="#s${i + 1}">${esc(h)}</a></li>`).join("")}</ol></nav>` : "";
   write(
     `posts/${p.slug}/index.html`,
@@ -351,7 +357,7 @@ ${p.tools.length ? `<div class="tools-row tools-top"><span>এই পোস্�
 ${p.key_points.length ? `<section class="glance"><h2>${catIcon(p.category)} এক নজরে</h2><ul>${p.key_points.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></section>` : ""}
 ${p.quick_facts.length ? `<section class="facts" aria-label="দ্রুত তথ্য">${p.quick_facts.map((f) => `<div><span>${esc(f.label)}</span><b>${esc(f.value)}</b></div>`).join("")}</section>` : ""}
 ${toc}
-<div class="prose">${bodyHtml}</div>
+<div class="prose">${richBody}</div>
 ${p.faq.length ? `<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${p.faq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section>` : ""}
 ${shareRow(url, p.title)}
 ${p.tags.length ? `<div class="tags">${p.tags.map((t) => `<span>#${esc(t)}</span>`).join("")}</div>` : ""}
