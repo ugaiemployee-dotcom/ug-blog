@@ -171,8 +171,8 @@ ${body}
 <footer class="site-footer"><div class="wrap">
 <div class="f-col f-about"><b>${esc(cfg.brand)}</b><p>${esc(cfg.footerAbout)}</p></div>
 <div class="f-col"><b>বিভাগ</b>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}</div>
-<div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}tools/">সব AI টুলের তালিকা</a><a href="${root}our-tools/">আমাদের AI টুল</a><a href="${root}about/">আমাদের কথা</a><a href="${root}feed.xml">RSS ফিড</a></div>
-</div><div class="f-bottom"><div class="wrap">© ${new Date().getFullYear()} ${esc(cfg.brand)} · সব অধিকার সংরক্ষিত</div></div></footer>
+<div class="f-col"><b>দরকারি লিংক</b><a href="${esc(cfg.mainSiteUrl)}">মূল ওয়েবসাইট: ${esc(host(cfg.mainSiteUrl))}</a><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাস: ${esc(host(cfg.freeClassUrl))}</a><a href="${root}tools/">সব AI টুলের তালিকা</a><a href="${root}our-tools/">আমাদের AI টুল</a><a href="${root}about/">আমাদের কথা</a><a href="${root}contact/">যোগাযোগ</a><a href="${root}feed.xml">RSS ফিড</a></div>
+</div><div class="f-bottom"><div class="wrap">© ${new Date().getFullYear()} ${esc(cfg.brand)} · সব অধিকার সংরক্ষিত · <a href="${root}privacy/">গোপনীয়তা নীতি</a> · <a href="${root}terms/">শর্ত ও দাবিত্যাগ</a> · <a href="${root}contact/">যোগাযোগ</a></div></div></footer>
 <script>window.UG=${JSON.stringify({ u: cfg.supabaseUrl || "", k: cfg.supabaseKey || "", free: host(cfg.freeClassUrl), main: host(cfg.mainSiteUrl) })};</script>
 <script src="${root}assets/site.js" defer></script>
 </body>
@@ -504,6 +504,68 @@ ${authorBox("../")}
   })
 );
 
+// গোপনীয়তা নীতি, যোগাযোগ, শর্তাবলি
+const UPDATED = "৯ অক্টোবর, ২০২৬";
+const infoPage = (slug, title, lead, html, type = "WebPage") => write(
+  `${slug}/index.html`,
+  layout({
+    root: "../",
+    title: `${title} | ${cfg.siteName}`,
+    description: lead,
+    canonical: `${SITE}/${slug}/`,
+    jsonLd: [crumbs([["ব্লগ", `${SITE}/`], [title, `${SITE}/${slug}/`]]), { "@type": type, name: title, url: `${SITE}/${slug}/`, inLanguage: "bn", publisher: { "@id": ORG["@id"] } }],
+    body: `<section class="hero hero-sm"><div class="wrap"><span class="eyebrow">${esc(cfg.brand)}</span><h1>${esc(title)}</h1><p>${esc(lead)}</p></div></section>
+<article class="article"><div class="prose">${html}</div></article>`,
+  })
+);
+const mail = `<a href="mailto:${esc(cfg.email)}">${esc(cfg.email)}</a>`;
+infoPage("privacy", "গোপনীয়তা নীতি", `${cfg.siteName} আপনার সম্পর্কে কী তথ্য রাখে আর কী রাখে না, সহজ বাংলায়।`, `
+<p>এই পাতায় বলা আছে ${esc(cfg.siteName)} (${esc(host(SITE))}) ব্যবহার করলে আপনার কোন তথ্য আমাদের কাছে আসে আর কোনটা আসে না। শেষ হালনাগাদ: ${UPDATED}।</p>
+<h2>সংক্ষেপে</h2>
+<ul><li>এই ব্লগ পড়তে অ্যাকাউন্ট খুলতে হয় না, নাম, ফোন নম্বর বা ইমেইল দিতে হয় না।</li><li>ব্লগ নিজে আপনার ব্রাউজারে কোনো কুকি বসায় না।</li><li>আমরা আপনার তথ্য কাউকে বিক্রি করি না।</li></ul>
+<h2>আমরা কী গুনে রাখি</h2>
+<p>ব্লগ থেকে কেউ আমাদের ফ্রি ক্লাস বা মূল ওয়েবসাইটের লিংকে ক্লিক করলে আমরা তিনটা জিনিস গুনে রাখি: কোন পাতা থেকে ক্লিক হল, কোন লিংকে, আর কখন। কে ক্লিক করলেন তা আমরা রাখি না। আপনার নাম, IP ঠিকানা বা ফোনের তথ্য এই হিসেবে থাকে না। এটা শুধু এটুকু বোঝার জন্য যে কোন লেখা পাঠকের কাজে লাগছে।</p>
+<p>ওই লিংকগুলোর শেষে একটা ছোট চিহ্ন জোড়া থাকে (যেমন <strong>utm_source=blog</strong>), যাতে আমাদের অন্য সাইট বুঝতে পারে আপনি ব্লগ থেকে এসেছেন।</p>
+<h2>যে পরিষেবাগুলো ব্যবহার করি</h2>
+<ul><li><strong>GitHub Pages:</strong> ব্লগের পাতাগুলো এখান থেকে আপনার কাছে পৌঁছয়। যেকোনো ওয়েবসাইটের মতো, পাতা পাঠানোর সময় তাদের সার্ভারে আপনার IP ঠিকানা সাময়িকভাবে ধরা পড়ে। এটা GitHub-এর নিজের নীতি অনুযায়ী চলে।</li><li><strong>Supabase:</strong> উপরে বলা ক্লিকের গোনাগুনতি এখানে জমা থাকে।</li></ul>
+<p>ব্লগের ফন্ট, ছবি আর আইকন আমাদের নিজের জায়গা থেকেই আসে, বাইরের কোনো সাইট থেকে নয়।</p>
+<h2>বিজ্ঞাপন</h2>
+<p>এই মুহূর্তে ব্লগে বাইরের কোনো বিজ্ঞাপন নেই। ভবিষ্যতে Google AdSense-এর মতো বিজ্ঞাপন চালু হলে Google ও তার সহযোগীরা কুকি ব্যবহার করে আপনার আগ্রহ অনুযায়ী বিজ্ঞাপন দেখাতে পারে। তখন এই পাতায় তা পরিষ্কার করে জানানো হবে, আর আপনি Google-এর বিজ্ঞাপন সেটিংস থেকে তা বন্ধ করতে পারবেন।</p>
+<h2>বাইরের লিংক</h2>
+<p>লেখার ভেতর থেকে আপনি ${esc(host(cfg.mainSiteUrl))}, ${esc(host(cfg.freeClassUrl))} বা আমাদের অন্য টুলের সাইটে যেতে পারেন। সেখানে ভর্তি বা পেমেন্টের সময় যে তথ্য দেন, তা ওই সাইটের নিজের নিয়মে চলে। আমাদের Telegram চ্যানেলে যোগ দিলে সেটা Telegram-এর নীতি অনুযায়ী চলে।</p>
+<h2>শিশুদের জন্য</h2>
+<p>এই ব্লগ সাধারণ পাঠকের জন্য লেখা। আমরা জেনেশুনে কোনো শিশুর ব্যক্তিগত তথ্য সংগ্রহ করি না।</p>
+<h2>নীতি বদলালে</h2>
+<p>এই নীতিতে কিছু বদলালে এই পাতাতেই নতুন তারিখ সহ জানানো হবে।</p>
+<h2>প্রশ্ন থাকলে</h2>
+<p>গোপনীয়তা নিয়ে কিছু জানার থাকলে লিখুন: ${mail}। আরও উপায় <a href="../contact/">যোগাযোগের পাতায়</a>।</p>`);
+infoPage("contact", "যোগাযোগ", `${cfg.brand}-এর সাথে যোগাযোগ করার সব উপায় এক জায়গায়।`, `
+<p>ব্লগের কোনো লেখা নিয়ে প্রশ্ন, ভুল ধরিয়ে দেওয়া, বা কোর্স নিয়ে জানতে চাইলে নিচের যেকোনো উপায়ে যোগাযোগ করুন।</p>
+<h2>ইমেইল</h2>
+<p>${mail}<br>লেখায় কোনো তথ্য ভুল মনে হলে পোস্টের লিংকটা সহ লিখুন, আমরা দেখে ঠিক করে দেব।</p>
+<h2>Telegram</h2>
+<p>AI-এর নতুন খবর আর আপডেট রোজ পেতে আমাদের চ্যানেলে যোগ দিন: <a href="https://t.me/uniquegurukulfamily" rel="noopener">t.me/uniquegurukulfamily</a></p>
+<h2>কোর্স ও ভর্তি</h2>
+<ul><li>৪ দিনের ফ্রি AI ক্লাস: <a href="${esc(cfg.freeClassUrl)}">${esc(host(cfg.freeClassUrl))}</a></li><li>সব কোর্স আর বিস্তারিত: <a href="${esc(cfg.mainSiteUrl)}">${esc(host(cfg.mainSiteUrl))}</a></li></ul>
+<h2>আমরা কোথায়</h2>
+<p>${esc(cfg.brand)}, ${esc(cfg.address?.locality || "")}, পশ্চিমবঙ্গ, ভারত। ২০১৭ সাল থেকে শেখাচ্ছি।</p>
+<p><a href="../about/">আমাদের কথা</a> · <a href="../privacy/">গোপনীয়তা নীতি</a> · <a href="../terms/">শর্ত ও দাবিত্যাগ</a></p>`, "ContactPage");
+infoPage("terms", "শর্ত ও দাবিত্যাগ", `${cfg.siteName}-এর লেখা কীভাবে তৈরি হয়, আর তা ব্যবহারের নিয়ম।`, `
+<p>শেষ হালনাগাদ: ${UPDATED}।</p>
+<h2>লেখার উদ্দেশ্য</h2>
+<p>এই ব্লগের সব লেখা শেখা আর জানার জন্য। AI টুলের দাম, ফিচার আর কোন দেশে চালু, এগুলো প্রায়ই বদলায়। তাই কোনো টুলে টাকা খরচ করার আগে সেই টুলের নিজের ওয়েবসাইটে একবার মিলিয়ে নিন।</p>
+<h2>আমরা কীভাবে লিখি</h2>
+<p>খবর জোগাড় আর প্রথম খসড়া তৈরিতে আমরা AI টুলের সাহায্য নিই। প্রতিটা লেখা প্রকাশের আগে ${esc(cfg.brand)}-এর পক্ষ থেকে পড়ে অনুমোদন করা হয়। যা আমরা নিজে পরীক্ষা করিনি, তা পরীক্ষা করেছি বলে লিখি না।</p>
+<h2>ভুল থাকলে</h2>
+<p>যত্ন নিয়ে লিখলেও ভুল থেকে যেতে পারে। কোনো তথ্য ভুল মনে হলে ${mail} ঠিকানায় জানান, আমরা দেখে ঠিক করব।</p>
+<h2>অন্য কোম্পানির নাম ও লোগো</h2>
+<p>লেখায় যে টুল বা কোম্পানির নাম আর লোগো আসে (যেমন ChatGPT, Gemini), সেগুলো তাদের নিজ নিজ মালিকের সম্পত্তি। আমরা শুধু চেনানোর জন্য ব্যবহার করি। ওই কোম্পানিগুলোর সাথে ${esc(cfg.brand)}-এর কোনো ব্যবসায়িক সম্পর্ক নেই, আর তারা এই ব্লগ অনুমোদন করেনি।</p>
+<h2>আয়ের কথা</h2>
+<p>"AI দিয়ে আয়" বিষয়ের লেখাগুলো সম্ভাবনা আর উপায় দেখায়। আয় নির্ভর করে আপনার পরিশ্রম, দক্ষতা আর বাজারের ওপর। আমরা কোনো নির্দিষ্ট আয়ের নিশ্চয়তা দিই না।</p>
+<h2>লেখা ব্যবহার</h2>
+<p>ব্লগের লেখা আর ছবি ${esc(cfg.brand)}-এর। লিংক দিয়ে শেয়ার করতে পারেন। পুরো লেখা কপি করে অন্য কোথাও ছাপতে চাইলে আগে অনুমতি নিন।</p>
+<p><a href="../privacy/">গোপনীয়তা নীতি</a> · <a href="../contact/">যোগাযোগ</a></p>`);
+
 // 404 (absolute paths, because it can be served from any depth)
 const base = new URL(SITE + "/").pathname;
 write(
@@ -522,6 +584,9 @@ write(
 const urls = [
   { loc: `${SITE}/`, lastmod: posts[0]?.date },
   { loc: `${SITE}/about/` },
+  { loc: `${SITE}/contact/` },
+  { loc: `${SITE}/privacy/` },
+  { loc: `${SITE}/terms/` },
   ...(OWN.length ? [{ loc: `${SITE}/our-tools/` }] : []),
   ...Object.keys(cfg.categories).map((k) => ({ loc: `${SITE}/category/${k}/`, lastmod: posts.find((p) => p.category === k)?.date })),
   ...(tcatKeys.length ? [{ loc: `${SITE}/tools/` }, ...tcatKeys.map((k) => ({ loc: `${SITE}/tools/${k}/`, lastmod: postsOfCat(k)[0]?.date }))] : []),
