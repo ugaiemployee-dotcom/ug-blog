@@ -133,7 +133,7 @@ function layout({ root, title, description, canonical, ogImage, ogType = "websit
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
-<meta name="description" content="${esc(description)}">
+<meta name="description" content="${esc(description.length > 160 ? description.slice(0, 157).replace(/\s+\S*$/, "") + "…" : description)}">
 <meta name="robots" content="${noindex ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1"}">
 <link rel="canonical" href="${esc(canonical)}">
 ${cfg.googleSiteVerification ? `<meta name="google-site-verification" content="${esc(cfg.googleSiteVerification)}">` : ""}
@@ -285,7 +285,7 @@ ${posts.slice(0, 2).map((p) => `<a href="./posts/${p.slug}/"><span class="tag">$
 ${page === 1 && posts[0] ? `<section class="news" id="news"><div class="news-head"><h2 class="section-title">আজকের AI খবর</h2><span class="news-date"><i></i>${todayBn}</span></div>
 ${chips(root)}
 <div class="news-grid">${card(posts[0], root, true)}${posts.length > 1 ? `<div class="news-side"><b class="news-side-title">সর্বশেষ আপডেট</b>${posts.slice(1, HEAD).map((p) => row(p, root)).join("")}</div>` : ""}</div></section>` : chips(root)}
-${rest.length || page > 1 ? `<h2 class="section-title">${page === 1 ? "আরও খবর ও গাইড" : `পুরনো পোস্ট, পাতা ${bnNum(page)}`}</h2>${grid(rest, root)}` : ""}
+${page > 1 ? `<h1 class="section-title">AI-এর খবর ও গাইড, পাতা ${bnNum(page)}</h1>` : ""}${rest.length || page > 1 ? `<h2 class="section-title">${page === 1 ? "আরও খবর ও গাইড" : `পুরনো পোস্ট, পাতা ${bnNum(page)}`}</h2>${grid(rest, root)}` : ""}
 ${!posts.length ? grid([], root) : ""}
 ${pager(root === "./" ? "./" : "../../", page, pages)}</div>
 ${page === 1 && Object.keys(TCATS).length ? `<section class="tcats"><div class="wrap"><h2 class="section-title">কাজ অনুযায়ী AI টুল</h2><p class="tcats-lead">ছবি, ভিডিও, ভয়েস, অ্যাপ বানানো: যে কাজের টুল খুঁজছেন, সেই বিভাগে যান। প্রতিটা টুলের নতুন আপডেট তারিখ ধরে সাজানো।</p>${catTiles("./")}</div></section>` : ""}
@@ -339,11 +339,12 @@ for (const p of posts) {
     `posts/${p.slug}/index.html`,
     layout({
       root,
-      title: `${p.meta_title || p.title} | ${cfg.brand}`,
+      title: ((t) => (t.length + cfg.brand.length + 3 <= 62 ? `${t} | ${cfg.brand}` : t))(p.meta_title || p.title),
       description: p.meta_description,
       canonical: url,
       ogImage: p.cover || undefined,
       ogType: "article",
+      noindex: text(p.body_html).split(" ").length < 150,
       extraHead: `<meta property="article:published_time" content="${isoDate(p.date)}">\n<meta property="article:section" content="${esc(catName(p.category))}">${p.tags.map((t) => `\n<meta property="article:tag" content="${esc(t)}">`).join("")}`,
       jsonLd: [
         crumbs([["ব্লগ", `${SITE}/`], [catName(p.category), `${SITE}/category/${p.category}/`], [p.title, url]]),
