@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       deploy: ${{ steps.decide.outputs.deploy }}
     steps:
@@ -36,6 +36,8 @@ jobs:
           echo "need=$need" >> "$GITHUB_OUTPUT"
       - name: Make news cards
         if: steps.covers.outputs.need == 'true'
+        continue-on-error: true
+        timeout-minutes: 8
         run: |
           npm i --no-save --silent playwright@1.56.0
           npx playwright install --with-deps chromium
@@ -74,7 +76,7 @@ jobs:
   deploy:
     needs: build
     if: needs.build.outputs.deploy == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
