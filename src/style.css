@@ -59,6 +59,8 @@ time,.bz-t,.u-clock{font-variant-numeric:tabular-nums}
 @keyframes live{0%{box-shadow:0 0 0 0 rgba(200,30,30,.55)}70%,100%{box-shadow:0 0 0 7px rgba(200,30,30,0)}}
 .new,.brk{display:inline-block;padding:3px 6px 1px;border-radius:3px;font-family:var(--f);font-size:11.5px;font-weight:700;line-height:1.25;white-space:nowrap}
 .new{background:var(--gold-l);color:#3A2500}
+.new.hot{animation:hot 1.6s ease-in-out 4}
+@keyframes hot{50%{background:#FBE3A6;box-shadow:0 0 0 3px rgba(240,190,92,.35)}}
 .brk{background:var(--red);color:#fff}
 
 /* ---------- মাথা: তারিখ-ঘড়ি, মাস্টহেড, বিভাগ, চলমান শিরোনাম ---------- */
@@ -165,6 +167,19 @@ time{font-size:13px;color:var(--muted);white-space:nowrap}
 .lead-pic{margin:0 0 12px;border-radius:var(--r);overflow:hidden;background:var(--wash);aspect-ratio:16/9}
 .lead-pic img{width:100%;height:100%;object-fit:cover}
 .dek{font-size:16.5px;line-height:1.6;color:var(--ink2)}
+.lead-card{display:none}
+@media (min-width:700px){
+  .lead-card{display:flex;align-items:stretch;gap:0;margin:4px 0 14px;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule2);background:linear-gradient(90deg,var(--wash),#fff 70%)}
+  .lc-logo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:104px;padding:10px 12px;border-right:1px solid var(--rule2)}
+  .lc-logo img,.lc-logo i{width:40px;height:40px;border-radius:9px;background:#fff;box-shadow:0 0 0 1px var(--rule)}
+  .lc-logo i{display:grid;place-items:center;font-style:normal;font-weight:700;color:var(--violet)}
+  .lc-logo b{font-size:12.5px;line-height:1.2;text-align:center}
+  .lead-card dl{display:grid;grid-template-columns:repeat(3,1fr);flex:1;margin:0}
+  .lead-card dl div{padding:10px 12px;border-right:1px solid var(--rule)}
+  .lead-card dl div:last-child{border-right:0}
+  .lead-card dt{font-size:12px;font-weight:700;color:var(--gold-ink);letter-spacing:.02em}
+  .lead-card dd{margin:2px 0 0;font-family:var(--d);font-weight:800;font-size:16px;line-height:1.3;color:var(--ink)}
+}
 .lead .dek{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:16px}
 .lead-points{display:none;list-style:none;margin:14px 0 0;padding:2px 0 2px 14px;border-left:3px solid var(--gold-l);gap:7px}
 .lead-points li{font-size:15.5px;line-height:1.5;color:var(--ink2)}
@@ -617,7 +632,7 @@ a.own:hover{border-color:var(--violet)}
 .foot-col a{font-size:15px;color:rgba(255,255,255,.92);min-height:44px;display:flex;align-items:center}
 .foot-col a:hover{color:var(--gold-l)}
 .press{max-width:var(--wrap);margin:6px auto 0;padding:0 16px;text-align:center}
-.press-word{font-family:var(--d);font-weight:800;font-size:clamp(60px,17.6vw,216px);line-height:1.1;letter-spacing:-.02em;white-space:nowrap;padding-top:.06em;color:transparent;background:linear-gradient(180deg,rgba(255,255,255,.24) 0,rgba(255,255,255,.24) 46%,var(--gold-l) 46%);-webkit-background-clip:text;background-clip:text}
+.press-word{font-family:var(--d);font-weight:800;font-size:clamp(56px,15vw,168px);line-height:1.1;letter-spacing:-.02em;white-space:nowrap;padding-top:.06em;color:transparent;background:linear-gradient(180deg,rgba(255,255,255,.24) 0,rgba(255,255,255,.24) 46%,var(--gold-l) 46%);-webkit-background-clip:text;background-clip:text}
 .foot-pub{border-top:1px solid rgba(255,255,255,.2);padding:8px 0 calc(10px + env(safe-area-inset-bottom));font-size:14px;color:rgba(255,255,255,.88)}
 .foot-pub .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0 20px}
 .foot-pub a{color:var(--gold-l);font-weight:700;display:inline-flex;align-items:center;min-height:44px}
@@ -736,9 +751,9 @@ a.own:hover{border-color:var(--violet)}
   .story h3{font-size:20.5px}
   .prose{font-size:18.5px}
   .seo-in{grid-template-columns:1.2fr 1fr;gap:56px}
-  .foot-in{grid-template-columns:1.6fr 1fr 1fr 1fr;padding-top:40px}
+  .foot-in{grid-template-columns:1.6fr 1fr 1fr 1fr;padding-top:32px}
   .foot-col{flex-direction:column;flex-wrap:nowrap}
-  .foot-col a{min-height:34px}
+  .foot-col a{min-height:30px;font-size:14.5px}
   .sheet{align-items:center}
   .sheet-panel{border-radius:14px;padding-bottom:18px}
   .install{left:auto;right:24px;bottom:24px;margin:0}

@@ -43,8 +43,8 @@
       t.textContent = r ? (t.hasAttribute("data-keep") ? base + " (" + r + ")" : r) : base;
       if (t.hasAttribute("data-nb")) {
         var fresh = exact ? now - Date.parse(iso) < 216e5 : r === "আজ";
-        var nx = t.nextElementSibling, has = nx && nx.className === "new";
-        if (fresh && !has) t.parentNode.insertBefore(el("b", "new", "নতুন"), t.nextSibling);
+        var nx = t.nextElementSibling, has = nx && /^new/.test(nx.className);
+        if (fresh && !has) t.parentNode.insertBefore(el("b", exact ? "new hot" : "new", "নতুন"), t.nextSibling);
         else if (!fresh && has) nx.remove();
       }
     });

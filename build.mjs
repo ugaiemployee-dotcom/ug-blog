@@ -247,7 +247,13 @@ const storyList = (items, root, id = "") =>
   items.length ? `<div class="feed"${id ? ` id="${id}"` : ""}>${items.map((p) => story(p, root)).join("\n")}</div>` : `<div class="feed"${id ? ` id="${id}"` : ""}><p class="empty">এই ধরনের খবর এখনও আসেনি। নতুন খবর এলেই এখানে দেখাবে।</p></div>`;
 
 // ---- প্রথম পাতার টুকরো ----
-const leadStory = (p, root) => `<article class="lead${alertCls(p)}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/"><div class="kicker"><b class="lead-k">প্রধান খবর</b>${tlabel(p)}${when(p)}</div><h2>${esc(p.title)}</h2>${p.photo ? `<figure class="lead-pic">${photoTag(p, root, 'fetchpriority="high" decoding="async"')}</figure>` : ""}<p class="dek">${esc(p.excerpt)}</p>${p.key_points.length ? `<ul class="lead-points">${p.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}<div class="lead-f">${p.tools.length ? `<span class="lead-tools">${p.tools.slice(0, 3).map((t) => toolChip(t, root, false)).join("")}</span>` : ""}${badges(p)}<span class="read">পুরো খবর পড়ুন${ICON.arrow}</span></div></a></article>`;
+// ছবি না থাকলে প্রধান খবরের পাশে খবরের কাগজের "এক নজরে" তথ্যের ঘর: টুলের লোগো আর ৩টা তথ্য (বানানো সংখ্যা নয়, পোস্টের quick_facts)
+const leadCard = (p, root) => {
+  const t = primaryTool(p), facts = p.quick_facts.filter((f) => !/^টুল$/.test(nf(f.label))).slice(0, 3);
+  if (!t || facts.length < 2) return "";
+  return `<div class="lead-card"><span class="lc-logo">${toolIcon(t, root, 40)}<b>${esc(t.name)}</b></span><dl>${facts.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(head(f.value) || f.value)}</dd></div>`).join("")}</dl></div>`;
+};
+const leadStory = (p, root) => `<article class="lead${alertCls(p)}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/"><div class="kicker"><b class="lead-k">প্রধান খবর</b>${tlabel(p)}${when(p)}</div><h2>${esc(p.title)}</h2>${p.photo ? `<figure class="lead-pic">${photoTag(p, root, 'fetchpriority="high" decoding="async"')}</figure>` : leadCard(p, root)}<p class="dek">${esc(p.excerpt)}</p>${p.key_points.length ? `<ul class="lead-points">${p.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}<div class="lead-f">${p.tools.length ? `<span class="lead-tools">${p.tools.slice(0, 3).map((t) => toolChip(t, root, false)).join("")}</span>` : ""}${badges(p)}<span class="read">পুরো খবর পড়ুন${ICON.arrow}</span></div></a></article>`;
 const secStory = (p, root) => `<article class="sec${alertCls(p)}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/">${tile(p.tools[0], root)}<div>${kicker(p)}<h3>${esc(p.title)}</h3><p>${esc(p.excerpt)}</p></div></a></article>`;
 const top5 = (root, items, id = "top5-h") => items.length ? `<section class="top5" aria-labelledby="${id}"><h2 class="rule-h" id="${id}">আজকের সেরা ৫</h2><ol>${items.map((p, i) => `<li><a href="${root}posts/${p.slug}/"><i aria-hidden="true">${bnNum(i + 1)}</i><span class="t5-tx"><b>${esc(p.title)}</b><span class="t5-m">${tlabel(p)}${when(p, false)}</span></span></a></li>`).join("")}</ol></section>` : "";
 const digest = (root) => `<section class="digest" aria-labelledby="dg-h"><h2 id="dg-h">আজ ২ মিনিটে</h2><p class="dg-k">সর্বশেষ ${bnNum(Math.min(5, posts.length))}টি খবরের মূল কথা, এক লাইনে</p><ul>${posts.slice(0, 5).map((p) => `<li><a href="${root}posts/${p.slug}/">${esc(p.key_points[0] || p.excerpt)}</a></li>`).join("")}</ul></section>`;
@@ -433,7 +439,7 @@ const pageHead = (kicker, h1, lead, extra = "") => `<section class="page-head"><
 // প্রথম পাতার বাছাই: ১টা প্রধান + ২টা পাশের খবর, আর "সেরা ৫" (শেষ ৮ দিনের, প্রতি ধরন থেকে আগে একটা করে)
 const FRONT = posts.slice(0, 3);
 const TOP5 = (() => {
-  const rest = posts.slice(7);
+  const rest = posts.slice(9);
   const week = rest.filter((p) => NOW - Date.parse(p.date) < 8 * 864e5);
   const pool = week.length >= 5 ? week : rest;
   const out = [], seenT = new Set();
@@ -446,20 +452,22 @@ const top5Ld = { "@type": "ItemList", name: "আজকের সেরা ৫ AI
 const sideRail = (root, fb, flash = true) => `<aside class="rail" aria-label="আরও খবর">${flash ? flashBox(root, 5, fb) : ""}${top5(root, TOP5)}</aside>`;
 
 // home + pagination
-const HEAD = 7; // প্রথম পাতার মাথার খবর বাদ দিয়ে বাকিগুলো "আগের খবর" আর পরের পাতায়
+const HEAD = 9; // প্রথম পাতার মাথার খবর বাদ দিয়ে বাকিগুলো "আগের খবর" আর পরের পাতায়
 const pages = Math.max(1, Math.ceil(Math.max(0, posts.length - HEAD) / PER_PAGE));
 const pinned = posts.filter((p) => p.pinned);
 // বিভাগের ব্লকে প্রথম পাতার মাথার খবরগুলো আবার না আসে, যদি যথেষ্ট অন্য খবর থাকে
-const fresh = (items) => { const x = items.filter((p) => !FRONT.includes(p)); return x.length >= 2 ? x : items; };
+// প্রতিটা খবর প্রথম পাতার ব্লকে একবারই আসে, যাতে পাতাটা একই শিরোনামের পুনরাবৃত্তি না লাগে
+const fresh = (items, used, min = 2) => { const x = items.filter((p) => !used.has(p)).slice(0, 4); if (x.length < min) return []; x.forEach((p) => used.add(p)); return x; };
 for (let page = 1; page <= pages; page++) {
   const root = page === 1 ? "./" : "../../";
   const rest = posts.slice(HEAD + (page - 1) * PER_PAGE, HEAD + page * PER_PAGE);
   const url = page === 1 ? `${SITE}/` : `${SITE}/page/${page}/`;
   const lead = posts[0];
   const leadPic = page === 1 && lead?.photo ? `<link rel="preload" as="image" href="${root}${esc(lead.photo)}" fetchpriority="high">\n` : "";
-  const typeBlocks = TYPES.filter((t) => t.key !== "scam-alert" && typeCount(t.key)).map((t) => blockOf(t.key, t.label, `${root}type/${t.key}/`, fresh(posts.filter((p) => p.type === t.key)), root));
+  const used = new Set([...posts.slice(0, HEAD), ...TOP5]);
+  const typeBlocks = TYPES.filter((t) => t.key !== "scam-alert" && typeCount(t.key)).map((t) => blockOf(t.key, t.label, `${root}type/${t.key}/`, fresh(posts.filter((p) => p.type === t.key), used, 1), root));
   const alerts = posts.filter((p) => p.type === "scam-alert");
-  const catBlocks = Object.keys(TCATS).map((k) => [k, postsOfCat(k)]).filter((x) => x[1].length >= 2).sort((a, b) => (a[1][0].date < b[1][0].date ? 1 : -1)).slice(0, 6).map(([k, items]) => blockOf(`c-${k}`, TCATS[k].name, `${root}tools/${k}/`, fresh(items), root));
+  const catBlocks = Object.keys(TCATS).map((k) => [k, postsOfCat(k)]).filter((x) => x[1].length >= 2).sort((a, b) => (a[1][0].date < b[1][0].date ? 1 : -1)).map(([k, items]) => blockOf(`c-${k}`, TCATS[k].name, `${root}tools/${k}/`, fresh(items, used, 3), root)).filter(Boolean).slice(0, 3);
   write(
     page === 1 ? "index.html" : `page/${page}/index.html`,
     layout({
@@ -483,9 +491,9 @@ for (let page = 1; page <= pages; page++) {
 ${pinned.length ? `<div class="wrap">${pinned.map((p) => `<a class="alert-bar" href="./posts/${p.slug}/"><b>সতর্কতা</b><span>${esc(p.title)}</span></a>`).join("")}</div>` : ""}
 <div class="wrap fp">
 ${lead ? leadStory(lead, root) : ""}
-${flashBox(root, 6, posts.slice(7, 13), " fp-flash")}
+${flashBox(root, 6, posts.slice(HEAD, HEAD + 6), " fp-flash")}
 <div class="secs">${posts.slice(1, 3).map((p) => secStory(p, root)).join("")}</div>
-${posts.length > 3 ? `<section class="fp-more" aria-labelledby="more-h"><h2 class="rule-h" id="more-h">আরও শিরোনাম</h2><ol>${posts.slice(3, 7).map((p) => `<li><a href="${root}posts/${p.slug}/"><b>${esc(p.title)}</b><span class="t5-m">${tlabel(p)}${when(p)}</span></a></li>`).join("")}</ol></section>` : ""}
+${posts.length > 3 ? `<section class="fp-more" aria-labelledby="more-h"><h2 class="rule-h" id="more-h">আরও শিরোনাম</h2><ol>${posts.slice(3, HEAD).map((p) => `<li><a href="${root}posts/${p.slug}/"><b>${esc(p.title)}</b><span class="t5-m">${tlabel(p)}${when(p)}</span></a></li>`).join("")}</ol></section>` : ""}
 <aside class="fp-r" aria-label="সেরা খবর ও সারাংশ">${top5(root, TOP5)}${digest(root)}</aside>
 </div>
 <div class="wrap">${bazar(root, { limit: 8 })}</div>
@@ -902,7 +910,7 @@ write("manifest.webmanifest", JSON.stringify({
   ],
 }, null, 1));
 const PRECACHE = [
-  "./", "offline/", `assets/style.css?v=${VER}`, `assets/site.js?v=${VER}`,
+  "./", "offline/", "flash/", ...(BZ.length ? ["bazar/"] : []), `assets/style.css?v=${VER}`, `assets/site.js?v=${VER}`,
   ...["bengali-400", "bengali-600", "bengali-700", "latin-400", "latin-600", "latin-700"].map((f) => `assets/fonts/hind-siliguri-${f}-normal.woff2`),
   "assets/fonts/anek-bangla-bengali-800-normal.woff2", "assets/fonts/anek-bangla-latin-800-normal.woff2",
   "assets/app/icon-192.png", "assets/app/badge-96.png", ...(hasMentor ? ["assets/mentor.webp"] : []), "manifest.webmanifest",
