@@ -81,10 +81,11 @@ self.addEventListener("push", function (e) {
   var d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data ? e.data.text() : "" }; }
   var url = (d.data && d.data.url) || d.url || SCOPE;
+  var same = function (u) { try { return new URL(u, SCOPE).origin === new URL(SCOPE).origin ? new URL(u, SCOPE).href : null; } catch (x) { return null; } };
   e.waitUntil(self.registration.showNotification(d.title || "Unique AI পত্রিকা", {
     body: d.body || "",
-    icon: d.icon || new URL("assets/app/icon-192.png", SCOPE).href,
-    badge: d.badge || new URL("assets/app/badge-96.png", SCOPE).href,
+    icon: (d.icon && same(d.icon)) || new URL("assets/app/icon-192.png", SCOPE).href,
+    badge: (d.badge && same(d.badge)) || new URL("assets/app/badge-96.png", SCOPE).href,
     tag: d.tag || undefined,
     lang: "bn",
     data: { url: url },

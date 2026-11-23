@@ -214,7 +214,7 @@ const storyList = (items, root, id = "") =>
 
 // খবরের ধরনের সারি (স্টিকি, পাশে স্ক্রল হয়)
 const secBar = (root, active, { filter = false, sticky = false } = {}) =>
-  `<div class="secbar${sticky ? " is-sticky" : ""}"><div class="wrap secbar-in"><nav class="chips" aria-label="খবরের ধরন"><a class="chip${active ? "" : " on"}" href="${root}"${active ? "" : ' aria-current="page"'} data-type="">সব খবর</a>${TYPES.map((t) => `<a class="chip t-${t.key}${active === t.key ? " on" : ""}" href="${root}type/${t.key}/" data-type="${t.key}"${active === t.key ? ' aria-current="page"' : ""}>${esc(t.label)}</a>`).join("")}</nav>${filter ? `<button type="button" class="filter-btn" data-sheet="fsheet" aria-haspopup="dialog">${ICON.filter}<span>ফিল্টার</span><i data-fcount hidden></i></button>` : ""}</div></div>`;
+  `<div class="secbar${sticky ? " is-sticky" : ""}"><div class="wrap secbar-in"><nav class="chips" aria-label="খবরের ধরন"><a class="chip${active ? "" : " on"}" href="${root}"${active ? "" : ' aria-current="page"'} data-type="">সব খবর</a>${TYPES.filter((t) => typeCount(t.key) || active === t.key).map((t) => `<a class="chip t-${t.key}${active === t.key ? " on" : ""}" href="${root}type/${t.key}/" data-type="${t.key}"${active === t.key ? ' aria-current="page"' : ""}>${esc(t.label)}</a>`).join("")}</nav>${filter ? `<button type="button" class="filter-btn" data-sheet="fsheet" aria-haspopup="dialog">${ICON.filter}<span>ফিল্টার</span><i data-fcount hidden></i></button>` : ""}</div></div>`;
 
 const radioGroup = (name, legend, opts) => `<fieldset><legend>${legend}</legend><div class="opts">${[["", "সব"], ...opts].map(([v, l], i) => `<label><input type="radio" name="${name}" value="${v}"${i ? "" : " checked"}><span>${esc(l)}</span></label>`).join("")}</div></fieldset>`;
 const filterSheet = () => `<div class="sheet" id="fsheet" role="dialog" aria-modal="true" aria-labelledby="fsheet-h" hidden><div class="sheet-bg" data-close></div><form class="sheet-panel" id="fform"><div class="sheet-head"><h2 id="fsheet-h">ফিল্টার</h2><button type="button" class="x" data-close aria-label="বন্ধ করুন">×</button></div>
@@ -410,6 +410,7 @@ for (const [k, v] of Object.entries(cfg.categories)) {
       root: "../../",
       kind: "list",
       filter: true,
+      noindex: !items.length,
       title: `${v}: খবর ও গাইড | ${cfg.siteName}`,
       description: desc,
       canonical: `${SITE}/category/${k}/`,
@@ -747,10 +748,10 @@ const urls = [
   { loc: `${SITE}/terms/` },
   ...(OWN.length ? [{ loc: `${SITE}/our-tools/` }] : []),
   ...TYPES.filter((t) => typeCount(t.key)).map((t) => ({ loc: `${SITE}/type/${t.key}/`, lastmod: posts.find((p) => p.type === t.key)?.date })),
-  ...Object.keys(cfg.categories).map((k) => ({ loc: `${SITE}/category/${k}/`, lastmod: posts.find((p) => p.category === k)?.date })),
+  ...Object.keys(cfg.categories).filter((k) => posts.some((p) => p.category === k)).map((k) => ({ loc: `${SITE}/category/${k}/`, lastmod: posts.find((p) => p.category === k)?.date })),
   ...(tcatKeys.length ? [{ loc: `${SITE}/tools/` }, ...tcatKeys.map((k) => ({ loc: `${SITE}/tools/${k}/`, lastmod: postsOfCat(k)[0]?.date }))] : []),
   ...toolPages.map((t) => ({ loc: `${SITE}/tool/${t.key}/`, lastmod: t.lastmod })),
-  ...posts.map((p) => ({ loc: `${SITE}/posts/${p.slug}/`, lastmod: p.updated || p.date, image: p.photo ? abs(p.photo) : p.cover ? abs(p.cover) : null })),
+  ...posts.filter((p) => text(p.body_html).split(" ").length >= 150).map((p) => ({ loc: `${SITE}/posts/${p.slug}/`, lastmod: p.updated || p.date, image: p.photo ? abs(p.photo) : p.cover ? abs(p.cover) : null })),
 ];
 write(
   "sitemap.xml",
