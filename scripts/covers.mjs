@@ -1,4 +1,4 @@
-// প্রতিটা পোস্টের জন্য ব্র্যান্ডেড নিউজ কার্ড (1200x630 PNG) বানায়: assets/covers/<slug>.png
+// প্রতিটা পোস্টের জন্য Unique AI পত্রিকা-র নিউজ কার্ড (1200x630 PNG) বানায়: assets/covers/<slug>.png
 import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 const cfg = JSON.parse(readFileSync("site.config.json", "utf8"));
 const esc = (s = "") => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -28,28 +28,28 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 for (const { p, out } of todo) {
   const head = p.card_headline || p.title;
-  const size = head.length > 46 ? 62 : head.length > 30 ? 72 : 84;
+  const size = head.length > 46 ? 64 : head.length > 30 ? 74 : 86;
+  // খবরের ধরন: প্রথম ট্যাগ ধরনের নাম হলে সেটা, নইলে বিষয় থেকে
+  const types = cfg.newsTypes || [];
+  const tkey = types.some((t) => t.key === p.news_type) ? p.news_type : (types.find((t) => t.label.normalize("NFC") === String((p.tags || [])[0] || "").normalize("NFC").trim()) || {}).key || cfg.typeFromCategory?.[p.category];
+  const label = (types.find((t) => t.key === tkey) || {}).label || cfg.categories[p.category] || "AI খবর";
+  const tc = { "scam-alert": "#B42318", "free-offer": "#067647", "jobs-income": "#7E5410" }[tkey] || "#5D16E9";
   await page.setContent(`<html><head><style>
 ${fonts}
 *{box-sizing:border-box}
-body{margin:0;width:1200px;height:630px;font-family:HSL,HS;color:#fff;background:linear-gradient(135deg,#6A24F2 0%,#5D16E9 45%,#4A0FC2 100%);position:relative;overflow:hidden}
-.ring{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.10)}
-.r1{width:620px;height:620px;right:-180px;top:-220px}.r2{width:420px;height:420px;right:-80px;top:-120px;border-color:rgba(240,190,92,.28)}
-.dots{position:absolute;left:0;bottom:16px;width:100%;height:210px;background-image:radial-gradient(rgba(255,255,255,.10) 2px,transparent 2px);background-size:26px 26px;-webkit-mask-image:linear-gradient(transparent,#000)}
-.top{position:absolute;left:72px;top:56px;right:72px;display:flex;align-items:center;gap:18px}
-.logo{height:76px;width:76px;background:#fff;border-radius:18px;display:flex;align-items:center;justify-content:center;padding:8px}
-.logo img{max-width:100%;max-height:100%}
-.brand{font-size:32px;font-weight:700;line-height:1.2}.brand small{display:block;font-size:20px;font-weight:600;color:#F0BE5C}
-.chip{margin-left:auto;background:#F0BE5C;color:#231A3A;font-size:26px;font-weight:700;padding:8px 26px;border-radius:999px}
-h1{position:absolute;left:72px;right:72px;top:190px;margin:0;font-size:${size}px;line-height:1.32;font-weight:700;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.foot{position:absolute;left:72px;right:72px;bottom:52px;display:flex;align-items:center;font-size:27px;font-weight:600;color:#EEE6FF}
-.foot b{margin-left:auto;color:#fff;font-weight:700}
-.bar{position:absolute;left:0;bottom:0;width:100%;height:16px;background:linear-gradient(90deg,#C9922A,#F0BE5C,#C9922A)}
+body{margin:0;width:1200px;height:630px;font-family:HSL,HS;color:#17131F;background:#fff;position:relative;overflow:hidden}
+.top{position:absolute;left:72px;right:72px;top:50px;display:flex;align-items:flex-end;padding-bottom:18px;border-bottom:6px double #17131F}
+.wm{line-height:1}.wm small{display:block;font-size:20px;font-weight:600;color:#5D16E9;letter-spacing:.1em;margin-bottom:6px}.wm b{font-size:46px;font-weight:700}
+.chip{margin-left:auto;display:flex;align-items:center;gap:12px;color:${tc};font-size:28px;font-weight:700}
+.chip i{width:16px;height:16px;background:${tc}}
+h1{position:absolute;left:72px;right:72px;top:198px;margin:0;font-size:${size}px;line-height:1.34;font-weight:700;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.foot{position:absolute;left:72px;right:72px;bottom:46px;display:flex;align-items:center;gap:22px;font-size:25px;font-weight:600;color:#3B3647;padding-top:20px;border-top:2px solid #C9922A}
+.foot b{margin-left:auto;color:#5D16E9;font-weight:700}
+.bar{position:absolute;left:0;bottom:0;width:100%;height:12px;background:#5D16E9}
 </style></head><body>
-<div class="ring r1"></div><div class="ring r2"></div><div class="dots"></div>
-<div class="top">${logo ? `<div class="logo"><img src="${logo}"></div>` : ""}<div class="brand">${esc(cfg.brand)}<small>AI আপডেট</small></div><div class="chip">${esc(cfg.categories[p.category] || "AI খবর")}</div></div>
+<div class="top"><div class="wm"><small>Unique</small><b>AI পত্রিকা</b></div><div class="chip"><i></i>${esc(label)}</div></div>
 <h1>${esc(head)}</h1>
-<div class="foot"><span>সহজ বাংলায় AI-এর খবর</span><b>${esc(cfg.mainSiteUrl.replace(/^https?:\/\//, ""))}</b></div>
+<div class="foot"><span>${esc(cfg.motto || "AI-এর খবর, বাংলার আলোয়")}</span><b>${esc(cfg.siteUrl.replace(/^https?:\/\//, "").replace(/\/+$/, ""))}</b></div>
 <div class="bar"></div></body></html>`);
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(150);
