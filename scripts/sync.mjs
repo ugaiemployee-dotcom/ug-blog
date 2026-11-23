@@ -18,6 +18,8 @@ for (const p of data.posts ?? []) {
   const file = `posts/${p.slug}.json`;
   const old = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
   const post = { slug: p.slug, title: p.title, meta_title: p.meta_title || old.meta_title || undefined, date: p.date, category: p.category, excerpt: p.excerpt, meta_description: p.meta_description, card_headline: p.card_headline || p.title, tags: p.tags || [], key_points: p.key_points?.length ? p.key_points : old.key_points || [], quick_facts: p.quick_facts?.length ? p.quick_facts : old.quick_facts || [], faq: p.faq?.length ? p.faq : old.faq || [], cover: `assets/covers/${p.slug}.png`, cover_alt: p.card_headline || p.title, body_html: p.body_html };
+  // পত্রিকার ঐচ্ছিক ঘর: খবরের ধরন, কাদের জন্য, ভারতে চালু কি না, দাম, নোটিফিকেশনের লাইন
+  for (const k of ["news_type", "audience", "india", "price", "push_line"]) { const v = p[k] ?? old[k]; if (v != null && v !== "") post[k] = v; }
   // আপনার পাঠানো ছবি (থাকলে) নামিয়ে রাখি
   if (p.photo_url && /^https:\/\//.test(p.photo_url)) {
     const ext = (p.photo_url.split("?")[0].match(/\.(jpe?g|png|webp)$/i)?.[1] || "jpg").toLowerCase();
