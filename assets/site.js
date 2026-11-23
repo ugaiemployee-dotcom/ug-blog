@@ -23,7 +23,20 @@
     var parts = new Intl.DateTimeFormat("bn-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).formatToParts(new Date());
     var g = function (t) { for (var i = 0; i < parts.length; i++) if (parts[i].type === t) return parts[i].value; return ""; };
     dl.textContent = g("weekday") + ", " + g("day") + " " + g("month") + " " + g("year");
+    var sd = $("[data-today-d]"), sm = $("[data-today-my]");
+    if (sd && sm) { sd.textContent = g("day"); sm.textContent = g("month") + " " + g("year"); }
   } catch (e) {}
+
+  // ---- ভাসমান মেনু: নিচে নামলে সরে যায়, উপরে উঠলে ফেরে ----
+  var lastY = 0, navTick = false;
+  var navState = function () {
+    var y = W.scrollY || 0;
+    B.classList.toggle("scrolled", y > 24);
+    if (Math.abs(y - lastY) > 6) { B.classList.toggle("nav-up", y > lastY && y > 320); lastY = y; }
+    navTick = false;
+  };
+  addEventListener("scroll", function () { if (!navTick) { navTick = true; requestAnimationFrame(navState); } }, { passive: true });
+  navState();
 
   // ---- ক্লিক গণনা, লিংক কপি ----
   var slug = (location.pathname.match(/\/posts\/([^/]+)/) || [])[1] || (location.pathname.replace(/\/+$/, "").split("/").pop() || "home");
@@ -34,9 +47,9 @@
       var h = a.getAttribute("href") || "";
       var target = FREE && h.indexOf(FREE) > -1 ? "free" : MAIN && h.indexOf(MAIN) > -1 ? "main" : null;
       if (target) {
-        var box = a.closest(".mast,.learn,.foot,.prose,.author,.own-tools,.page-head,.seo-block");
-        var place = box ? box.className.split(" ")[0] : "other";
-        if (h.indexOf("utm_source") < 0 && h.indexOf("mailto:") !== 0) a.href = h + (h.indexOf("?") > -1 ? "&" : "?") + "utm_source=patrika&utm_medium=" + place + "&utm_campaign=" + encodeURIComponent(slug);
+        var box = a.closest(".nav,.hero,.klass,.foot,.prose,.author,.own-tools,.page-head,.seo-block");
+        var place = (h.match(/utm_medium=([\w-]+)/) || [])[1] || (box ? box.className.split(" ")[0] : "other");
+        if (h.indexOf("mailto:") !== 0 && h.indexOf("utm_campaign") < 0) a.href = h + (h.indexOf("?") > -1 ? "&" : "?") + (h.indexOf("utm_source") < 0 ? "utm_source=patrika&utm_medium=" + place + "&" : "") + "utm_campaign=" + encodeURIComponent(slug);
         if (SB && SBK) try {
           fetch(SB + "/rest/v1/news_clicks", { method: "POST", keepalive: true, headers: { apikey: SBK, Authorization: "Bearer " + SBK, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify({ slug: slug.slice(0, 120), target: target, place: place.slice(0, 30) }) }).catch(function () {});
         } catch (e) {}
@@ -229,7 +242,7 @@
           if (e.metaKey || e.ctrlKey || e.shiftKey) return;
           e.preventDefault();
           S.type = c.getAttribute("data-type") || ""; push(); apply();
-          var m = $("#main"), bar = $(".secbar"), top = m ? m.offsetTop - (bar ? bar.offsetHeight : 0) : 0;
+          var m = $("#news"), bar = $(".secbar"), top = m ? m.offsetTop - (bar ? bar.offsetHeight : 0) - 8 : 0;
           if (scrollY > top) scrollTo({ top: top, behavior: reduced ? "auto" : "smooth" });
         });
       });
@@ -280,9 +293,9 @@
     if (Date.now() - loadedAt < 4000) return setTimeout(showInstall, 4000);
     if (openS) return setTimeout(showInstall, 5000);
     if (ios) { $("[data-ios]", inst).hidden = false; $("[data-std]", inst).hidden = true; $("[data-install]", inst).hidden = true; $("[data-install-x]", inst).textContent = "ঠিক আছে"; }
-    inst.hidden = false; requestAnimationFrame(function () { inst.classList.add("open"); });
+    inst.hidden = false; B.classList.add("has-install"); requestAnimationFrame(function () { inst.classList.add("open"); });
   };
-  var hideInstall = function () { if (!inst) return; inst.classList.remove("open"); setTimeout(function () { inst.hidden = true; }, 220); };
+  var hideInstall = function () { if (!inst) return; B.classList.remove("has-install"); inst.classList.remove("open"); setTimeout(function () { inst.hidden = true; }, 220); };
   if (inst) {
     addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; showInstall(); });
     setTimeout(showInstall, Math.max(4000, 4e4 - (Date.now() - t0)));
@@ -300,6 +313,21 @@
   var API = B.getAttribute("data-push-api");
   var canPush = B.getAttribute("data-push") === "1" && API && hasSW && "PushManager" in W && "Notification" in W;
   var pform = $("#pform");
+  // নোটিফিকেশনের বোতাম: push থাকলে শিট খোলে, না থাকলে Telegram চ্যানেলে যায়
+  $$("[data-push-cta]").forEach(function (a) {
+    if (canPush && pform) a.addEventListener("click", function (e) { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); openSheet("psheet", a); });
+    else { var sp = $("span", a); if (sp) sp.textContent = a.getAttribute("data-alt"); var tg = a.parentNode.querySelector("[data-tg]"); if (tg) { tg.removeAttribute("target"); tg.href = R + "tools/"; $("span", tg).textContent = "সব AI টুল দেখুন"; } }
+  });
+  // খবরের নিচের ছোট বার (শেয়ার + নোটিফিকেশন)
+  var abar = $("#abar");
+  if (abar && !store.sget("uap_abar_x")) {
+    var abarOn = false, abarCheck = function () {
+      var on = (W.scrollY || 0) > 500 && !openS;
+      if (on !== abarOn) { abarOn = on; if (on) { abar.hidden = false; requestAnimationFrame(function () { abar.classList.add("open"); }); } else abar.classList.remove("open"); }
+    };
+    addEventListener("scroll", abarCheck, { passive: true });
+    $("[data-abar-x]", abar).addEventListener("click", function () { store.sset("uap_abar_x", "1"); abar.hidden = true; removeEventListener("scroll", abarCheck); });
+  }
   if (canPush && pform) {
     $$("[data-push-open],[data-push-box]").forEach(function (n) { n.hidden = false; });
     var pmsg = $("[data-push-msg]", pform), on = $("[data-push-on]", pform), off = $("[data-push-off]", pform);

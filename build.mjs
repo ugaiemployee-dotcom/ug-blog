@@ -22,6 +22,11 @@ const text = (html = "") => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").t
 const abs = (p) => (/^https?:\/\//.test(p) ? p : `${SITE}/${p.replace(/^\/+/, "")}`);
 const catName = (k) => cfg.categories[k] || k;
 const host = (u) => u.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+// Unique Gurukul-এর প্রতিটা লিংকে utm: কোন জায়গা থেকে ক্লিক হল তা বোঝা যায়
+const ug = (u, medium) => esc(`${u}${u.includes("?") ? "&" : "?"}utm_source=patrika&utm_medium=${medium}`);
+const UG_HREF = new RegExp(`href="(https?://(?:www\\.)?(?:${[cfg.mainSiteUrl, cfg.freeClassUrl].map((u) => host(u).replace(/\./g, "\\.")).join("|")})[^"]*)"`, "g");
+const utmHtml = (html = "", medium) => html.replace(UG_HREF, (m, u) => (u.includes("utm_source") ? m : `href="${u}${u.includes("?") ? "&amp;" : "?"}utm_source=patrika&amp;utm_medium=${medium}"`));
+const TG = cfg.telegramUrl || "https://t.me/uniquegurukulfamily";
 const hasLogo = existsSync("assets/logo.webp");
 const logoAbs = hasLogo ? abs("assets/logo.webp") : cfg.logoSourceUrl;
 const APPICON = existsSync("assets/app/icon-512.png");
@@ -130,7 +135,7 @@ const catIcon = (k) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="cu
 // ---- Unique Gurukul-এর নিজস্ব AI টুল ----
 const OWN = existsSync("data/own-tools.json") ? JSON.parse(readFileSync("data/own-tools.json", "utf8")) : [];
 const ownCard = (t) => `<a class="own" href="${esc(t.url)}?utm_source=patrika&utm_medium=own-tools" target="_blank" rel="noopener"><div class="own-top"><i aria-hidden="true">${esc(t.name.replace(/^AI /, "")[0])}</i><div><span class="own-cat">${esc(t.category)}</span><b>${esc(t.name)}</b></div></div><em>${esc(t.tagline)}</em><p>${esc(t.desc)}</p><ul>${t.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul><span class="more">টুলটা দেখুন</span></a>`;
-const ownSection = () => OWN.length ? `<section class="own-tools"><div class="wrap"><p class="lede">বিভিন্ন বিভাগে Unique Gurukul-এর ৪০টিরও বেশি নিজস্ব AI টুল আছে, আরও তৈরি হচ্ছে। তার মধ্যে কয়েকটা:</p><div class="own-grid">${OWN.map(ownCard).join("")}<div class="own own-more"><b>আরও টুল আসছে</b><p>বাকি টুলগুলো একে একে এখানে যোগ হবে।</p><a class="btn" href="${esc(cfg.mainSiteUrl)}">Unique Gurukul-এর ওয়েবসাইট</a></div></div></div></section>` : "";
+const ownSection = () => OWN.length ? `<section class="own-tools"><div class="wrap"><p class="lede">বিভিন্ন বিভাগে Unique Gurukul-এর ৪০টিরও বেশি নিজস্ব AI টুল আছে, আরও তৈরি হচ্ছে। তার মধ্যে কয়েকটা:</p><div class="own-grid">${OWN.map(ownCard).join("")}<div class="own own-more"><b>আরও টুল আসছে</b><p>বাকি টুলগুলো একে একে এখানে যোগ হবে।</p><a class="btn" href="${ug(cfg.mainSiteUrl, "own-tools")}">Unique Gurukul-এর ওয়েবসাইট</a></div></div></div></section>` : "";
 
 // ---- load posts ----
 const posts = [];
@@ -188,6 +193,8 @@ const ICON = {
   share: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>',
   search: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
   bell: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>',
+  plane: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L3 10.5l6.5 2.5M21 3l-4.5 17-7-7M21 3L9.5 13v6l3.2-3.8"/></svg>',
+  arrow: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   filter: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
 };
 const shareRow = (url, title) => {
@@ -229,13 +236,36 @@ const pushSheet = () => `<div class="sheet" id="psheet" role="dialog" aria-modal
 <div class="sheet-foot"><button type="button" class="btn-line" data-push-off hidden>বন্ধ করুন</button><button type="submit" class="btn" data-push-on>নোটিফিকেশন চালু করুন</button></div></form></div>`;
 const installCard = (root) => `<div class="install" id="install" role="dialog" aria-labelledby="install-h" hidden><img src="${root}assets/app/icon-192.png" alt="" width="48" height="48"><div class="install-tx"><b id="install-h">AI পত্রিকা ফোনে রাখুন</b><p data-std>অ্যাপের মতো এক ট্যাপে খুলবে। নেট না থাকলেও আগে খোলা খবর পড়া যাবে।</p><p data-ios hidden>Safari-র নিচের Share বোতামে ট্যাপ করে "Add to Home Screen" বেছে নিন।</p></div><div class="install-act"><button type="button" class="btn" data-install>ইনস্টল করুন</button><button type="button" class="btn-text" data-install-x>এখন নয়</button></div></div>`;
 
-const wordmark = (root, tag = "a") => `<a class="wordmark" href="${root}"><small>Unique</small><span>AI পত্রিকা</span></a>`;
+const wordmark = (root) => `<a class="brand" href="${root}" aria-label="${esc(cfg.siteName)}, প্রথম পাতা"><img src="${root}assets/app/icon-192.png" alt="" width="36" height="36"><span class="wordmark"><small>Unique</small><b>AI পত্রিকা</b></span></a>`;
+// নোটিফিকেশনের বোতাম: ব্রাউজারে push না থাকলে একই বোতাম Telegram চ্যানেলে নিয়ে যায়
+const pushCta = (cls, label = "নোটিফিকেশন চালু করুন") => `<a class="${cls}" href="${esc(TG)}" target="_blank" rel="noopener" data-push-cta data-alt="Telegram-এ রোজ খবর পান">${ICON.bell}<span>${label}</span></a>`;
+const tgBtn = (cls, label = "Telegram-এ জয়েন করুন") => `<a class="${cls}" href="${esc(TG)}" target="_blank" rel="noopener" data-tg>${ICON.plane}<span>${label}</span></a>`;
+
+// ---- ছাপাখানার চিহ্ন: সংস্করণের সিল, ক্লাসের টিকিট, ফুটারের ছাপার রোল ----
+const burst = (n, r1, r2) => { let d = ""; for (let i = 0; i < n * 2; i++) { const a = (Math.PI * i) / n, r = i % 2 ? r2 : r1; d += `${i ? "L" : "M"}${(60 + r * Math.cos(a)).toFixed(1)} ${(60 + r * Math.sin(a)).toFixed(1)}`; } return d + "Z"; };
+const todayParts = () => { const ps = new Intl.DateTimeFormat("bn-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).formatToParts(new Date(NOW)); const g = (t) => ps.find((x) => x.type === t)?.value || ""; return [g("day"), `${g("month")} ${g("year")}`]; };
+const seal = () => { const [d, my] = todayParts(); return `<div class="seal" aria-hidden="true"><svg class="seal-edge" viewBox="0 0 120 120"><path d="${burst(30, 59, 54)}"/><circle cx="60" cy="60" r="47.5"/></svg><div class="seal-in"><small>সংস্করণ</small><b data-today-d>${d}</b><span data-today-my>${my}</span></div></div>`; };
+const WHY = [
+  ["ভারতে চালু কিনা, প্রথম লাইনেই", "টুলটা এ দেশে খোলে কি না আর খরচ কত, সেটা জেনে তবে বাকিটা পড়ুন।", '<path d="M16 28s9-8.2 9-15a9 9 0 1 0-18 0c0 6.800 9 15 9 15z"/><path d="M12.200 13.200l2.800 2.800 5-5.400"/>'],
+  ["কীভাবে ব্যবহার করবেন, ধাপে ধাপে", "শুধু খবর নয়। কোথায় ট্যাপ করবেন, কী লিখবেন, পরপর সাজানো।", '<path d="M4 26h7v-6h7v-6h7V8"/><path d="M21 8h4v4"/>'],
+  ["তৈরি প্রম্পট, এক ট্যাপে কপি", "লেখার মধ্যেই প্রম্পট দেওয়া থাকে। কপি করে নিজের কাজে বসিয়ে নিন।", '<rect x="11" y="10" width="15" height="17" rx="3"/><path d="M21 10V8a3 3 0 0 0-3-3H9a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h2M15.500 16h6M15.500 21h4"/>'],
+  ["স্ক্যামের সতর্কতা, সবার আগে", "ভুয়ো অ্যাপ, ডিপফেক বা প্রতারণার খবর এলে সেটা পাতার একদম উপরে থাকে।", '<path d="M16 4l10 4v7c0 6.500-4.300 11-10 13C10.300 26 6 21.500 6 15V8z"/><path d="M16 11v6M16 21.200v.3"/>'],
+];
+const whyStrip = () => `<section class="why"><div class="wrap"><h2 class="sec-title rv">প্রতিটা খবরে এই চারটে জিনিস <em>থাকবেই</em></h2><ul class="why-grid rv">${WHY.map(([t, d, ic]) => `<li><svg viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ic}</svg><b>${t}</b><span>${d}</span></li>`).join("")}</ul></div></section>`;
+// ৪ দিনের ফ্রি ক্লাস: একটা প্রবেশপত্রের মতো কার্ড। wide = হোমের বড় ব্যান্ড, নইলে খবরের নিচের ছোট বাক্স
+const klass = (root, medium, wide) => `<aside class="klass${wide ? " klass-wide rv" : ""}" aria-labelledby="klass-h"><div class="klass-main"><p class="pill-k"><i></i>${esc(cfg.brand)}-এর ফ্রি ক্লাস</p><h2 id="klass-h">${wide ? "খবর তো পড়লেন। এবার <em>নিজের হাতে</em> করে দেখুন।" : esc(cfg.learnTitle)}</h2><p>${esc(wide ? cfg.ctaText : cfg.learnText)}</p><ul class="klass-pts"><li>৪ দিন</li><li>পুরোটা ফ্রি</li><li>বাংলায়</li><li>হাতে-কলমে</li></ul><a class="btn-gold" href="${ug(cfg.freeClassUrl, medium)}" target="_blank" rel="noopener"><span>ফ্রি ক্লাসে নাম লেখান</span>${ICON.arrow}</a></div><div class="klass-stub">${hasMentor ? `<img src="${root}assets/mentor.webp" alt="${esc(cfg.mentorName)}" width="72" height="72" loading="lazy">` : ""}<p><b>${esc(cfg.mentorName)}</b><span>${esc(cfg.mentorTitle)}</span></p><dl><div><dt>কত দিন</dt><dd>৪ দিন</dd></div><div><dt>ফি</dt><dd>₹০</dd></div></dl></div></aside>`;
+const joinCard = () => `<aside class="join"><div><h2>কাল সকালের খবরটাও চাই?</h2><p>বড় খবর এলেই ফোনে জানাব। দিনে খুব বেশি নয়, আর যখন খুশি বন্ধ করা যায়।</p></div><div class="join-act">${pushCta("btn-gold")}${tgBtn("btn-ghost")}</div></aside>`;
+const press = () => `<div class="press" aria-hidden="true"><p class="press-word">AI পত্রিকা</p><div class="press-line"><svg class="press-roll" viewBox="0 0 96 96" width="96" height="96"><circle cx="48" cy="48" r="46" fill="#fff"/><circle cx="48" cy="48" r="36" fill="none" stroke="#DCCFFB" stroke-width="1.500"/><circle cx="48" cy="48" r="27" fill="none" stroke="#DCCFFB" stroke-width="1.500"/><circle cx="48" cy="48" r="17" fill="#F0BE5C"/><path d="M48 31v34M31 48h34" stroke="#7E5410" stroke-width="3" stroke-linecap="round"/><circle cx="48" cy="48" r="5" fill="#4A0FC2"/></svg><span class="press-web"></span><svg class="press-nip" viewBox="0 0 40 84" width="40" height="84"><g class="nip-a"><circle cx="20" cy="20" r="18" fill="#F0BE5C"/><path d="M20 8v24M8 20h24" stroke="#7E5410" stroke-width="2.500" stroke-linecap="round"/></g><g class="nip-b"><circle cx="20" cy="64" r="18" fill="#F0BE5C"/><path d="M20 52v24M8 64h24" stroke="#7E5410" stroke-width="2.500" stroke-linecap="round"/></g></svg><svg class="press-plane" viewBox="0 0 150 110" width="150" height="110"><path class="plane-trail" d="M4 104C30 100 52 86 70 62" fill="none" stroke="#F0BE5C" stroke-width="2.500" stroke-linecap="round" stroke-dasharray="1 9"/><g class="plane"><path d="M146 6L62 44l28 10z" fill="#fff"/><path d="M146 6L90 54l-4 28z" fill="#E9DFFF"/><path d="M146 6L90 54l32 12z" fill="#fff"/><path d="M90 54l-4 28 14-22z" fill="#C9B6F7"/><path d="M96 38l22-12M100 43l12-6" stroke="#5D16E9" stroke-width="2.200" stroke-linecap="round" opacity=".55"/><path d="M104 58l14 5" stroke="#5D16E9" stroke-width="2.200" stroke-linecap="round" opacity=".4"/></g></svg></div><p class="press-cap">ছাপা হয়ে সোজা আপনার ফোনে</p></div>`;
 const CSP = `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data:; font-src 'self'; connect-src 'self' ${new URL(cfg.supabaseUrl || cfg.pushApi).origin}; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'`;
 
 function layout({ root, title, description, canonical, ogImage, ogType = "website", jsonLd = [], body, extraHead = "", noindex = false, kind = "page", active = "", filter = false, preload = "" }) {
   const img = abs(ogImage || "assets/og-default.png");
   const ld = [{ "@context": "https://schema.org", "@graph": [ORG, PUB, ...jsonLd] }];
   const home = kind === "home";
+  // পাতার মাথার বেগুনি অংশ (হিরো বা শিরোনাম) আলাদা করে নিই, যাতে ধরনের সারি তার নিচে বসে
+  const ph = body.match(/^\s*<section class="(?:page-head|hero)"[\s\S]*?<\/section>/);
+  const top = ph ? ph[0] : "";
+  if (ph) body = body.slice(ph[0].length);
   return `<!doctype html>
 <html lang="bn">
 <head>
@@ -273,28 +303,28 @@ ${extraHead}
 <link rel="icon" href="${root}assets/app/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="${root}assets/app/icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="${root}assets/app/apple-touch-icon.png">
-<link rel="preload" href="${root}assets/fonts/hind-siliguri-bengali-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="${root}assets/fonts/anek-bangla-bengali-800-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="${root}assets/fonts/hind-siliguri-bengali-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 ${preload}<link rel="stylesheet" href="${root}assets/style.css?v=${VER}">
 ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(/</g, "\\u003c")}</script>`).join("\n")}
 </head>
-<body class="k-${kind}" data-root="${root}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}">
+<body class="k-${kind}${top ? " top-v" : ""}" data-root="${root}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}">
 <a class="skip" href="#main">মূল লেখায় যান</a>
 ${kind === "article" ? '<div class="progress" aria-hidden="true"><i></i></div>' : ""}
-<header class="mast${home ? " mast-full" : ""}"><div class="wrap">
-<div class="mast-bar">${home ? "" : wordmark(root)}<span class="dateline" data-today>${dparts(NOW, true)}</span><span class="mast-act"><a class="icon-btn" href="${root}search/">${ICON.search}<span>খুঁজুন</span></a><button class="icon-btn" type="button" data-sheet="psheet" data-push-open hidden>${ICON.bell}<span>নোটিফিকেশন</span></button></span></div>
-${home ? `<h1 class="masthead">${wordmark(root)}</h1><p class="motto"><span>${esc(cfg.motto)}</span></p>` : ""}
-</div></header>
-${secBar(root, active, { filter, sticky: filter })}
+<header class="nav"><div class="wrap"><div class="nav-pill">${wordmark(root)}<nav class="nav-links" aria-label="প্রধান মেনু"><a href="${root}">আজকের খবর</a><a href="${root}tools/">AI টুল</a><a href="${root}type/scam-alert/">সতর্কতা</a><a href="${root}about/">আমাদের কথা</a></nav><span class="nav-act"><a class="icon-btn" href="${root}search/" aria-label="খবর খুঁজুন">${ICON.search}</a><button class="icon-btn" type="button" data-sheet="psheet" data-push-open hidden aria-label="নোটিফিকেশন">${ICON.bell}</button><a class="nav-cta" href="${ug(cfg.freeClassUrl, "nav")}" target="_blank" rel="noopener">ফ্রি ক্লাস</a></span></div></div></header>
 <main id="main">
+${top}
+${secBar(root, active, { filter, sticky: filter })}
+<div id="news"></div>
 ${body}
 </main>
 <footer class="foot"><div class="wrap foot-in">
-<div class="foot-brand">${wordmark(root)}<p class="foot-motto">${esc(cfg.motto)}</p><p>${esc(cfg.footerAbout)}</p></div>
+<div class="foot-brand">${wordmark(root)}<p class="foot-motto">${esc(cfg.motto)}</p><p>${esc(cfg.footerAbout)}</p><div class="foot-act">${tgBtn("btn-ghost", "Telegram চ্যানেল")}<a class="btn-ghost" href="${ug(cfg.freeClassUrl, "footer")}" target="_blank" rel="noopener">৪ দিনের ফ্রি ক্লাস</a></div></div>
 <nav class="foot-col" aria-label="খবরের ধরন"><b>খবরের ধরন</b>${TYPES.map((t) => `<a href="${root}type/${t.key}/">${esc(t.label)}</a>`).join("")}</nav>
 <nav class="foot-col" aria-label="বিষয়"><b>বিষয়</b>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}<a href="${root}tools/">সব AI টুলের তালিকা</a><a href="${root}our-tools/">Unique Gurukul-এর টুল</a></nav>
 <nav class="foot-col" aria-label="পত্রিকা"><b>পত্রিকা</b><a href="${root}about/">আমাদের কথা</a><a href="${root}contact/">যোগাযোগ</a><a href="${root}privacy/">গোপনীয়তা নীতি</a><a href="${root}terms/">শর্ত ও দাবিত্যাগ</a><a href="${root}feed.xml">RSS ফিড</a></nav>
-</div><div class="foot-pub"><div class="wrap"><p><a href="${esc(cfg.mainSiteUrl)}">${esc(cfg.brand)}</a>-এর একটি উদ্যোগ</p><p>© ${bnNum(new Date().getFullYear()).replace(/,/g, "")} ${esc(cfg.brand)}। সব অধিকার সংরক্ষিত।</p></div></div></footer>
+</div>${press()}<div class="foot-pub"><div class="wrap"><p><a href="${ug(cfg.mainSiteUrl, "footer")}">${esc(cfg.brand)}</a>-এর একটি উদ্যোগ</p><p>© ${bnNum(new Date().getFullYear()).replace(/,/g, "")} ${esc(cfg.brand)}। সব অধিকার সংরক্ষিত।</p></div></div></footer>
+${kind === "article" ? `<div class="abar" id="abar" hidden><a class="abar-wa" href="https://wa.me/?text=${encodeURIComponent(title.split(" | ")[0])}%20${encodeURIComponent(canonical)}" target="_blank" rel="noopener">${ICON.wa}<span>WhatsApp শেয়ার</span></a>${pushCta("abar-push", "নোটিফিকেশন")}<button type="button" class="x" data-abar-x aria-label="বন্ধ করুন">×</button></div>` : ""}
 ${filter ? filterSheet() : ""}
 ${pushSheet()}
 ${installCard(root)}
@@ -328,6 +358,7 @@ const typeIndex = (root) => `<section class="rail-box"><h2>খবরের ধ�
 const toolIndex = (root) => Object.keys(TCATS).length ? `<section class="rail-box"><h2>কাজ অনুযায়ী AI টুল</h2><ul class="tool-index">${Object.entries(TCATS).filter(([k]) => toolsIn(k).length).map(([k, v]) => `<li><a href="${root}tools/${k}/"><span class="ti-ic">${toolsIn(k).filter((t) => t.icon).slice(0, 3).map((t) => toolIcon(t, root, 18)).join("")}</span>${esc(v.name)}</a></li>`).join("")}</ul><a class="rail-more" href="${root}tools/">সব AI টুলের তালিকা</a></section>` : "";
 const pushBox = () => `<section class="rail-box rail-push" data-push-box hidden><h2>বড় খবর এলেই জানুন</h2><p>যে ধরনের খবর চান, শুধু সেটাই আসবে।</p><button type="button" class="btn" data-sheet="psheet">নোটিফিকেশন চালু করুন</button></section>`;
 
+const pageHead = (kicker, h1, lead, extra = "") => `<section class="page-head"><div class="wrap">${kicker ? `<p class="page-k">${kicker}</p>` : ""}<h1>${h1}</h1>${lead ? `<p>${lead}</p>` : ""}${extra}</div></section>`;
 // home + pagination
 const HEAD = 5; // প্রথম পাতায়: ১টা বড় খবর + পাশে ৪টা
 const pages = Math.max(1, Math.ceil(Math.max(0, posts.length - HEAD) / PER_PAGE));
@@ -353,10 +384,21 @@ for (let page = 1; page <= pages; page++) {
         { "@type": "FAQPage", mainEntity: cfg.homeFaq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
         { "@type": "ItemList", name: "সর্বশেষ খবর", itemListElement: posts.slice(0, 10).map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/posts/${p.slug}/`, name: p.title })) },
       ] : [],
-      body: `${page === 1 && pinned.length ? `<div class="wrap">${pinned.map((p) => `<a class="alert-bar" href="./posts/${p.slug}/"><b>সতর্কতা</b><span>${esc(p.title)}</span></a>`).join("")}</div>` : ""}
-${page === 1 && lead ? `<section class="front wrap" id="front" aria-label="প্রধান খবর">
-<article class="lead${lead.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(lead)}><a href="./posts/${lead.slug}/">${lead.photo ? `<figure class="lead-pic">${photoTag(lead, root, 'fetchpriority="high" decoding="async"')}</figure>` : ""}<div class="lead-tx">${kicker(lead)}<h2>${esc(lead.title)}</h2><p class="dek">${esc(lead.excerpt)}</p>${!lead.photo && lead.key_points.length ? `<ul class="lead-points">${lead.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}${(() => { const f = lead.quick_facts.filter((x) => !["ভারতে", "খরচ"].includes(nf(x.label)) && !/বলা নেই/.test(x.value)).slice(0, 3); return !lead.photo && f.length ? `<dl class="lead-facts">${f.map((x) => `<div><dt>${esc(x.label)}</dt><dd>${esc(x.value)}</dd></div>`).join("")}</dl>` : ""; })()}${badges(lead)}<span class="read">পুরো খবর পড়ুন<i aria-hidden="true"></i></span></div></a></article>
-<div class="side">${posts.slice(1, HEAD).map((p, i) => `<article class="side-story${p.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(p)}><a href="./posts/${p.slug}/">${kicker(p)}<h3>${esc(p.title)}</h3>${i === 0 ? `<p>${esc(p.excerpt)}</p>` : ""}${badges(p)}</a></article>`).join("")}</div>
+      body: `${page === 1 ? `<section class="hero"><div class="wrap hero-in">
+<div class="hero-tx">
+<p class="eyebrow"><i></i><b>আজকের সংস্করণ</b><span data-today>${dparts(NOW, true)}</span></p>
+<h1 class="masthead"><small>Unique</small><span>AI পত্রিকা</span></h1>
+<p class="motto">AI-এর খবর, <em>বাংলার আলোয়</em></p>
+<p class="promise">রোজ ২ মিনিটে জানুন, AI-এর কোন খবরটা আপনার কাজে লাগবে।</p>
+<div class="hero-cta">${pushCta("btn-gold")}${tgBtn("btn-ghost")}</div>
+<p class="trust">২০১৭ থেকে · ৩০,০০০+ শিক্ষার্থীর ভরসা <a href="${ug(cfg.mainSiteUrl, "hero")}">${esc(cfg.brand)}</a>-এর উদ্যোগ</p>
+${seal()}
+</div>
+${lead ? `<article class="lead${lead.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(lead)}><a href="./posts/${lead.slug}/"><span class="lead-tab">আজকের বড় খবর</span>${lead.photo ? `<figure class="lead-pic">${photoTag(lead, root, 'fetchpriority="high" decoding="async"')}</figure>` : ""}<div class="lead-tx">${kicker(lead)}<h2>${esc(lead.title)}</h2><p class="dek">${esc(lead.excerpt)}</p>${!lead.photo && lead.key_points.length ? `<ul class="lead-points">${lead.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}${badges(lead)}<span class="read">পুরো খবর পড়ুন${ICON.arrow}</span></div></a></article>` : ""}
+</div></section>` : pageHead(`<a href="${root}">আজকের খবর</a>`, "পুরনো খবর", `পাতা ${bnNum(page)} / ${bnNum(pages)}`)}
+${page === 1 && pinned.length ? `<div class="wrap">${pinned.map((p) => `<a class="alert-bar" href="./posts/${p.slug}/"><b>সতর্কতা</b><span>${esc(p.title)}</span></a>`).join("")}</div>` : ""}
+${page === 1 && posts.length > 1 ? `<section class="front wrap" id="front" aria-labelledby="front-h"><h2 class="sec-title" id="front-h">আজকের <em>আরও খবর</em></h2>
+<div class="side">${posts.slice(1, HEAD).map((p) => `<article class="side-story${p.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(p)}><a href="./posts/${p.slug}/">${kicker(p)}<h3>${esc(p.title)}</h3><p>${esc(p.excerpt)}</p>${badges(p)}</a></article>`).join("")}</div>
 </section>` : ""}
 <div class="wrap paper">
 <div class="paper-main">
@@ -368,14 +410,15 @@ ${pager(root, page, pages)}
 </div>
 <aside class="rail" aria-label="আরও">${pushBox()}${typeIndex(root)}${toolIndex(root)}</aside>
 </div>
-${page === 1 ? `<section class="seo-block"><div class="wrap seo-in"><div class="prose">${cfg.homeSeoHtml}</div>
+${page === 1 ? `${whyStrip()}
+<div class="wrap klass-wrap">${klass(root, "home-class", true)}</div>
+<section class="seo-block"><div class="wrap seo-in"><div class="prose">${utmHtml(cfg.homeSeoHtml, "home-about")}</div>
 <div><div class="tool-cloud"><h2>টুল অনুযায়ী খবর</h2><div class="tools-row">${TOOLS.map((t) => [t, postsOfTool(t).length]).filter((x) => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 18).map((x) => toolChip(x[0], root)).join("") || "<span>শিগগিরই আসছে</span>"}</div><a class="rail-more" href="${root}tools/">সব AI টুলের তালিকা</a></div>
 <section class="faq"><h2>সাধারণ প্রশ্ন</h2>${cfg.homeFaq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section></div></div></section>` : ""}`,
     })
   );
 }
 
-const pageHead = (kicker, h1, lead, extra = "") => `<section class="page-head"><div class="wrap">${kicker ? `<p class="page-k">${kicker}</p>` : ""}<h1>${h1}</h1>${lead ? `<p>${lead}</p>` : ""}${extra}</div></section>`;
 
 // খবরের ধরনের পাতা: /type/<key>/
 for (const t of TYPES) {
@@ -487,13 +530,14 @@ ${p.key_points.length ? `<section class="glance"><h2>এক নজরে</h2><ul
 ${p.quick_facts.length ? `<dl class="facts">${p.quick_facts.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.value)}</dd></div>`).join("")}</dl>` : ""}
 ${p.tools.length ? `<div class="tools-row tools-top"><span>এই খবরে:</span>${p.tools.map((t) => toolChip(t, root)).join("")}</div>` : ""}
 ${toc}
-<div class="prose">${richBody}</div>
+<div class="prose">${utmHtml(richBody, "article-body")}</div>
 ${p.faq.length ? `<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${p.faq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section>` : ""}
-<aside class="learn"><h2>${esc(cfg.learnTitle)}</h2><p>${esc(cfg.learnText)}</p><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসের বিস্তারিত দেখুন</a></aside>
+${klass(root, "article-class", false)}
 ${shareRow(url, p.title)}
 ${p.tags.length ? `<ul class="tags" aria-label="ট্যাগ">${p.tags.map((t) => `<li>#${esc(t)}</li>`).join("")}</ul>` : ""}
 ${authorBox(root)}
-${next && next !== p ? `<nav class="next" aria-label="পরের খবর"><a href="${root}posts/${next.slug}/"><span>পরের খবর</span>${kicker(next)}<b>${esc(next.title)}</b></a></nav>` : ""}
+${next && next !== p ? `<nav class="next" aria-label="পরের খবর"><a href="${root}posts/${next.slug}/"><span class="next-k">পরের খবর${ICON.arrow}</span>${kicker(next)}<b>${esc(next.title)}</b><p>${esc(next.excerpt)}</p></a></nav>` : ""}
+${joinCard()}
 </div>
 </article>
 ${related.length ? `<section class="related"><div class="wrap"><h2>আরও পড়ুন</h2>${storyList(related, root)}</div></section>` : ""}`,
@@ -603,12 +647,12 @@ write(
     canonical: `${SITE}/about/`,
     jsonLd: [crumbs([["হোম", `${SITE}/`], ["আমাদের কথা", `${SITE}/about/`]]), { "@type": "AboutPage", name: `${cfg.siteName} সম্পর্কে`, url: `${SITE}/about/`, inLanguage: "bn", about: { "@id": PUB["@id"] } }, { "@type": "Person", name: cfg.mentorName, jobTitle: cfg.mentorTitle, description: cfg.mentorBio, worksFor: { "@id": ORG["@id"] } }],
     body: `${pageHead("আমাদের কথা", `${esc(cfg.siteName)} ও ${esc(cfg.brand)}`, esc(cfg.aboutDescription))}
-<article class="article"><div class="a-body">${existsSync("assets/mentor-about.webp") ? `<figure class="about-photo"><img src="../assets/mentor-about.webp" alt="${esc(cfg.mentorName)}, ${esc(cfg.mentorTitle)}" width="860" height="800" loading="lazy"><figcaption><b>${esc(cfg.mentorName)}</b>${esc(cfg.mentorTitle)}</figcaption></figure>` : ""}<div class="prose">${cfg.aboutHtml}</div>
+<article class="article"><div class="a-body">${existsSync("assets/mentor-about.webp") ? `<figure class="about-photo"><img src="../assets/mentor-about.webp" alt="${esc(cfg.mentorName)}, ${esc(cfg.mentorTitle)}" width="860" height="800" loading="lazy"><figcaption><b>${esc(cfg.mentorName)}</b>${esc(cfg.mentorTitle)}</figcaption></figure>` : ""}<div class="prose">${utmHtml(cfg.aboutHtml, "about")}</div>
 <section class="diff"><h2>${esc(cfg.diff.title)}</h2><p class="muted">${esc(cfg.diff.lead)}</p>
 <div class="diff-table" role="table"><div class="diff-row diff-head" role="row"><span role="columnheader"></span><span role="columnheader">সাধারণ AI কোর্স</span><span role="columnheader">${esc(cfg.brand)}</span></div>
 ${cfg.diff.rows.map((r) => `<div class="diff-row" role="row"><b role="cell">${esc(r[0])}</b><span role="cell" class="no">${esc(r[1])}</span><span role="cell" class="yes">${esc(r[2])}</span></div>`).join("")}</div></section>
 ${authorBox("../")}
-<aside class="learn"><h2>${esc(cfg.learnTitle)}</h2><p>${esc(cfg.learnText)}</p><a href="${esc(cfg.freeClassUrl)}">ফ্রি ক্লাসের বিস্তারিত দেখুন</a></aside></div></article>`,
+${klass("../", "about-class", false)}</div></article>`,
   })
 );
 
@@ -656,9 +700,9 @@ infoPage("contact", "যোগাযোগ", `${cfg.siteName} আর ${cfg.brand
 <h2>ইমেইল</h2>
 <p>${mail}<br>খবরে কোনো তথ্য ভুল মনে হলে খবরের লিংকটা সহ লিখুন, আমরা দেখে ঠিক করে দেব।</p>
 <h2>Telegram</h2>
-<p>AI-এর নতুন খবর আর আপডেট রোজ পেতে আমাদের চ্যানেলে যোগ দিন: <a href="https://t.me/uniquegurukulfamily" rel="noopener">t.me/uniquegurukulfamily</a></p>
+<p>AI-এর নতুন খবর আর আপডেট রোজ পেতে আমাদের চ্যানেলে যোগ দিন: <a href="${esc(TG)}" rel="noopener">${esc(host(TG))}</a></p>
 <h2>কোর্স ও ভর্তি</h2>
-<ul><li>৪ দিনের ফ্রি AI ক্লাস: <a href="${esc(cfg.freeClassUrl)}">${esc(host(cfg.freeClassUrl))}</a></li><li>সব কোর্স আর বিস্তারিত: <a href="${esc(cfg.mainSiteUrl)}">${esc(host(cfg.mainSiteUrl))}</a></li></ul>
+<ul><li>৪ দিনের ফ্রি AI ক্লাস: <a href="${ug(cfg.freeClassUrl, "contact")}">${esc(host(cfg.freeClassUrl))}</a></li><li>সব কোর্স আর বিস্তারিত: <a href="${ug(cfg.mainSiteUrl, "contact")}">${esc(host(cfg.mainSiteUrl))}</a></li></ul>
 <h2>আমরা কোথায়</h2>
 <p>${esc(cfg.brand)}, ${esc(cfg.address?.locality || "")}, পশ্চিমবঙ্গ, ভারত। ২০১৭ সাল থেকে শেখাচ্ছি।</p>
 <p><a href="../about/">আমাদের কথা</a>, <a href="../privacy/">গোপনীয়তা নীতি</a>, <a href="../terms/">শর্ত ও দাবিত্যাগ</a></p>`, "ContactPage");
@@ -688,7 +732,7 @@ write(
     description: cfg.description,
     canonical: `${SITE}/`,
     noindex: true,
-    body: `${pageHead("", "পাতাটা পাওয়া যায়নি", "ঠিকানাটা ভুল, অথবা খবরটা সরানো হয়েছে।", `<p><a class="btn" href="${base}">আজকের খবরে ফিরে যান</a></p>`)}`,
+    body: `${pageHead("", "পাতাটা পাওয়া যায়নি", "ঠিকানাটা ভুল, অথবা খবরটা সরানো হয়েছে।", `<p><a class="btn-gold" href="${base}">আজকের খবরে ফিরে যান</a></p>`)}`,
   })
 );
 write(
@@ -700,7 +744,7 @@ write(
     description: cfg.description,
     canonical: `${SITE}/`,
     noindex: true,
-    body: `${pageHead("", "আপনি অফলাইনে আছেন", "ইন্টারনেট ফিরলেই নতুন খবর দেখাবে। এর মধ্যে আগে খোলা খবরগুলো পড়তে পারেন।", `<p><button type="button" class="btn" data-reload>আবার চেষ্টা করুন</button></p>`)}
+    body: `${pageHead("", "আপনি অফলাইনে আছেন", "ইন্টারনেট ফিরলেই নতুন খবর দেখাবে। এর মধ্যে আগে খোলা খবরগুলো পড়তে পারেন।", `<p><button type="button" class="btn-gold" data-reload>আবার চেষ্টা করুন</button></p>`)}
 <div class="wrap narrow"><h2 class="sec-h">ফোনে রাখা খবর</h2><div id="offline-list" class="feed"><p class="empty">এখনও কোনো খবর ফোনে রাখা নেই। নেট ফিরলে যে খবর খুলবেন, সেটা পরে অফলাইনেও পড়া যাবে।</p></div></div>`,
   })
 );
@@ -735,6 +779,7 @@ write("manifest.webmanifest", JSON.stringify({
 const PRECACHE = [
   "./", "offline/", `assets/style.css?v=${VER}`, `assets/site.js?v=${VER}`,
   ...["bengali-400", "bengali-600", "bengali-700", "latin-400", "latin-600", "latin-700"].map((f) => `assets/fonts/hind-siliguri-${f}-normal.woff2`),
+  "assets/fonts/anek-bangla-bengali-800-normal.woff2", "assets/fonts/anek-bangla-latin-800-normal.woff2",
   "assets/app/icon-192.png", "assets/app/badge-96.png", ...(hasMentor ? ["assets/mentor.webp"] : []), "manifest.webmanifest",
 ];
 write("sw.js", SW_SRC.replace("__VERSION__", VER).replace("__PRECACHE__", JSON.stringify(PRECACHE)));
