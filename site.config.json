@@ -232,7 +232,7 @@
       "text": "যে অ্যাপ আর প্ল্যাটফর্মে AI-এর নতুন সুবিধা যোগ হচ্ছে।"
     }
   },
-  "pushEnabled": false,
+  "pushEnabled": true,
   "pushApi": "https://wiynqetgssigxyjvdvqh.supabase.co/functions/v1/patrika-push",
   "typeFromCategory": {
     "ai-tools": "new-tool",
