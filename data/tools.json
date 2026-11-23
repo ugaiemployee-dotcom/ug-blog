@@ -3,7 +3,7 @@
   "key": "chatgpt",
   "name": "ChatGPT",
   "match": "chatgpt|gpt-?\\d|openai",
-  "icon": null,
+  "icon": "assets/icons/openai.svg",
   "cat": "chat",
   "desc": "OpenAI-এর চ্যাট সহকারী। লেখা, পড়াশোনা, ছবি তৈরি আর কোডের কাজে সবচেয়ে বেশি ব্যবহার হয়।"
  },
@@ -131,7 +131,7 @@
   "key": "nano-banana",
   "name": "Nano Banana",
   "match": "nano banana|imagen",
-  "icon": null,
+  "icon": "assets/icons/gemini.svg",
   "cat": "image",
   "desc": "Google-এর ছবি তৈরি ও ছবি বদলানোর মডেল, Gemini-র ভেতরে চলে।"
  },
@@ -163,7 +163,7 @@
   "key": "canva",
   "name": "Canva",
   "match": "canva",
-  "icon": null,
+  "icon": "assets/icons/canva.svg",
   "cat": "image",
   "desc": "পোস্টার, সোশ্যাল পোস্ট আর প্রেজেন্টেশন বানানোর ডিজাইন টুল, ভেতরে AI ছবি ও লেখার সুবিধা আছে।"
  },
@@ -283,7 +283,7 @@
   "key": "playground",
   "name": "Google Playground",
   "match": "google.{0,12}playground|playground",
-  "icon": null,
+  "icon": "assets/icons/google.svg",
   "cat": "code",
   "desc": "Google Labs-এর টুল, লিখে বললে ব্রাউজারে খেলার মতো গেম বানায়।"
  },
@@ -483,7 +483,7 @@
   "key": "windows",
   "name": "Windows",
   "match": "windows|microsoft",
-  "icon": null,
+  "icon": "assets/icons/windows.svg",
   "cat": "other",
   "desc": "Microsoft-এর কম্পিউটার অপারেটিং সিস্টেম, ভেতরে Copilot আছে।"
  },
@@ -603,7 +603,7 @@
   "key": "codex",
   "name": "Codex",
   "match": "openai codex|\\bcodex\\b",
-  "icon": null,
+  "icon": "assets/icons/openai.svg",
   "cat": "code",
   "desc": "OpenAI-এর কোড লেখার এজেন্ট, নিজে থেকে কোডের কাজ সেরে দেয়।"
  },
