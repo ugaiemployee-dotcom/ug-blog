@@ -83,3 +83,26 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      # Web Push: নতুন খবরের নোটিফিকেশন। site.config.json-এ pushEnabled: true না হলে কিছুই পাঠায় না।
+      # repo variable PUSH_ENABLED=false দিলে পুরো ধাপ বন্ধ (জরুরি সুইচ)। ব্যর্থ হলেও deploy ভাঙে না।
+      - name: Checkout for push notify
+        if: success() && vars.PUSH_ENABLED != 'false'
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          sparse-checkout: |
+            posts
+            scripts/notify.mjs
+            site.config.json
+          sparse-checkout-cone-mode: false
+      - name: Send push notifications for new posts
+        if: success() && vars.PUSH_ENABLED != 'false'
+        continue-on-error: true
+        timeout-minutes: 12
+        env:
+          PATRIKA_PUSH_SECRET: ${{ secrets.PATRIKA_PUSH_SECRET }}
+          PUSH_ENABLED: ${{ vars.PUSH_ENABLED }}
+        run: |
+          [ -f scripts/notify.mjs ] || { echo "notify.mjs নেই, বাদ"; exit 0; }
+          node scripts/notify.mjs
