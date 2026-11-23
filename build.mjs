@@ -100,7 +100,7 @@ function deriveMeta(p) {
 const typeLabel = (k) => TYPE[k]?.label || "";
 
 // ---- AI tool library (icons + matching) ----
-const TOOLS = existsSync("data/tools.json") ? JSON.parse(readFileSync("data/tools.json", "utf8")).map((t) => ({ ...t, re: new RegExp(t.match, "i") })) : [];
+const TOOLS = existsSync("data/tools.json") ? JSON.parse(readFileSync("data/tools.json", "utf8")).map((t) => ({ ...t, re: new RegExp(`(?<![a-z])(?:${t.match})`, "i") })) /* শব্দের শুরু থেকে মিল: "Inkling" যেন "Kling" না হয় */ : [];
 const toolsFor = (p) => {
   const hay = `${p.title} ${(p.tags || []).join(" ")} ${text(p.body_html).slice(0, 700)}`;
   return TOOLS.filter((t) => t.re.test(hay)).slice(0, 4);
@@ -175,6 +175,28 @@ if (existsSync("posts")) {
 posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.slug.localeCompare(a.slug)));
 const typeCount = (k) => posts.filter((p) => p.type === k).length;
 
+// ---- AI ফ্ল্যাশ: ছোট খবর। build-এর সময় একবার আনা হয় (SEO আর JS ছাড়া পাঠকের জন্য), পাতায় site.js নিজে তাজা করে ----
+const INDIA_S = { available: "ভারতে চালু", soon: "ভারতে শীঘ্রই", no: "ভারতে নেই" };
+let briefs = [];
+if (cfg.briefsApi && !process.env.NO_BRIEFS) {
+  try {
+    const r = await fetch(cfg.briefsApi, { signal: AbortSignal.timeout(8000), headers: { accept: "application/json" } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    briefs = (Array.isArray(j?.briefs) ? j.briefs : [])
+      .filter((b) => b && typeof b.title === "string" && b.title.trim() && !isNaN(Date.parse(b.time)))
+      .map((b) => ({ id: String(b.id ?? "").replace(/[^\w-]/g, "").slice(0, 40), title: b.title.trim().slice(0, 160), body: String(b.body || "").trim().slice(0, 500), type: TYPE[b.news_type] ? b.news_type : "", tool: String(b.tool || "").trim().slice(0, 40), india: INDIA[b.india] ? b.india : "", price: PRICE[b.price] ? b.price : "", imp: +b.importance || 1, time: new Date(b.time).toISOString() }))
+      .filter((b) => b.id)
+      .sort((a, b) => (a.time < b.time ? 1 : -1));
+  } catch (e) {
+    console.warn(`briefs: আনা গেল না (${e.message}); সর্বশেষ খবর থেকে ফ্ল্যাশ বানানো হচ্ছে`);
+  }
+}
+const LIVE = briefs.filter((b) => NOW - Date.parse(b.time) < 48 * 36e5 && Date.parse(b.time) <= NOW + 6e5).slice(0, 60);
+const BRK = LIVE.filter((b) => b.imp >= 3 && NOW - Date.parse(b.time) < 24 * 36e5).slice(0, 4);
+const bnTime = (d) => new Intl.DateTimeFormat("bn-IN", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" }).format(new Date(d));
+const fromPost = (p) => ({ slug: p.slug, title: p.card_headline || p.title, body: p.excerpt, type: p.type, tool: p.tools[0]?.name || "", india: p.india || "", price: p.price || "", imp: 1, date: p.date });
+
 // ---- asset version (cache-busting + service worker) ----
 const CSS = readFileSync("src/style.css", "utf8");
 const JS = readFileSync("assets/site.js", "utf8");
@@ -202,9 +224,11 @@ const shareRow = (url, title) => {
   return `<div class="share"><b>খবরটা শেয়ার করুন</b><div class="share-btns"><a class="s-wa" href="https://wa.me/?text=${t}%20${u}" target="_blank" rel="noopener">${ICON.wa}WhatsApp</a><button type="button" class="s-native" data-share-title="${esc(title)}" data-share-url="${esc(url)}" hidden>${ICON.share}শেয়ার</button><a href="https://t.me/share/url?url=${u}&amp;text=${t}" target="_blank" rel="noopener">Telegram</a><a href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener">Facebook</a><button type="button" data-copy="${esc(url)}">লিংক কপি</button></div></div>`;
 };
 
-// খবরের ধরন + ভারতে চালু + দাম
+// খবরের ধরন + সময় + ভারতে চালু + দাম
 const tlabel = (p) => `<span class="tl t-${p.type}">${esc(typeLabel(p.type))}</span>`;
-const kicker = (p) => `<div class="kicker">${tlabel(p)}<time datetime="${p.date}">${bnDate(p.date)}</time></div>`;
+// সময়: পাতায় লেখা থাকে তারিখ; site.js সেটাকে "আজ / গতকাল / ৩ দিন আগে" করে, আর data-nb থাকলে "নতুন" ছাপ বসায়
+const when = (p, nb = true) => `<time datetime="${p.date}" data-rel="d"${nb ? " data-nb" : ""}>${bnDate(p.date)}</time>`;
+const kicker = (p) => `<div class="kicker">${tlabel(p)}${when(p)}</div>`;
 const badges = (p) => {
   const b = [];
   if (p.india) b.push(`<li class="b-in b-${p.india}">${INDIA[p.india]}</li>`);
@@ -213,19 +237,79 @@ const badges = (p) => {
 };
 const dataAttrs = (p) => `data-t="${p.type}" data-a="${p.aud.join(" ")}" data-i="${p.india || ""}" data-p="${p.price || ""}"`;
 const photoTag = (p, root, attrs) => p.photo ? `<img src="${root}${esc(p.photo)}" alt="${esc(p.photo_alt || p.title)}" width="${p.photoSize[0]}" height="${p.photoSize[1]}" ${attrs}>` : "";
+// টুলের লোগোর ছোট টালি: ছবি না থাকা খবরেও চোখে পড়ার মতো একটা চিহ্ন থাকে
+const tile = (t, root, size = 28) => `<span class="lt" aria-hidden="true">${t ? toolIcon(t, root, size) : "<i>AI</i>"}</span>`;
+const alertCls = (p) => (p.type === "scam-alert" ? " is-alert" : "");
 
-// তালিকার একটা খবর
-const story = (p, root) => `<article class="story${p.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/"><div class="story-tx">${kicker(p)}<h3>${esc(p.title)}</h3><p>${esc(p.excerpt)}</p>${badges(p)}</div>${p.photo ? `<div class="story-pic">${photoTag(p, root, 'loading="lazy" decoding="async"')}</div>` : ""}</a></article>`;
+// তালিকার একটা খবর (ধরনের পাতা, খোঁজা, পুরনো খবর)
+const story = (p, root) => `<article class="story${alertCls(p)}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/">${p.photo ? `<div class="story-pic">${photoTag(p, root, 'loading="lazy" decoding="async"')}</div>` : tile(p.tools[0], root)}<div class="story-tx">${kicker(p)}<h3>${esc(p.title)}</h3><p>${esc(p.excerpt)}</p>${badges(p)}</div></a></article>`;
 const storyList = (items, root, id = "") =>
   items.length ? `<div class="feed"${id ? ` id="${id}"` : ""}>${items.map((p) => story(p, root)).join("\n")}</div>` : `<div class="feed"${id ? ` id="${id}"` : ""}><p class="empty">এই ধরনের খবর এখনও আসেনি। নতুন খবর এলেই এখানে দেখাবে।</p></div>`;
 
-// খবরের ধরনের সারি (স্টিকি, পাশে স্ক্রল হয়)
-const secBar = (root, active, { filter = false, sticky = false } = {}) =>
-  `<div class="secbar${sticky ? " is-sticky" : ""}"><div class="wrap secbar-in"><nav class="chips" aria-label="খবরের ধরন"><a class="chip${active ? "" : " on"}" href="${root}"${active ? "" : ' aria-current="page"'} data-type="">সব খবর</a>${TYPES.filter((t) => typeCount(t.key) || active === t.key).map((t) => `<a class="chip t-${t.key}${active === t.key ? " on" : ""}" href="${root}type/${t.key}/" data-type="${t.key}"${active === t.key ? ' aria-current="page"' : ""}>${esc(t.label)}</a>`).join("")}</nav>${filter ? `<button type="button" class="filter-btn" data-sheet="fsheet" aria-haspopup="dialog">${ICON.filter}<span>ফিল্টার</span><i data-fcount hidden></i></button>` : ""}</div></div>`;
+// ---- প্রথম পাতার টুকরো ----
+const leadStory = (p, root) => `<article class="lead${alertCls(p)}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/"><div class="kicker"><b class="lead-k">প্রধান খবর</b>${tlabel(p)}${when(p)}</div><h2>${esc(p.title)}</h2>${p.photo ? `<figure class="lead-pic">${photoTag(p, root, 'fetchpriority="high" decoding="async"')}</figure>` : ""}<p class="dek">${esc(p.excerpt)}</p>${p.key_points.length ? `<ul class="lead-points">${p.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}<div class="lead-f">${p.tools.length ? `<span class="lead-tools">${p.tools.slice(0, 3).map((t) => toolChip(t, root, false)).join("")}</span>` : ""}${badges(p)}<span class="read">পুরো খবর পড়ুন${ICON.arrow}</span></div></a></article>`;
+const secStory = (p, root) => `<article class="sec${alertCls(p)}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/">${tile(p.tools[0], root)}<div>${kicker(p)}<h3>${esc(p.title)}</h3><p>${esc(p.excerpt)}</p></div></a></article>`;
+const top5 = (root, items, id = "top5-h") => items.length ? `<section class="top5" aria-labelledby="${id}"><h2 class="rule-h" id="${id}">আজকের সেরা ৫</h2><ol>${items.map((p, i) => `<li><a href="${root}posts/${p.slug}/"><i aria-hidden="true">${bnNum(i + 1)}</i><span class="t5-tx"><b>${esc(p.title)}</b><span class="t5-m">${tlabel(p)}${when(p, false)}</span></span></a></li>`).join("")}</ol></section>` : "";
+const digest = (root) => `<section class="digest" aria-labelledby="dg-h"><h2 id="dg-h">আজ ২ মিনিটে</h2><p class="dg-k">সর্বশেষ ${bnNum(Math.min(5, posts.length))}টি খবরের মূল কথা, এক লাইনে</p><ul>${posts.slice(0, 5).map((p) => `<li><a href="${root}posts/${p.slug}/">${esc(p.key_points[0] || p.excerpt)}</a></li>`).join("")}</ul></section>`;
+
+// AI ফ্ল্যাশের একটা খবর। site.js-এর flashEl() ঠিক এই গঠনই বানায়
+const flashLi = (f, root, full) => {
+  const href = f.slug ? `${root}posts/${f.slug}/` : `${full ? "" : `${root}flash/`}#f-${f.id}`;
+  const tm = f.slug ? `<time datetime="${f.date}" data-rel="d" data-nb>${bnDate(f.date)}</time>` : `<time datetime="${f.time}" data-rel="t" data-nb>${bnTime(f.time)}</time>`;
+  const chips = [f.tool && `<li class="c-tool">${esc(f.tool)}</li>`, f.india && `<li class="b-${f.india}">${INDIA_S[f.india]}</li>`, f.price && `<li class="b-${f.price}">${PRICE[f.price]}</li>`].filter(Boolean).join("");
+  return `<li class="fl${f.slug ? " fl-p" : ""}${f.imp >= 3 ? " fl-brk" : ""}"${full && f.id ? ` id="f-${f.id}"` : ""}><a href="${href}"><span class="fl-m">${tm}${f.imp >= 3 ? '<b class="brk">ব্রেকিং</b>' : ""}${f.type ? `<span class="tl t-${f.type}">${esc(typeLabel(f.type))}</span>` : ""}</span><b class="fl-h">${esc(f.title)}</b>${f.body ? `<p>${esc(f.body)}</p>` : ""}${chips ? `<ul class="fl-c">${chips}</ul>` : ""}</a></li>`;
+};
+const TL_JSON = esc(JSON.stringify(Object.fromEntries(TYPES.map((t) => [t.key, t.label]))));
+// n = কটা দেখাবে (০ = সব); fb = ফ্ল্যাশ না থাকলে যে খবরগুলো থেকে বানানো হবে
+const flashList = (root, n, fb, full = false) => {
+  // ফ্ল্যাশ কম থাকলে বাকি জায়গা সর্বশেষ খবর দিয়ে ভরা হয় (fl-p), যাতে কলাম কখনও ফাঁকা না থাকে
+  const live = n ? LIVE.slice(0, n) : LIVE;
+  const items = [...live, ...fb.slice(0, Math.max(0, (n || 8) - live.length)).map(fromPost)];
+  return `<ol class="flash${full ? " flash-full" : ""}" data-flash="${n}"${full ? " data-full" : ""} data-tl="${TL_JSON}">${items.map((f) => flashLi(f, root, full)).join("")}</ol>`;
+};
+const flashBox = (root, n, fb, cls = "") => `<section class="flashbox${cls}" aria-labelledby="fx-h"><header class="fx-h"><h2 id="fx-h"><i class="live-dot" aria-hidden="true"></i><a href="${root}flash/">AI ফ্ল্যাশ</a></h2><span class="fx-upd" data-flash-upd>ছোট খবর, সবার আগে</span></header>${flashList(root, n, fb)}<footer class="fx-f"><a href="${esc(TG)}" target="_blank" rel="noopener">${ICON.plane}সব ফ্ল্যাশ Telegram-এ</a><a href="${root}flash/">সব ফ্ল্যাশ দেখুন</a></footer></section>`;
+
+// ---- AI বাজার: যে টুলে সম্প্রতি খবর এসেছে তার বোর্ড ----
+const BCAT = { chat: "চ্যাট", image: "ছবি", video: "ভিডিও", voice: "ভয়েস", code: "কোডিং", auto: "অটোমেশন", write: "লেখা", design: "ডিজাইন", other: "অন্যান্য" };
+const primaryTool = (p) => p.tools.find((t) => t.re.test(p.title)) || p.tools[0];
+const BZ = (() => {
+  const m = new Map();
+  for (const p of posts) {
+    const t = primaryTool(p);
+    if (!t) continue;
+    if (!m.has(t.key)) m.set(t.key, { t, p, n: 0 });
+    if (NOW - Date.parse(p.date) < 30 * 864e5) m.get(t.key).n++;
+  }
+  return [...m.values()];
+})();
+const shortLine = (s, max = 8) => { const w = String(s).trim().split(/\s+/); return w.length > max ? w.slice(0, max).join(" ").replace(/[,:;।?!-]+$/, "") + "…" : w.join(" "); };
+const bzRow = ({ t, p, n }, root, i, limit) => `<tr data-c="${t.cat}" data-d="${p.date}" data-n="${n}" data-name="${esc(t.name.toLowerCase())}"${limit && i >= limit ? ' class="bz-x"' : ""}><th scope="row"><a class="bz-tool" href="${root}tool/${t.key}/">${tile(t, root, 24)}<span><b>${esc(t.name)}</b><small>${esc(BCAT[t.cat] || "")}</small></span></a></th><td class="bz-chg"><a href="${root}posts/${p.slug}/">${esc(shortLine(p.card_headline || p.title))}</a></td><td class="bz-type">${tlabel(p)}</td><td class="bz-in">${p.india ? `<span class="st st-${p.india}">${INDIA_S[p.india].replace("ভারতে ", "")}</span>` : '<span class="st st-na">জানা নেই</span>'}</td><td class="bz-pr">${p.price ? `<span class="st st-${p.price}">${PRICE[p.price]}</span>` : '<span class="st st-na">জানা নেই</span>'}</td><td class="bz-n"><span class="bars" aria-hidden="true">${"<i class=\"on\"></i>".repeat(Math.min(5, n))}${"<i></i>".repeat(5 - Math.min(5, n))}</span><b>${bnNum(n)}</b></td><td class="bz-when">${when(p)}</td></tr>`;
+const sortBtn = (k, label, cur = false) => `<button type="button" data-sort="${k}"${cur ? ' class="on"' : ""}>${label}</button>`;
+const bazar = (root, { limit = 0, head = true } = {}) => {
+  if (!BZ.length) return "";
+  const cats = Object.keys(BCAT).filter((c) => BZ.some((r) => r.t.cat === c));
+  return `<section class="bazar" data-bazar="${limit}" aria-labelledby="bz-h">${head ? `<header class="bz-head"><div><h2 id="bz-h"><a href="${root}bazar/">AI বাজার</a></h2><p>কোন টুলে কী বদলাল, ভারতে চালু কি না, খরচ কত: এক বোর্ডে</p></div><p class="bz-stamp"><i class="live-dot" aria-hidden="true"></i>শেষ বদল ${when(BZ[0].p, false)}</p></header>` : `<h2 class="vh" id="bz-h">টুলের আপডেট বোর্ড</h2>`}
+<div class="bz-tabs" role="group" aria-label="টুলের বিভাগ"><button type="button" data-bcat="" aria-pressed="true">সব</button>${cats.map((c) => `<button type="button" data-bcat="${c}" aria-pressed="false">${BCAT[c]}</button>`).join("")}</div>
+<div class="bz-wrap"><table class="bz-t"><thead><tr><th scope="col" aria-sort="none">${sortBtn("name", "টুল")}</th><th scope="col">সর্বশেষ বদল</th><th scope="col">ধরন</th><th scope="col">ভারতে</th><th scope="col">খরচ</th><th scope="col" aria-sort="none">${sortBtn("n", "৩০ দিনে খবর")}</th><th scope="col" aria-sort="descending">${sortBtn("d", "কবে", true)}</th></tr></thead><tbody>${BZ.map((r, i) => bzRow(r, root, i, limit)).join("")}</tbody></table></div>
+<p class="bz-empty" hidden>এই বিভাগের টুলে এখন নতুন খবর নেই।</p>
+${limit && BZ.length > limit ? `<p class="bz-more"><a href="${root}bazar/">পুরো বোর্ড দেখুন: ${bnNum(BZ.length)}টি টুল${ICON.arrow}</a></p>` : ""}</section>`;
+};
+
+// ---- বিভাগের ব্লক: ১টা বড় খবর + ৩টা শিরোনাম ----
+const blockOf = (id, label, href, items, root, cls = "") => items.length ? `<section class="blk${cls}" aria-labelledby="blk-${id}"><header class="blk-h"><h2 id="blk-${id}"><a href="${href}">${esc(label)}</a></h2><a class="blk-all" href="${href}" aria-label="${esc(label)}: সব খবর দেখুন">সব দেখুন</a></header><article class="feat"><a href="${root}posts/${items[0].slug}/">${items[0].photo ? `<div class="feat-pic">${photoTag(items[0], root, 'loading="lazy" decoding="async"')}</div>` : ""}<div class="kicker">${when(items[0])}</div><h3>${esc(items[0].title)}</h3><p>${esc(items[0].excerpt)}</p>${badges(items[0])}</a></article>${items.length > 1 ? `<ol class="heads">${items.slice(1, 4).map((p) => `<li><a href="${root}posts/${p.slug}/">${tile(p.tools[0], root, 20)}<span><b>${esc(p.title)}</b>${when(p)}</span></a></li>`).join("")}</ol>` : ""}</section>` : "";
+
+// খবরের ধরনের সারি: কাগজের বিভাগের মতো, পাতার মাথায় আটকে থাকে
+const secBar = (root, active, { filter = false } = {}) => {
+  const a = (key, href, label, cls = "", extra = "") => `<a class="sn${cls}${active === key ? " on" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}${extra}>${label}</a>`;
+  return `<div class="secnav"><div class="wrap secnav-in"><nav class="sn-row" aria-label="খবরের বিভাগ">${a("", root, "প্রথম পাতা")}${a("flash", `${root}flash/`, '<i class="live-dot" aria-hidden="true"></i>AI ফ্ল্যাশ')}${a("bazar", `${root}bazar/`, "AI বাজার")}${TYPES.filter((t) => typeCount(t.key) || active === t.key).map((t) => a(t.key, `${root}type/${t.key}/`, esc(t.label), ` t-${t.key}`)).join("")}${a("tools", `${root}tools/`, "AI টুল")}${a("-", ug(cfg.freeClassUrl, "nav"), "ফ্রি ক্লাস", " sn-cta", ' target="_blank" rel="noopener"')}</nav>${filter ? `<button type="button" class="who-chip" data-sheet="fsheet" data-who aria-haspopup="dialog">আপনি কে?</button><button type="button" class="filter-btn" data-sheet="fsheet" aria-haspopup="dialog">${ICON.filter}<span>ফিল্টার</span><i data-fcount hidden></i></button>` : ""}</div></div>`;
+};
+// চলমান শিরোনাম: ব্রেকিং ফ্ল্যাশ আগে, তারপর সর্বশেষ খবর। দ্বিতীয় তালিকাটা শুধু চোখের জন্য (থামা ছাড়া ঘোরাতে)
+const tkItems = (root, hid) => [...BRK.map((b) => `<li class="tk-brk"><a href="${root}flash/#f-${b.id}"${hid}><b>ব্রেকিং</b>${esc(b.title)}</a></li>`), ...posts.slice(0, 8).map((p) => `<li><a href="${root}posts/${p.slug}/"${hid}><i>${esc(typeLabel(p.type))}</i>${esc(p.card_headline || p.title)}</a></li>`)].join("");
+const ticker = (root) => posts.length ? `<div class="ticker" role="region" aria-label="সর্বশেষ শিরোনাম"><div class="wrap tk-in"><b class="tk-live"><i class="live-dot" aria-hidden="true"></i>লাইভ</b><div class="tk-view"><div class="tk-track" data-ticker><ul>${tkItems(root, "")}</ul><ul aria-hidden="true">${tkItems(root, ' tabindex="-1"')}</ul></div></div><button type="button" class="tk-pause" data-tk-pause aria-pressed="false" aria-label="শিরোনামের চলা থামান"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path class="i-pause" d="M7 5h3.500v14H7zM13.500 5H17v14h-3.500z"/><path class="i-play" d="M8 5l11 7-11 7z"/></svg></button></div></div>` : "";
 
 const radioGroup = (name, legend, opts) => `<fieldset><legend>${legend}</legend><div class="opts">${[["", "সব"], ...opts].map(([v, l], i) => `<label><input type="radio" name="${name}" value="${v}"${i ? "" : " checked"}><span>${esc(l)}</span></label>`).join("")}</div></fieldset>`;
 const filterSheet = () => `<div class="sheet" id="fsheet" role="dialog" aria-modal="true" aria-labelledby="fsheet-h" hidden><div class="sheet-bg" data-close></div><form class="sheet-panel" id="fform"><div class="sheet-head"><h2 id="fsheet-h">ফিল্টার</h2><button type="button" class="x" data-close aria-label="বন্ধ করুন">×</button></div>
-${radioGroup("aud", "কাদের জন্য", Object.entries(AUD))}
+${radioGroup("aud", "আপনি কে? বেছে নিলে আপনার কাজের খবর আগে দেখাব", Object.entries(AUD))}
 ${radioGroup("india", "ভারতে", [["available", "চালু"], ["soon", "শীঘ্রই"], ["no", "এখনও নেই"]])}
 ${radioGroup("price", "খরচ", Object.entries(PRICE))}
 <p class="sheet-note">যে খবরে এই তথ্য নেই, সেটা ভারত বা খরচের ফিল্টারে বাদ যায়। কাদের জন্য, তা না লেখা থাকলে খবরটা সবার জন্য ধরা হয়।</p>
@@ -236,36 +320,23 @@ const pushSheet = () => `<div class="sheet" id="psheet" role="dialog" aria-modal
 <div class="sheet-foot"><button type="button" class="btn-line" data-push-off hidden>বন্ধ করুন</button><button type="submit" class="btn" data-push-on>নোটিফিকেশন চালু করুন</button></div></form></div>`;
 const installCard = (root) => `<div class="install" id="install" role="dialog" aria-labelledby="install-h" hidden><img src="${root}assets/app/icon-192.png" alt="" width="48" height="48"><div class="install-tx"><b id="install-h">AI পত্রিকা ফোনে রাখুন</b><p data-std>অ্যাপের মতো এক ট্যাপে খুলবে। নেট না থাকলেও আগে খোলা খবর পড়া যাবে।</p><p data-ios hidden>Safari-র নিচের Share বোতামে ট্যাপ করে "Add to Home Screen" বেছে নিন।</p></div><div class="install-act"><button type="button" class="btn" data-install>ইনস্টল করুন</button><button type="button" class="btn-text" data-install-x>এখন নয়</button></div></div>`;
 
-const wordmark = (root) => `<a class="brand" href="${root}" aria-label="${esc(cfg.siteName)}, প্রথম পাতা"><img src="${root}assets/app/icon-192.png" alt="" width="36" height="36"><span class="wordmark"><small>Unique</small><b>AI পত্রিকা</b></span></a>`;
+const wordmark = (root) => `<a class="brand" href="${root}" aria-label="${esc(cfg.siteName)}, প্রথম পাতা"><img src="${root}assets/app/icon-192.png" alt="" width="40" height="40"><span class="wordmark"><b><small>Unique</small> AI পত্রিকা</b><em>${esc(cfg.motto)}</em></span></a>`;
 // নোটিফিকেশনের বোতাম: ব্রাউজারে push না থাকলে একই বোতাম Telegram চ্যানেলে নিয়ে যায়
 const pushCta = (cls, label = "নোটিফিকেশন চালু করুন") => `<a class="${cls}" href="${esc(TG)}" target="_blank" rel="noopener" data-push-cta data-alt="Telegram-এ রোজ খবর পান">${ICON.bell}<span>${label}</span></a>`;
 const tgBtn = (cls, label = "Telegram-এ জয়েন করুন") => `<a class="${cls}" href="${esc(TG)}" target="_blank" rel="noopener" data-tg>${ICON.plane}<span>${label}</span></a>`;
 
-// ---- ছাপাখানার চিহ্ন: সংস্করণের সিল, ক্লাসের টিকিট, ফুটারের ছাপার রোল ----
-const burst = (n, r1, r2) => { let d = ""; for (let i = 0; i < n * 2; i++) { const a = (Math.PI * i) / n, r = i % 2 ? r2 : r1; d += `${i ? "L" : "M"}${(60 + r * Math.cos(a)).toFixed(1)} ${(60 + r * Math.sin(a)).toFixed(1)}`; } return d + "Z"; };
-const todayParts = () => { const ps = new Intl.DateTimeFormat("bn-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).formatToParts(new Date(NOW)); const g = (t) => ps.find((x) => x.type === t)?.value || ""; return [g("day"), `${g("month")} ${g("year")}`]; };
-const seal = () => { const [d, my] = todayParts(); return `<div class="seal" aria-hidden="true"><svg class="seal-edge" viewBox="0 0 120 120"><path d="${burst(30, 59, 54)}"/><circle cx="60" cy="60" r="47.5"/></svg><div class="seal-in"><small>সংস্করণ</small><b data-today-d>${d}</b><span data-today-my>${my}</span></div></div>`; };
-const WHY = [
-  ["ভারতে চালু কিনা, প্রথম লাইনেই", "টুলটা এ দেশে খোলে কি না আর খরচ কত, সেটা জেনে তবে বাকিটা পড়ুন।", '<path d="M16 28s9-8.2 9-15a9 9 0 1 0-18 0c0 6.800 9 15 9 15z"/><path d="M12.200 13.200l2.800 2.800 5-5.400"/>'],
-  ["কীভাবে ব্যবহার করবেন, ধাপে ধাপে", "শুধু খবর নয়। কোথায় ট্যাপ করবেন, কী লিখবেন, পরপর সাজানো।", '<path d="M4 26h7v-6h7v-6h7V8"/><path d="M21 8h4v4"/>'],
-  ["তৈরি প্রম্পট, এক ট্যাপে কপি", "লেখার মধ্যেই প্রম্পট দেওয়া থাকে। কপি করে নিজের কাজে বসিয়ে নিন।", '<rect x="11" y="10" width="15" height="17" rx="3"/><path d="M21 10V8a3 3 0 0 0-3-3H9a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h2M15.500 16h6M15.500 21h4"/>'],
-  ["স্ক্যামের সতর্কতা, সবার আগে", "ভুয়ো অ্যাপ, ডিপফেক বা প্রতারণার খবর এলে সেটা পাতার একদম উপরে থাকে।", '<path d="M16 4l10 4v7c0 6.500-4.300 11-10 13C10.300 26 6 21.500 6 15V8z"/><path d="M16 11v6M16 21.200v.3"/>'],
-];
-const whyStrip = () => `<section class="why"><div class="wrap"><h2 class="sec-title rv">প্রতিটা খবরে এই চারটে জিনিস <em>থাকবেই</em></h2><ul class="why-grid rv">${WHY.map(([t, d, ic]) => `<li><svg viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ic}</svg><b>${t}</b><span>${d}</span></li>`).join("")}</ul></div></section>`;
-// ৪ দিনের ফ্রি ক্লাস: একটা প্রবেশপত্রের মতো কার্ড। wide = হোমের বড় ব্যান্ড, নইলে খবরের নিচের ছোট বাক্স
-const klass = (root, medium, wide) => `<aside class="klass${wide ? " klass-wide rv" : ""}" aria-labelledby="klass-h"><div class="klass-main"><p class="pill-k"><i></i>${esc(cfg.brand)}-এর ফ্রি ক্লাস</p><h2 id="klass-h">${wide ? "খবর তো পড়লেন। এবার <em>নিজের হাতে</em> করে দেখুন।" : esc(cfg.learnTitle)}</h2><p>${esc(wide ? cfg.ctaText : cfg.learnText)}</p><ul class="klass-pts"><li>৪ দিন</li><li>পুরোটা ফ্রি</li><li>বাংলায়</li><li>হাতে-কলমে</li></ul><a class="btn-gold" href="${ug(cfg.freeClassUrl, medium)}" target="_blank" rel="noopener"><span>ফ্রি ক্লাসে নাম লেখান</span>${ICON.arrow}</a></div><div class="klass-stub">${hasMentor ? `<img src="${root}assets/mentor.webp" alt="${esc(cfg.mentorName)}" width="72" height="72" loading="lazy">` : ""}<p><b>${esc(cfg.mentorName)}</b><span>${esc(cfg.mentorTitle)}</span></p><dl><div><dt>কত দিন</dt><dd>৪ দিন</dd></div><div><dt>ফি</dt><dd>₹০</dd></div></dl></div></aside>`;
-const joinCard = () => `<aside class="join"><div><h2>কাল সকালের খবরটাও চাই?</h2><p>বড় খবর এলেই ফোনে জানাব। দিনে খুব বেশি নয়, আর যখন খুশি বন্ধ করা যায়।</p></div><div class="join-act">${pushCta("btn-gold")}${tgBtn("btn-ghost")}</div></aside>`;
-const press = () => `<div class="press" aria-hidden="true"><p class="press-word">AI পত্রিকা</p><div class="press-line"><svg class="press-roll" viewBox="0 0 96 96" width="96" height="96"><circle cx="48" cy="48" r="46" fill="#fff"/><circle cx="48" cy="48" r="36" fill="none" stroke="#DCCFFB" stroke-width="1.500"/><circle cx="48" cy="48" r="27" fill="none" stroke="#DCCFFB" stroke-width="1.500"/><circle cx="48" cy="48" r="17" fill="#F0BE5C"/><path d="M48 31v34M31 48h34" stroke="#7E5410" stroke-width="3" stroke-linecap="round"/><circle cx="48" cy="48" r="5" fill="#4A0FC2"/></svg><span class="press-web"></span><svg class="press-nip" viewBox="0 0 40 84" width="40" height="84"><g class="nip-a"><circle cx="20" cy="20" r="18" fill="#F0BE5C"/><path d="M20 8v24M8 20h24" stroke="#7E5410" stroke-width="2.500" stroke-linecap="round"/></g><g class="nip-b"><circle cx="20" cy="64" r="18" fill="#F0BE5C"/><path d="M20 52v24M8 64h24" stroke="#7E5410" stroke-width="2.500" stroke-linecap="round"/></g></svg><svg class="press-plane" viewBox="0 0 150 110" width="150" height="110"><path class="plane-trail" d="M4 104C30 100 52 86 70 62" fill="none" stroke="#F0BE5C" stroke-width="2.500" stroke-linecap="round" stroke-dasharray="1 9"/><g class="plane"><path d="M146 6L62 44l28 10z" fill="#fff"/><path d="M146 6L90 54l-4 28z" fill="#E9DFFF"/><path d="M146 6L90 54l32 12z" fill="#fff"/><path d="M90 54l-4 28 14-22z" fill="#C9B6F7"/><path d="M96 38l22-12M100 43l12-6" stroke="#5D16E9" stroke-width="2.200" stroke-linecap="round" opacity=".55"/><path d="M104 58l14 5" stroke="#5D16E9" stroke-width="2.200" stroke-linecap="round" opacity=".4"/></g></svg></div><p class="press-cap">ছাপা হয়ে সোজা আপনার ফোনে</p></div>`;
+// ---- কাগজের ভেতরের বিজ্ঞপ্তি: ফ্রি ক্লাস, নোটিফিকেশন ----
+// ৪ দিনের ফ্রি ক্লাস: কাগজের "বিজ্ঞপ্তি"-র মতো একটা ঘর। wide = প্রথম পাতার চওড়া সংস্করণ
+const klass = (root, medium, wide) => `<aside class="notice${wide ? " notice-wide" : ""}" aria-labelledby="notice-h"><p class="notice-k">বিজ্ঞপ্তি</p><div class="notice-b"><h2 id="notice-h">${wide ? "৪ দিনের ফ্রি AI ক্লাস, পুরোটা বাংলায়" : esc(cfg.learnTitle)}</h2><p>${esc(cfg.learnText)}</p><dl class="notice-f"><div><dt>সময়</dt><dd>৪ দিন</dd></div><div><dt>ফি</dt><dd>₹০</dd></div><div><dt>ভাষা</dt><dd>বাংলা</dd></div><div><dt>ধরন</dt><dd>হাতে-কলমে</dd></div></dl></div><div class="notice-a">${hasMentor ? `<img src="${root}assets/mentor.webp" alt="" width="48" height="48" loading="lazy">` : ""}<p><b>${esc(cfg.mentorName)}</b><span>${esc(cfg.mentorTitle)}</span></p><a class="btn" href="${ug(cfg.freeClassUrl, medium)}" target="_blank" rel="noopener">ফ্রি ক্লাসে নাম লেখান${ICON.arrow}</a></div></aside>`;
+const joinCard = () => `<aside class="join"><div><h2>বড় খবর এলেই জানতে চান?</h2><p>দিনে খুব বেশি নয়, আর যখন খুশি বন্ধ করা যায়।</p></div><div class="join-act">${pushCta("btn")}${tgBtn("btn-line")}</div></aside>`;
+const pushStrip = () => `<div class="pstrip" data-pstrip><div class="wrap pstrip-in">${pushCta("pstrip-a", "নোটিফিকেশন চালু করুন")}<span class="pstrip-t">বড় খবর মিস করবেন না</span><button type="button" class="x" data-pstrip-x aria-label="এই সারিটা বন্ধ করুন">×</button></div></div>`;
+const press = () => `<div class="press" aria-hidden="true"><p class="press-word">AI পত্রিকা</p></div>`;
 const CSP = `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data:; font-src 'self'; connect-src 'self' ${new URL(cfg.supabaseUrl || cfg.pushApi).origin}; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'`;
 
-function layout({ root, title, description, canonical, ogImage, ogType = "website", jsonLd = [], body, extraHead = "", noindex = false, kind = "page", active = "", filter = false, preload = "" }) {
+function layout({ root, title, description, canonical, ogImage, ogType = "website", jsonLd = [], body, extraHead = "", noindex = false, kind = "page", active = "-", filter = false, preload = "" }) {
   const img = abs(ogImage || "assets/og-default.png");
   const ld = [{ "@context": "https://schema.org", "@graph": [ORG, PUB, ...jsonLd] }];
-  const home = kind === "home";
-  // পাতার মাথার বেগুনি অংশ (হিরো বা শিরোনাম) আলাদা করে নিই, যাতে ধরনের সারি তার নিচে বসে
-  const ph = body.match(/^\s*<section class="(?:page-head|hero)"[\s\S]*?<\/section>/);
-  const top = ph ? ph[0] : "";
-  if (ph) body = body.slice(ph[0].length);
+  const news = ["home", "list", "article"].includes(kind);
   return `<!doctype html>
 <html lang="bn">
 <head>
@@ -308,20 +379,21 @@ ${extraHead}
 ${preload}<link rel="stylesheet" href="${root}assets/style.css?v=${VER}">
 ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(/</g, "\\u003c")}</script>`).join("\n")}
 </head>
-<body class="k-${kind}${top ? " top-v" : ""}" data-root="${root}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}">
+<body class="k-${kind}" data-root="${root}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}">
 <a class="skip" href="#main">মূল লেখায় যান</a>
 ${kind === "article" ? '<div class="progress" aria-hidden="true"><i></i></div>' : ""}
-<header class="nav"><div class="wrap"><div class="nav-pill">${wordmark(root)}<nav class="nav-links" aria-label="প্রধান মেনু"><a href="${root}">আজকের খবর</a><a href="${root}tools/">AI টুল</a><a href="${root}type/scam-alert/">সতর্কতা</a><a href="${root}about/">আমাদের কথা</a></nav><span class="nav-act"><a class="icon-btn" href="${root}search/" aria-label="খবর খুঁজুন">${ICON.search}</a><button class="icon-btn" type="button" data-sheet="psheet" data-push-open hidden aria-label="নোটিফিকেশন">${ICON.bell}</button><a class="nav-cta" href="${ug(cfg.freeClassUrl, "nav")}" target="_blank" rel="noopener">ফ্রি ক্লাস</a></span></div></div></header>
+<div class="util"><div class="wrap util-in"><span class="u-date" data-today>${dparts(NOW, true)}</span><span class="u-ed">অনলাইন সংস্করণ</span><span class="u-clock" data-clockbox hidden><i class="live-dot" aria-hidden="true"></i><b data-clock></b><small>ভারতীয় সময়</small></span><nav class="u-links" aria-label="প্রধান মেনু"><a href="${root}about/">আমাদের কথা</a><a href="${root}our-tools/">আমাদের টুল</a><a href="${esc(TG)}" target="_blank" rel="noopener">Telegram</a></nav></div></div>
+<header class="mast"><div class="wrap mast-in">${wordmark(root)}<span class="mast-act"><a class="icon-btn" href="${root}search/" aria-label="খবর খুঁজুন">${ICON.search}</a><button class="icon-btn" type="button" data-sheet="psheet" data-push-open hidden aria-label="নোটিফিকেশন">${ICON.bell}</button><a class="mast-cta" href="${ug(cfg.freeClassUrl, "nav")}" target="_blank" rel="noopener">৪ দিনের ফ্রি ক্লাস</a></span></div></header>
+${secBar(root, active, { filter })}
+${kind === "offline" ? "" : ticker(root)}
+${news ? pushStrip() : ""}
 <main id="main">
-${top}
-${secBar(root, active, { filter, sticky: filter })}
-<div id="news"></div>
 ${body}
 </main>
 <footer class="foot"><div class="wrap foot-in">
-<div class="foot-brand">${wordmark(root)}<p class="foot-motto">${esc(cfg.motto)}</p><p>${esc(cfg.footerAbout)}</p><div class="foot-act">${tgBtn("btn-ghost", "Telegram চ্যানেল")}<a class="btn-ghost" href="${ug(cfg.freeClassUrl, "footer")}" target="_blank" rel="noopener">৪ দিনের ফ্রি ক্লাস</a></div></div>
+<div class="foot-brand">${wordmark(root)}<p>${esc(cfg.footerAbout)}</p><p class="foot-links"><a href="${esc(TG)}" target="_blank" rel="noopener">Telegram চ্যানেল</a><a href="${ug(cfg.freeClassUrl, "footer")}" target="_blank" rel="noopener">৪ দিনের ফ্রি ক্লাস</a></p></div>
 <nav class="foot-col" aria-label="খবরের ধরন"><b>খবরের ধরন</b>${TYPES.map((t) => `<a href="${root}type/${t.key}/">${esc(t.label)}</a>`).join("")}</nav>
-<nav class="foot-col" aria-label="বিষয়"><b>বিষয়</b>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}<a href="${root}tools/">সব AI টুলের তালিকা</a><a href="${root}our-tools/">Unique Gurukul-এর টুল</a></nav>
+<nav class="foot-col" aria-label="নিউজরুম"><b>নিউজরুম</b><a href="${root}flash/">AI ফ্ল্যাশ</a><a href="${root}bazar/">AI বাজার</a><a href="${root}tools/">সব AI টুলের তালিকা</a>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}<a href="${root}our-tools/">Unique Gurukul-এর টুল</a></nav>
 <nav class="foot-col" aria-label="পত্রিকা"><b>পত্রিকা</b><a href="${root}about/">আমাদের কথা</a><a href="${root}contact/">যোগাযোগ</a><a href="${root}privacy/">গোপনীয়তা নীতি</a><a href="${root}terms/">শর্ত ও দাবিত্যাগ</a><a href="${root}feed.xml">RSS ফিড</a></nav>
 </div>${press()}<div class="foot-pub"><div class="wrap"><p><a href="${ug(cfg.mainSiteUrl, "footer")}">${esc(cfg.brand)}</a>-এর একটি উদ্যোগ</p><p>© ${bnNum(new Date().getFullYear()).replace(/,/g, "")} ${esc(cfg.brand)}। সব অধিকার সংরক্ষিত।</p></div></div></footer>
 ${kind === "article" ? `<div class="abar" id="abar" hidden><a class="abar-wa" href="https://wa.me/?text=${encodeURIComponent(title.split(" | ")[0])}%20${encodeURIComponent(canonical)}" target="_blank" rel="noopener">${ICON.wa}<span>WhatsApp শেয়ার</span></a>${pushCta("abar-push", "নোটিফিকেশন")}<button type="button" class="x" data-abar-x aria-label="বন্ধ করুন">×</button></div>` : ""}
@@ -349,31 +421,51 @@ function write(path, content) {
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(join(OUT, "assets"), { recursive: true });
 cpSync("assets", join(OUT, "assets"), { recursive: true });
+// site.js: মন্তব্যের লাইন আর সারির শুরুর ফাঁকা জায়গা বাদ দিয়ে পাঠানো হয় (ফাইলটা ছোট হয়, কোড একই থাকে)
+writeFileSync(join(OUT, "assets/site.js"), JS.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n") + "\n");
 writeFileSync(join(OUT, "assets/style.css"), CSS);
 writeFileSync(join(OUT, ".nojekyll"), "");
 if (existsSync("CNAME")) cpSync("CNAME", join(OUT, "CNAME"));
 
-const feedHead = (title) => `<div class="feed-head"><h2 id="feed-title" data-default="${esc(title)}">${esc(title)}</h2><span class="feed-count" data-feed-count aria-live="polite"></span><button type="button" class="btn-text" data-clear hidden>ফিল্টার মুছুন</button></div>`;
-const typeIndex = (root) => `<section class="rail-box"><h2>খবরের ধরন</h2><ul class="type-index">${TYPES.map((t) => `<li${typeCount(t.key) ? "" : ' class="is-zero"'}><a href="${root}type/${t.key}/"><span class="tl t-${t.key}">${esc(t.label)}</span><em>${bnNum(typeCount(t.key))}</em></a></li>`).join("")}</ul></section>`;
-const toolIndex = (root) => Object.keys(TCATS).length ? `<section class="rail-box"><h2>কাজ অনুযায়ী AI টুল</h2><ul class="tool-index">${Object.entries(TCATS).filter(([k]) => toolsIn(k).length).map(([k, v]) => `<li><a href="${root}tools/${k}/"><span class="ti-ic">${toolsIn(k).filter((t) => t.icon).slice(0, 3).map((t) => toolIcon(t, root, 18)).join("")}</span>${esc(v.name)}</a></li>`).join("")}</ul><a class="rail-more" href="${root}tools/">সব AI টুলের তালিকা</a></section>` : "";
-const pushBox = () => `<section class="rail-box rail-push" data-push-box hidden><h2>বড় খবর এলেই জানুন</h2><p>যে ধরনের খবর চান, শুধু সেটাই আসবে।</p><button type="button" class="btn" data-sheet="psheet">নোটিফিকেশন চালু করুন</button></section>`;
-
+const feedHead = (title) => `<div class="feed-head"><h2 class="rule-h" id="feed-title" data-default="${esc(title)}">${esc(title)}</h2><span class="feed-count" data-feed-count aria-live="polite"></span><button type="button" class="btn-text" data-clear hidden>ফিল্টার মুছুন</button></div>`;
 const pageHead = (kicker, h1, lead, extra = "") => `<section class="page-head"><div class="wrap">${kicker ? `<p class="page-k">${kicker}</p>` : ""}<h1>${h1}</h1>${lead ? `<p>${lead}</p>` : ""}${extra}</div></section>`;
+
+// প্রথম পাতার বাছাই: ১টা প্রধান + ২টা পাশের খবর, আর "সেরা ৫" (শেষ ৮ দিনের, প্রতি ধরন থেকে আগে একটা করে)
+const FRONT = posts.slice(0, 3);
+const TOP5 = (() => {
+  const rest = posts.slice(7);
+  const week = rest.filter((p) => NOW - Date.parse(p.date) < 8 * 864e5);
+  const pool = week.length >= 5 ? week : rest;
+  const out = [], seenT = new Set();
+  for (const p of pool) if (!seenT.has(p.type)) { seenT.add(p.type); out.push(p); }
+  for (const p of pool) if (out.length < 5 && !out.includes(p)) out.push(p);
+  return out.slice(0, 5).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+})();
+const top5Ld = { "@type": "ItemList", name: "আজকের সেরা ৫ AI খবর", itemListOrder: "https://schema.org/ItemListOrderAscending", numberOfItems: TOP5.length, itemListElement: TOP5.map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/posts/${p.slug}/`, name: p.title })) };
+// পাশের কলাম (ধরনের পাতা, ফ্ল্যাশ, পুরনো খবর)
+const sideRail = (root, fb, flash = true) => `<aside class="rail" aria-label="আরও খবর">${flash ? flashBox(root, 5, fb) : ""}${top5(root, TOP5)}</aside>`;
+
 // home + pagination
-const HEAD = 5; // প্রথম পাতায়: ১টা বড় খবর + পাশে ৪টা
+const HEAD = 7; // প্রথম পাতার মাথার খবর বাদ দিয়ে বাকিগুলো "আগের খবর" আর পরের পাতায়
 const pages = Math.max(1, Math.ceil(Math.max(0, posts.length - HEAD) / PER_PAGE));
 const pinned = posts.filter((p) => p.pinned);
+// বিভাগের ব্লকে প্রথম পাতার মাথার খবরগুলো আবার না আসে, যদি যথেষ্ট অন্য খবর থাকে
+const fresh = (items) => { const x = items.filter((p) => !FRONT.includes(p)); return x.length >= 2 ? x : items; };
 for (let page = 1; page <= pages; page++) {
   const root = page === 1 ? "./" : "../../";
   const rest = posts.slice(HEAD + (page - 1) * PER_PAGE, HEAD + page * PER_PAGE);
   const url = page === 1 ? `${SITE}/` : `${SITE}/page/${page}/`;
   const lead = posts[0];
   const leadPic = page === 1 && lead?.photo ? `<link rel="preload" as="image" href="${root}${esc(lead.photo)}" fetchpriority="high">\n` : "";
+  const typeBlocks = TYPES.filter((t) => t.key !== "scam-alert" && typeCount(t.key)).map((t) => blockOf(t.key, t.label, `${root}type/${t.key}/`, fresh(posts.filter((p) => p.type === t.key)), root));
+  const alerts = posts.filter((p) => p.type === "scam-alert");
+  const catBlocks = Object.keys(TCATS).map((k) => [k, postsOfCat(k)]).filter((x) => x[1].length >= 2).sort((a, b) => (a[1][0].date < b[1][0].date ? 1 : -1)).slice(0, 6).map(([k, items]) => blockOf(`c-${k}`, TCATS[k].name, `${root}tools/${k}/`, fresh(items), root));
   write(
     page === 1 ? "index.html" : `page/${page}/index.html`,
     layout({
       root,
       kind: page === 1 ? "home" : "list",
+      active: page === 1 ? "" : "-",
       filter: true,
       preload: leadPic,
       title: page === 1 ? `${cfg.siteName} | ${cfg.tagline}` : `${cfg.siteName} | পাতা ${bnNum(page)}`,
@@ -383,42 +475,34 @@ for (let page = 1; page <= pages; page++) {
         { "@type": "WebSite", "@id": `${SITE}/#website`, name: cfg.siteName, alternateName: cfg.shortName, url: `${SITE}/`, inLanguage: "bn", description: cfg.description, publisher: { "@id": PUB["@id"] }, potentialAction: { "@type": "SearchAction", target: `${SITE}/search/?q={search_term_string}`, "query-input": "required name=search_term_string" } },
         { "@type": "FAQPage", mainEntity: cfg.homeFaq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
         { "@type": "ItemList", name: "সর্বশেষ খবর", itemListElement: posts.slice(0, 10).map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/posts/${p.slug}/`, name: p.title })) },
+        top5Ld,
       ] : [],
-      body: `${page === 1 ? `<section class="hero"><div class="wrap hero-in">
-<div class="hero-tx">
-<p class="eyebrow"><i></i><b>আজকের সংস্করণ</b><span data-today>${dparts(NOW, true)}</span></p>
-<h1 class="masthead"><small>Unique</small><span>AI পত্রিকা</span></h1>
-<p class="motto">AI-এর খবর, <em>বাংলার আলোয়</em></p>
-<p class="promise">রোজ ২ মিনিটে জানুন, AI-এর কোন খবরটা আপনার কাজে লাগবে।</p>
-<div class="hero-cta">${pushCta("btn-gold")}${tgBtn("btn-ghost")}</div>
-<p class="trust">২০১৭ থেকে · ৩০,০০০+ শিক্ষার্থীর ভরসা <a href="${ug(cfg.mainSiteUrl, "hero")}">${esc(cfg.brand)}</a>-এর উদ্যোগ</p>
-${seal()}
+      body: page === 1 ? `<h1 class="vh">${esc(cfg.siteName)}: ${esc(cfg.tagline)}</h1>
+<div class="wrap paper" id="fwrap" hidden><div class="paper-main">${feedHead("বাছাই করা খবর")}<div class="feed" id="feed"></div><div class="feed-more" data-more hidden><button type="button" class="btn-line">আরও খবর দেখুন</button></div></div></div>
+<div id="front">
+${pinned.length ? `<div class="wrap">${pinned.map((p) => `<a class="alert-bar" href="./posts/${p.slug}/"><b>সতর্কতা</b><span>${esc(p.title)}</span></a>`).join("")}</div>` : ""}
+<div class="wrap fp">
+${lead ? leadStory(lead, root) : ""}
+${flashBox(root, 6, posts.slice(7, 13), " fp-flash")}
+<div class="secs">${posts.slice(1, 3).map((p) => secStory(p, root)).join("")}</div>
+${posts.length > 3 ? `<section class="fp-more" aria-labelledby="more-h"><h2 class="rule-h" id="more-h">আরও শিরোনাম</h2><ol>${posts.slice(3, 7).map((p) => `<li><a href="${root}posts/${p.slug}/"><b>${esc(p.title)}</b><span class="t5-m">${tlabel(p)}${when(p)}</span></a></li>`).join("")}</ol></section>` : ""}
+<aside class="fp-r" aria-label="সেরা খবর ও সারাংশ">${top5(root, TOP5)}${digest(root)}</aside>
 </div>
-${lead ? `<article class="lead${lead.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(lead)}><a href="./posts/${lead.slug}/"><span class="lead-tab">আজকের বড় খবর</span>${lead.photo ? `<figure class="lead-pic">${photoTag(lead, root, 'fetchpriority="high" decoding="async"')}</figure>` : ""}<div class="lead-tx">${kicker(lead)}<h2>${esc(lead.title)}</h2><p class="dek">${esc(lead.excerpt)}</p>${!lead.photo && lead.key_points.length ? `<ul class="lead-points">${lead.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}${badges(lead)}<span class="read">পুরো খবর পড়ুন${ICON.arrow}</span></div></a></article>` : ""}
-</div></section>` : pageHead(`<a href="${root}">আজকের খবর</a>`, "পুরনো খবর", `পাতা ${bnNum(page)} / ${bnNum(pages)}`)}
-${page === 1 && pinned.length ? `<div class="wrap">${pinned.map((p) => `<a class="alert-bar" href="./posts/${p.slug}/"><b>সতর্কতা</b><span>${esc(p.title)}</span></a>`).join("")}</div>` : ""}
-${page === 1 && posts.length > 1 ? `<section class="front wrap" id="front" aria-labelledby="front-h"><h2 class="sec-title" id="front-h">আজকের <em>আরও খবর</em></h2>
-<div class="side">${posts.slice(1, HEAD).map((p) => `<article class="side-story${p.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(p)}><a href="./posts/${p.slug}/">${kicker(p)}<h3>${esc(p.title)}</h3><p>${esc(p.excerpt)}</p>${badges(p)}</a></article>`).join("")}</div>
-</section>` : ""}
-<div class="wrap paper">
-<div class="paper-main">
-${page === 1 ? `<section class="aud-pick" id="audpick" aria-labelledby="audpick-h" hidden><div><h2 id="audpick-h">আপনি কে?</h2><p>বেছে নিলে আপনার কাজের খবর আগে দেখাব। পরে ফিল্টার থেকে বদলাতে পারবেন।</p></div><div class="aud-opts">${Object.entries(AUD).map(([k, v]) => `<button type="button" data-aud="${k}">${esc(v)}</button>`).join("")}<button type="button" class="btn-text" data-aud-skip>এখন নয়</button></div></section>` : ""}
-${feedHead(page === 1 ? "সর্বশেষ খবর" : `পুরনো খবর, পাতা ${bnNum(page)}`)}
-${storyList(rest, root, "feed")}
-<div class="feed-more" data-more hidden><button type="button" class="btn-line">আরও খবর দেখুন</button></div>
-${pager(root, page, pages)}
-</div>
-<aside class="rail" aria-label="আরও">${pushBox()}${typeIndex(root)}${toolIndex(root)}</aside>
-</div>
-${page === 1 ? `${whyStrip()}
-<div class="wrap klass-wrap">${klass(root, "home-class", true)}</div>
+<div class="wrap">${bazar(root, { limit: 8 })}</div>
+${alerts.length ? `<div class="wrap">${blockOf("scam-alert", "সতর্কতা ডেস্ক", `${root}type/scam-alert/`, alerts, root, " blk-alert")}</div>` : ""}
+<div class="wrap blks">${typeBlocks.join("")}</div>
+<div class="wrap">${klass(root, "home-class", true)}</div>
+${catBlocks.length ? `<div class="wrap"><h2 class="band-h">কাজ ধরে খবর</h2></div><div class="wrap blks blks-b">${catBlocks.join("")}</div>` : ""}
+${rest.length ? `<section class="wrap arch" aria-labelledby="arch-h"><header class="blk-h"><h2 id="arch-h">আগের খবর</h2>${pages > 1 ? `<a class="blk-all" href="./page/2/">আরও পুরনো খবর</a>` : ""}</header><ol class="arch-l">${rest.map((p) => `<li><a href="./posts/${p.slug}/">${when(p, false)}<b>${esc(p.title)}</b>${tlabel(p)}</a></li>`).join("")}</ol></section>` : ""}
 <section class="seo-block"><div class="wrap seo-in"><div class="prose">${utmHtml(cfg.homeSeoHtml, "home-about")}</div>
 <div><div class="tool-cloud"><h2>টুল অনুযায়ী খবর</h2><div class="tools-row">${TOOLS.map((t) => [t, postsOfTool(t).length]).filter((x) => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 18).map((x) => toolChip(x[0], root)).join("") || "<span>শিগগিরই আসছে</span>"}</div><a class="rail-more" href="${root}tools/">সব AI টুলের তালিকা</a></div>
-<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${cfg.homeFaq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section></div></div></section>` : ""}`,
+<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${cfg.homeFaq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section></div></div></section>
+</div>` : `${pageHead(`<a href="${root}">প্রথম পাতা</a>`, "পুরনো খবর", `পাতা ${bnNum(page)} / ${bnNum(pages)}`)}
+<div class="wrap paper"><div class="paper-main">${feedHead(`পুরনো খবর, পাতা ${bnNum(page)}`)}${storyList(rest, root, "feed")}<div class="feed-more" data-more hidden><button type="button" class="btn-line">আরও খবর দেখুন</button></div>${pager(root, page, pages)}</div>
+${sideRail(root, posts.slice(0, 5))}</div>`,
     })
   );
 }
-
 
 // খবরের ধরনের পাতা: /type/<key>/
 for (const t of TYPES) {
@@ -436,9 +520,9 @@ for (const t of TYPES) {
       canonical: url,
       noindex: !items.length,
       jsonLd: [crumbs([["হোম", `${SITE}/`], [t.label, url]]), { "@type": "CollectionPage", name: `${t.label}: AI-এর খবর`, url, inLanguage: "bn", isPartOf: { "@id": `${SITE}/#website` }, ...(items.length ? { mainEntity: { "@type": "ItemList", itemListElement: items.slice(0, 20).map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/posts/${p.slug}/` })) } } : {}) }],
-      body: `${pageHead(`<span class="tl t-${t.key}">খবরের ধরন</span>`, esc(t.label), esc(t.text), `<p class="page-count">${bnNum(items.length)}টি খবর</p>`)}
+      body: `${pageHead(`<a href="../../">প্রথম পাতা</a><span aria-hidden="true"> / </span>খবরের ধরন`, esc(t.label), esc(t.text), `<p class="page-count">${bnNum(items.length)}টি খবর</p>`)}
 <div class="wrap paper"><div class="paper-main">${feedHead(`${t.label}: সব খবর`)}${storyList(items, "../../", "feed")}<div class="feed-more" data-more hidden><button type="button" class="btn-line">আরও খবর দেখুন</button></div></div>
-<aside class="rail" aria-label="আরও">${pushBox()}${typeIndex("../../")}</aside></div>`,
+${sideRail("../../", posts.slice(0, 5))}</div>`,
     })
   );
 }
@@ -458,9 +542,49 @@ for (const [k, v] of Object.entries(cfg.categories)) {
       description: desc,
       canonical: `${SITE}/category/${k}/`,
       jsonLd: [crumbs([["হোম", `${SITE}/`], [v, `${SITE}/category/${k}/`]]), { "@type": "CollectionPage", name: v, url: `${SITE}/category/${k}/`, inLanguage: "bn" }],
-      body: `${pageHead("বিষয়", esc(v), esc(cfg.categoryText?.[k] || `${v} বিষয়ে সব খবর এক জায়গায়।`), `<p class="page-count">${bnNum(items.length)}টি খবর</p>`)}
+      body: `${pageHead(`<a href="../../">প্রথম পাতা</a><span aria-hidden="true"> / </span>বিষয়`, esc(v), esc(cfg.categoryText?.[k] || `${v} বিষয়ে সব খবর এক জায়গায়।`), `<p class="page-count">${bnNum(items.length)}টি খবর</p>`)}
 <div class="wrap paper"><div class="paper-main">${feedHead(`${v}: সব খবর`)}${storyList(items, "../../", "feed")}<div class="feed-more" data-more hidden><button type="button" class="btn-line">আরও খবর দেখুন</button></div></div>
-<aside class="rail" aria-label="আরও">${typeIndex("../../")}${toolIndex("../../")}</aside></div>`,
+${sideRail("../../", posts.slice(0, 5))}</div>`,
+    })
+  );
+}
+
+// AI বাজার: /bazar/
+if (BZ.length) write(
+  "bazar/index.html",
+  layout({
+    root: "../",
+    kind: "list",
+    active: "bazar",
+    title: `AI টুলের আজকের আপডেট বোর্ড: কোন টুলে কী বদলাল | ${cfg.shortName}`,
+    description: `${BZ.slice(0, 5).map((r) => r.t.name).join(", ")} সহ ${bnNum(BZ.length)}টি AI টুলের সর্বশেষ বদল এক বোর্ডে: কী এল, ভারতে চালু কি না, ফ্রি না পেইড, আর কবে। সহজ বাংলায়।`,
+    canonical: `${SITE}/bazar/`,
+    jsonLd: [crumbs([["হোম", `${SITE}/`], ["AI বাজার", `${SITE}/bazar/`]]), { "@type": "CollectionPage", name: "AI বাজার: AI টুলের আপডেট বোর্ড", url: `${SITE}/bazar/`, inLanguage: "bn", isPartOf: { "@id": `${SITE}/#website` }, dateModified: isoDate(BZ[0].p.date), mainEntity: { "@type": "ItemList", numberOfItems: BZ.length, itemListElement: BZ.slice(0, 30).map((r, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/posts/${r.p.slug}/`, name: `${r.t.name}: ${r.p.card_headline || r.p.title}` })) } }],
+    body: `${pageHead(`<a href="../">প্রথম পাতা</a><span aria-hidden="true"> / </span>AI বাজার`, "AI টুলের আজকের আপডেট বোর্ড", "শেয়ার বাজারের বোর্ডের মতো, তবে AI টুলের। কোন টুলে সর্বশেষ কী বদলাল, ভারতে চালু কি না, খরচ কত আর খবরটা কবেকার, এক নজরে।", `<p class="page-count">${bnNum(BZ.length)}টি টুল, শেষ বদল ${when(BZ[0].p, false)}</p>`)}
+<div class="wrap bazar-page">${bazar("../", { head: false })}
+<div class="bz-note prose"><h2>বোর্ডটা কীভাবে পড়বেন</h2><ul><li><strong>সর্বশেষ বদল:</strong> ওই টুল নিয়ে আমাদের সবচেয়ে নতুন খবরের শিরোনাম। ট্যাপ করলে পুরো খবর খুলবে।</li><li><strong>ভারতে:</strong> খবর প্রকাশের দিন টুলটা ভারতে চালু ছিল কি না। সূত্রে বলা না থাকলে "জানা নেই"।</li><li><strong>খরচ:</strong> ফ্রি, আংশিক ফ্রি না পেইড। টাকা খরচের আগে টুলের নিজের সাইটে একবার মিলিয়ে নিন।</li><li><strong>৩০ দিনে খবর:</strong> গত ৩০ দিনে ওই টুল নিয়ে পত্রিকায় কটা খবর বেরিয়েছে।</li></ul><p>সব টুলের পরিচয় বিভাগ ধরে দেখতে চাইলে <a href="../tools/">AI টুলের তালিকা</a> খুলুন।</p></div>
+${klass("../", "bazar-class", true)}</div>`,
+  })
+);
+
+// AI ফ্ল্যাশ: /flash/ (গত ৪৮ ঘণ্টার ছোট খবর; ফ্ল্যাশ না থাকলে সর্বশেষ খবর)
+{
+  const fb = posts.slice(0, 12);
+  const list = LIVE.length ? LIVE.map((b) => ({ url: `${SITE}/flash/#f-${b.id}`, name: b.title })) : fb.map((p) => ({ url: `${SITE}/posts/${p.slug}/`, name: p.title }));
+  write(
+    "flash/index.html",
+    layout({
+      root: "../",
+      kind: "list",
+      active: "flash",
+      title: `AI ফ্ল্যাশ: গত ৪৮ ঘণ্টার ছোট AI খবর বাংলায় | ${cfg.shortName}`,
+      description: "AI জগতে গত ৪৮ ঘণ্টায় যা যা ঘটল, দুই-তিন লাইনে: নতুন টুল, আপডেট, ফ্রি অফার আর সতর্কতা। সময় ধরে সাজানো, সহজ বাংলায়।",
+      canonical: `${SITE}/flash/`,
+      jsonLd: [crumbs([["হোম", `${SITE}/`], ["AI ফ্ল্যাশ", `${SITE}/flash/`]]), { "@type": "CollectionPage", name: "AI ফ্ল্যাশ: ছোট AI খবর", url: `${SITE}/flash/`, inLanguage: "bn", isPartOf: { "@id": `${SITE}/#website` }, mainEntity: { "@type": "ItemList", numberOfItems: list.length, itemListElement: list.slice(0, 30).map((x, i) => ({ "@type": "ListItem", position: i + 1, ...x })) } }],
+      body: `${pageHead(`<a href="../">প্রথম পাতা</a><span aria-hidden="true"> / </span>AI ফ্ল্যাশ`, "AI ফ্ল্যাশ: গত ৪৮ ঘণ্টার ছোট খবর", "বড় খবরের ফাঁকে ফাঁকে যা ঘটছে, দুই-তিন লাইনে। নতুনটা সবার উপরে, পাতা খোলা রাখলে নিজে থেকেই তাজা হয়।", `<p class="page-count"><i class="live-dot" aria-hidden="true"></i><span data-flash-upd>${LIVE.length ? `${bnNum(LIVE.length)}টি ফ্ল্যাশ` : "সর্বশেষ খবর থেকে"}</span></p>`)}
+<div class="wrap paper"><div class="paper-main">${flashList("../", 0, fb, true)}
+<p class="flash-tg"><a class="btn-line" href="${esc(TG)}" target="_blank" rel="noopener">${ICON.plane}সব ফ্ল্যাশ Telegram-এ পান</a></p></div>
+${sideRail("../", fb, false)}</div>`,
     })
   );
 }
@@ -516,17 +640,17 @@ posts.forEach((p, idx) => {
         },
         ...(p.faq.length ? [{ "@type": "FAQPage", mainEntity: p.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) }] : []),
       ],
-      body: `<article class="article${p.type === "scam-alert" ? " is-alert" : ""}" data-slug="${p.slug}">
+      body: `<div class="wrap a-grid"><article class="article${alertCls(p)}" data-slug="${p.slug}">
 <header class="a-head">
-<nav class="crumbs" aria-label="ব্রেডক্রাম্ব"><a href="${root}">হোম</a><span aria-hidden="true">/</span><a href="${root}type/${p.type}/">${esc(typeLabel(p.type))}</a></nav>
+<p class="a-kick"><a class="tl t-${p.type}" href="${root}type/${p.type}/">${esc(typeLabel(p.type))}</a></p>
 <h1>${esc(p.title)}</h1>
 <p class="dek">${esc(p.excerpt)}</p>
+<div class="dateline"><p><b>${esc(cfg.siteName)} ডেস্ক</b><span>কলকাতা সময় <time datetime="${p.date}" data-rel="d" data-keep data-nb>${bnDate(p.date)}</time></span><span>${bnNum(p.minutes)} মিনিটে পড়া</span></p><button type="button" class="s-native icon-share" data-share-title="${esc(p.title)}" data-share-url="${esc(url)}" hidden aria-label="খবরটা শেয়ার করুন">${ICON.share}</button></div>
 ${p.india || p.price || p.aud.length ? `<div class="a-badges">${badges(p)}${p.aud.length ? `<p class="a-aud"><span>কাদের জন্য:</span>${p.aud.map((a) => `<b>${esc(AUD[a])}</b>`).join("")}</p>` : ""}</div>` : ""}
-<div class="byline">${hasMentor ? `<img src="${root}assets/mentor.webp" alt="" width="40" height="40">` : ""}<p><b>${esc(cfg.mentorName)}</b><span><time datetime="${p.date}">${bnDate(p.date)}</time>, ${bnNum(p.minutes)} মিনিটে পড়া</span></p><button type="button" class="s-native icon-share" data-share-title="${esc(p.title)}" data-share-url="${esc(url)}" hidden aria-label="খবরটা শেয়ার করুন">${ICON.share}</button></div>
 </header>
 ${p.photo ? `<figure class="a-photo">${photoTag(p, root, 'fetchpriority="high" decoding="async"')}</figure>` : ""}
 <div class="a-body">
-${p.key_points.length ? `<section class="glance"><h2>এক নজরে</h2><ul>${p.key_points.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></section>` : ""}
+${p.key_points.length ? `<section class="glance"><h2>সংক্ষেপে</h2><ul>${p.key_points.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></section>` : ""}
 ${p.quick_facts.length ? `<dl class="facts">${p.quick_facts.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.value)}</dd></div>`).join("")}</dl>` : ""}
 ${p.tools.length ? `<div class="tools-row tools-top"><span>এই খবরে:</span>${p.tools.map((t) => toolChip(t, root)).join("")}</div>` : ""}
 ${toc}
@@ -540,7 +664,8 @@ ${next && next !== p ? `<nav class="next" aria-label="পরের খবর"><a
 ${joinCard()}
 </div>
 </article>
-${related.length ? `<section class="related"><div class="wrap"><h2>আরও পড়ুন</h2>${storyList(related, root)}</div></section>` : ""}`,
+<aside class="a-rail" aria-label="আরও খবর">${flashBox(root, 5, others.slice(0, 5))}${top5(root, [...TOP5.filter((x) => x !== p), ...FRONT.filter((x) => x !== p)].slice(0, 5))}</aside></div>
+${related.length ? `<section class="related"><div class="wrap"><h2 class="rule-h">আরও পড়ুন</h2>${storyList(related, root)}</div></section>` : ""}`,
     })
   );
 });
@@ -609,7 +734,7 @@ ${tcatKeys.map((k) => `<section class="tsec" id="${k}"><div class="tsec-head"><h
 }
 
 // search + client data (ফিল্টার আর অফলাইন পাতা এটাই পড়ে)
-write("search.json", JSON.stringify(posts.map((p) => ({ s: p.slug, t: p.title, e: p.excerpt, c: catName(p.category), y: p.type, l: typeLabel(p.type), a: p.aud, i: p.india || "", p: p.price || "", d: bnDate(p.date), dt: p.date, k: [...p.tags, ...p.tools.map((t) => t.name)].join(" "), ph: p.photo || "", w: p.photoSize?.[0] || 0, h: p.photoSize?.[1] || 0 }))));
+write("search.json", JSON.stringify(posts.map((p) => ({ s: p.slug, t: p.title, e: p.excerpt, c: catName(p.category), y: p.type, l: typeLabel(p.type), a: p.aud, i: p.india || "", p: p.price || "", d: bnDate(p.date), dt: p.date, k: [...p.tags, ...p.tools.map((t) => t.name)].join(" "), ic: p.tools[0]?.icon || "", tn: p.tools[0]?.name[0] || "", ph: p.photo || "", w: p.photoSize?.[0] || 0, h: p.photoSize?.[1] || 0 }))));
 write(
   "search/index.html",
   layout({
@@ -787,6 +912,8 @@ write("sw.js", SW_SRC.replace("__VERSION__", VER).replace("__PRECACHE__", JSON.s
 // sitemap, robots, feed
 const urls = [
   { loc: `${SITE}/`, lastmod: posts[0]?.date },
+  { loc: `${SITE}/flash/`, lastmod: posts[0]?.date },
+  ...(BZ.length ? [{ loc: `${SITE}/bazar/`, lastmod: BZ[0].p.date }] : []),
   { loc: `${SITE}/about/` },
   { loc: `${SITE}/contact/` },
   { loc: `${SITE}/privacy/` },

@@ -235,6 +235,7 @@
   },
   "pushEnabled": true,
   "pushApi": "https://wiynqetgssigxyjvdvqh.supabase.co/functions/v1/patrika-push",
+  "briefsApi": "https://wiynqetgssigxyjvdvqh.supabase.co/functions/v1/patrika-briefs?action=feed",
   "typeFromCategory": {
     "ai-tools": "new-tool",
     "vibe-coding": "education",
