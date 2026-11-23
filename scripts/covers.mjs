@@ -31,7 +31,7 @@ for (const { p, out } of todo) {
   const size = head.length > 46 ? 64 : head.length > 30 ? 74 : 86;
   // খবরের ধরন: প্রথম ট্যাগ ধরনের নাম হলে সেটা, নইলে বিষয় থেকে
   const types = cfg.newsTypes || [];
-  const tkey = types.some((t) => t.key === p.news_type) ? p.news_type : (types.find((t) => t.label === String((p.tags || [])[0] || "").trim()) || {}).key || cfg.typeFromCategory?.[p.category];
+  const tkey = types.some((t) => t.key === p.news_type) ? p.news_type : (types.find((t) => t.label.normalize("NFC") === String((p.tags || [])[0] || "").normalize("NFC").trim()) || {}).key || cfg.typeFromCategory?.[p.category];
   const label = (types.find((t) => t.key === tkey) || {}).label || cfg.categories[p.category] || "AI খবর";
   const tc = { "scam-alert": "#B42318", "free-offer": "#067647", "jobs-income": "#7E5410" }[tkey] || "#5D16E9";
   await page.setContent(`<html><head><style>

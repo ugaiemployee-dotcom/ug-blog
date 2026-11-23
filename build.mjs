@@ -53,35 +53,43 @@ function imgSize(f) {
 // ---- খবরের ধরন, কাদের জন্য, ভারতে চালু, দাম ----
 const TYPES = cfg.newsTypes || [];
 const TYPE = Object.fromEntries(TYPES.map((t) => [t.key, t]));
-const TYPE_BY_LABEL = Object.fromEntries(TYPES.map((t) => [t.label, t.key]));
+// য়/ড়/ঢ় দুইভাবে লেখা যায় (এক অক্ষরে বা নুক্তা দিয়ে), তাই তুলনার আগে NFC করে নিই
+const nf = (s) => String(s ?? "").normalize("NFC").trim();
+const TYPE_BY_LABEL = Object.fromEntries(TYPES.map((t) => [nf(t.label), t.key]));
 const AUD = cfg.audiences || {};
-const AUD_BY_LABEL = Object.fromEntries(Object.entries(AUD).map(([k, v]) => [v, k]));
+const AUD_BY_LABEL = Object.fromEntries(Object.entries(AUD).map(([k, v]) => [nf(v), k]));
 const INDIA = { available: "ভারতে চালু ✅", soon: "ভারতে শীঘ্রই", no: "ভারতে এখনও নেই" };
 const PRICE = { free: "ফ্রি", freemium: "আংশিক ফ্রি", paid: "পেইড" };
+// বন্ধনীর আগের অংশটুকুই আসল কথা: "টাকা লাগে (ফ্রি ব্যবহারকারীদের জন্য নয়)" মানে পেইড
+const head = (v = "") => nf(String(v).split("(")[0]);
+const rx = (s) => new RegExp(nf(s));
 const indiaFrom = (v = "") => {
-  if (!v || /বলা নেই/.test(v)) return null;
-  if (/শীঘ্রই/.test(v)) return "soon";
-  if (/এখনও|নয়|হয়নি|নেই/.test(v)) return "no";
-  if (/চালু/.test(v)) return "available";
+  const m = head(v);
+  if (!m || /বলা নেই/.test(m)) return null;
+  if (rx("শীঘ্রই|চালু হচ্ছে|আসছে").test(m)) return "soon";
+  if (rx("এখনও|নয়|হয়নি|নেই|বন্ধ").test(m)) return "no";
+  if (/চালু/.test(m)) return "available";
   return null;
 };
 const priceFrom = (v = "") => {
-  if (!v || /বলা নেই/.test(v)) return null;
-  if (/আংশিক ফ্রি/.test(v) || (/ফ্রি/.test(v) && /টাকা/.test(v))) return "freemium";
-  if (/টাকা লাগে/.test(v)) return "paid";
-  if (/ফ্রি/.test(v)) return "free";
+  const m = head(v);
+  if (!m || /বলা নেই/.test(m)) return null;
+  const free = /ফ্রি/.test(m), paid = /টাকা|\$|ডলার|পেইড|চার্জ|ফি(?![\u0980-\u09FF])|শুরু/.test(m.replace(/ফ্রি/g, ""));
+  if (/আংশিক ফ্রি|কিছু ফ্রি/.test(m) || (free && paid)) return "freemium";
+  if (free) return "free";
+  if (/টাকা|\$|ডলার|পেইড|চার্জ/.test(m)) return "paid";
   return null;
 };
 function deriveMeta(p) {
-  const tags = p.tags.map((t) => String(t).trim());
+  const tags = p.tags.map(nf);
   p.type = TYPE[p.news_type] ? p.news_type : TYPE_BY_LABEL[tags[0]] || cfg.typeFromCategory?.[p.category] || TYPES[0]?.key;
   const aud = Array.isArray(p.audience) ? p.audience : tags.map((t) => AUD_BY_LABEL[t]);
   p.aud = [...new Set(aud.filter((a) => AUD[a]))];
-  const fact = (l) => (p.quick_facts.find((f) => String(f.label).trim() === l) || {}).value || "";
+  const fact = (l) => (p.quick_facts.find((f) => nf(f.label) === nf(l)) || {}).value || "";
   p.india = INDIA[p.india] ? p.india : indiaFrom(String(fact("ভারতে")));
   p.price = PRICE[p.price] ? p.price : priceFrom(String(fact("খরচ")));
   p.push_line = p.push_line || p.card_headline || p.title;
-  p.tags = p.tags.filter((t) => !TYPE_BY_LABEL[String(t).trim()] && !AUD_BY_LABEL[String(t).trim()]);
+  p.tags = p.tags.filter((t) => !TYPE_BY_LABEL[nf(t)] && !AUD_BY_LABEL[nf(t)]);
   p.pinned = p.type === "scam-alert" && NOW - new Date(p.date).getTime() < 3 * 864e5;
 }
 const typeLabel = (k) => TYPE[k]?.label || "";
@@ -316,7 +324,7 @@ writeFileSync(join(OUT, ".nojekyll"), "");
 if (existsSync("CNAME")) cpSync("CNAME", join(OUT, "CNAME"));
 
 const feedHead = (title) => `<div class="feed-head"><h2 id="feed-title" data-default="${esc(title)}">${esc(title)}</h2><span class="feed-count" data-feed-count aria-live="polite"></span><button type="button" class="btn-text" data-clear hidden>ফিল্টার মুছুন</button></div>`;
-const typeIndex = (root) => `<section class="rail-box"><h2>খবরের ধরন</h2><ul class="type-index">${TYPES.map((t) => `<li><a href="${root}type/${t.key}/"><span class="tl t-${t.key}">${esc(t.label)}</span><em>${bnNum(typeCount(t.key))}</em></a></li>`).join("")}</ul></section>`;
+const typeIndex = (root) => `<section class="rail-box"><h2>খবরের ধরন</h2><ul class="type-index">${TYPES.map((t) => `<li${typeCount(t.key) ? "" : ' class="is-zero"'}><a href="${root}type/${t.key}/"><span class="tl t-${t.key}">${esc(t.label)}</span><em>${bnNum(typeCount(t.key))}</em></a></li>`).join("")}</ul></section>`;
 const toolIndex = (root) => Object.keys(TCATS).length ? `<section class="rail-box"><h2>কাজ অনুযায়ী AI টুল</h2><ul class="tool-index">${Object.entries(TCATS).filter(([k]) => toolsIn(k).length).map(([k, v]) => `<li><a href="${root}tools/${k}/"><span class="ti-ic">${toolsIn(k).filter((t) => t.icon).slice(0, 3).map((t) => toolIcon(t, root, 18)).join("")}</span>${esc(v.name)}</a></li>`).join("")}</ul><a class="rail-more" href="${root}tools/">সব AI টুলের তালিকা</a></section>` : "";
 const pushBox = () => `<section class="rail-box rail-push" data-push-box hidden><h2>বড় খবর এলেই জানুন</h2><p>যে ধরনের খবর চান, শুধু সেটাই আসবে।</p><button type="button" class="btn" data-sheet="psheet">নোটিফিকেশন চালু করুন</button></section>`;
 
@@ -347,7 +355,7 @@ for (let page = 1; page <= pages; page++) {
       ] : [],
       body: `${page === 1 && pinned.length ? `<div class="wrap">${pinned.map((p) => `<a class="alert-bar" href="./posts/${p.slug}/"><b>সতর্কতা</b><span>${esc(p.title)}</span></a>`).join("")}</div>` : ""}
 ${page === 1 && lead ? `<section class="front wrap" id="front" aria-label="প্রধান খবর">
-<article class="lead${lead.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(lead)}><a href="./posts/${lead.slug}/">${lead.photo ? `<figure class="lead-pic">${photoTag(lead, root, 'fetchpriority="high" decoding="async"')}</figure>` : ""}<div class="lead-tx">${kicker(lead)}<h2>${esc(lead.title)}</h2><p class="dek">${esc(lead.excerpt)}</p>${!lead.photo && lead.key_points.length ? `<ul class="lead-points">${lead.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}${badges(lead)}<span class="read">পুরো খবর পড়ুন<i aria-hidden="true"></i></span></div></a></article>
+<article class="lead${lead.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(lead)}><a href="./posts/${lead.slug}/">${lead.photo ? `<figure class="lead-pic">${photoTag(lead, root, 'fetchpriority="high" decoding="async"')}</figure>` : ""}<div class="lead-tx">${kicker(lead)}<h2>${esc(lead.title)}</h2><p class="dek">${esc(lead.excerpt)}</p>${!lead.photo && lead.key_points.length ? `<ul class="lead-points">${lead.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}${(() => { const f = lead.quick_facts.filter((x) => !["ভারতে", "খরচ"].includes(nf(x.label)) && !/বলা নেই/.test(x.value)).slice(0, 3); return !lead.photo && f.length ? `<dl class="lead-facts">${f.map((x) => `<div><dt>${esc(x.label)}</dt><dd>${esc(x.value)}</dd></div>`).join("")}</dl>` : ""; })()}${badges(lead)}<span class="read">পুরো খবর পড়ুন<i aria-hidden="true"></i></span></div></a></article>
 <div class="side">${posts.slice(1, HEAD).map((p, i) => `<article class="side-story${p.type === "scam-alert" ? " is-alert" : ""}" ${dataAttrs(p)}><a href="./posts/${p.slug}/">${kicker(p)}<h3>${esc(p.title)}</h3>${i === 0 ? `<p>${esc(p.excerpt)}</p>` : ""}${badges(p)}</a></article>`).join("")}</div>
 </section>` : ""}
 <div class="wrap paper">
@@ -361,7 +369,7 @@ ${pager(root, page, pages)}
 <aside class="rail" aria-label="আরও">${pushBox()}${typeIndex(root)}${toolIndex(root)}</aside>
 </div>
 ${page === 1 ? `<section class="seo-block"><div class="wrap seo-in"><div class="prose">${cfg.homeSeoHtml}</div>
-<div><div class="tool-cloud"><h2>টুল অনুযায়ী খবর</h2><div class="tools-row">${TOOLS.filter((t) => posts.some((p) => p.tools.includes(t))).map((t) => toolChip(t, root)).join("") || "<span>শিগগিরই আসছে</span>"}</div></div>
+<div><div class="tool-cloud"><h2>টুল অনুযায়ী খবর</h2><div class="tools-row">${TOOLS.map((t) => [t, postsOfTool(t).length]).filter((x) => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 18).map((x) => toolChip(x[0], root)).join("") || "<span>শিগগিরই আসছে</span>"}</div><a class="rail-more" href="${root}tools/">সব AI টুলের তালিকা</a></div>
 <section class="faq"><h2>সাধারণ প্রশ্ন</h2>${cfg.homeFaq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section></div></div></section>` : ""}`,
     })
   );

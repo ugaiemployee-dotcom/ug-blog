@@ -229,7 +229,8 @@
           if (e.metaKey || e.ctrlKey || e.shiftKey) return;
           e.preventDefault();
           S.type = c.getAttribute("data-type") || ""; push(); apply();
-          var bar = $(".secbar"); if (bar && bar.getBoundingClientRect().top < 0 || scrollY > (front ? front.offsetTop : 0)) scrollTo({ top: (bar ? bar.offsetTop : 0), behavior: reduced ? "auto" : "smooth" });
+          var m = $("#main"), bar = $(".secbar"), top = m ? m.offsetTop - (bar ? bar.offsetHeight : 0) : 0;
+          if (scrollY > top) scrollTo({ top: top, behavior: reduced ? "auto" : "smooth" });
         });
       });
       addEventListener("popstate", function () { S.type = safe(new URLSearchParams(location.search).get("type") || ""); apply(); });

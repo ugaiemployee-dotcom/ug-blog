@@ -56,10 +56,10 @@ button{cursor:pointer}
 .wordmark span{font-size:25px;font-weight:700;letter-spacing:-.01em}
 .mast:not(.mast-full) .dateline{display:none}
 .mast-full .mast-bar{border-bottom:0;min-height:48px}
-.masthead{text-align:center;margin:6px 0 0;padding:14px 0 6px;border-top:1px solid var(--rule)}
+.masthead{text-align:center;margin:4px 0 0;padding:10px 0 4px;border-top:1px solid var(--rule)}
 .masthead .wordmark{align-items:center}
-.masthead .wordmark small{font-size:clamp(15px,4vw,20px);margin:0 0 6px;letter-spacing:.12em}
-.masthead .wordmark span{font-size:clamp(46px,14vw,104px);letter-spacing:-.02em;line-height:1.12;padding-bottom:.04em}
+.masthead .wordmark small{font-size:clamp(15px,3.6vw,19px);margin:0 0 4px;letter-spacing:.08em}
+.masthead .wordmark span{font-size:clamp(46px,13vw,88px);letter-spacing:-.02em;line-height:1.12;padding-bottom:.04em}
 .motto{display:flex;align-items:center;gap:14px;justify-content:center;margin:6px 0 0;padding:0 0 14px;font-size:clamp(15px,3.6vw,18px);color:var(--ink2);font-weight:500}
 .motto::before,.motto::after{content:"";flex:1;max-width:220px;height:1px;background:var(--gold)}
 .mast-full{border-bottom:3px double var(--ink)}
@@ -112,6 +112,10 @@ button{cursor:pointer}
 .lead-points{list-style:none;margin:16px 0 0;padding:14px 0 0;border-top:1px solid var(--rule);display:grid;gap:8px}
 .lead-points li{position:relative;padding-left:20px;font-size:16.5px;line-height:1.6;color:var(--ink2)}
 .lead-points li::before{content:"";position:absolute;left:2px;top:.62em;width:7px;height:7px;background:var(--gold)}
+.lead-facts{display:none;margin:18px 0 0;grid-template-columns:repeat(3,1fr);border-top:2px solid var(--ink)}
+.lead-facts div{padding:10px 14px 0 0}
+.lead-facts dt{font-size:13.5px;color:var(--muted)}
+.lead-facts dd{margin:0;font-weight:600;font-size:15.5px;line-height:1.45}
 .read{display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-weight:600;color:var(--violet);border-bottom:2px solid var(--gold-l);padding-bottom:1px}
 .lead.is-alert .lead-tx{background:var(--red-wash);border-left:4px solid var(--red);padding:16px;border-radius:8px}
 .side{margin-top:22px;border-top:3px double var(--ink)}
@@ -156,6 +160,8 @@ button{cursor:pointer}
 .rail-box h2{font-size:18px;margin-bottom:6px}
 .type-index,.tool-index{list-style:none;margin:0;padding:0}
 .type-index a,.tool-index a{display:flex;align-items:center;gap:10px;min-height:44px;border-bottom:1px solid var(--rule);font-size:16px}
+.is-zero .tl{color:var(--muted)}
+.is-zero .tl::before{background:var(--rule2)}
 .type-index em{margin-left:auto;font-style:normal;color:var(--muted);font-size:14px}
 .type-index a:hover .tl,.tool-index a:hover{color:var(--violet-ink)}
 .ti-ic{display:flex;width:62px;flex:none}
@@ -352,7 +358,8 @@ a.own:hover{border-color:var(--violet)}
 .x{width:44px;height:44px;border:0;background:none;font-size:28px;line-height:1;color:var(--muted);border-radius:8px}
 .x:hover{background:var(--violet-wash);color:var(--violet)}
 .sheet fieldset{border:0;margin:0;padding:14px 0 4px}
-.sheet legend{font-weight:700;font-size:16px;padding:0;margin-bottom:8px}
+.sheet legend{float:left;width:100%;font-weight:700;font-size:16px;padding:0;margin-bottom:10px}
+.sheet .opts{clear:both}
 .opts{display:flex;flex-wrap:wrap;gap:8px}
 .opts label{position:relative}
 .opts input{position:absolute;opacity:0;width:1px;height:1px}
@@ -379,7 +386,8 @@ a.own:hover{border-color:var(--violet)}
 .foot-brand .wordmark span{font-size:30px}
 .foot-motto{margin-top:8px!important;font-weight:600;color:var(--ink2)}
 .foot-brand p{margin-top:6px;font-size:15px;color:var(--muted);max-width:44ch}
-.foot-col{display:flex;flex-direction:column}
+.foot-col{display:flex;flex-wrap:wrap;gap:0 18px}
+.foot-col b{width:100%}
 .foot-col b{font-size:15px;margin-bottom:4px}
 .foot-col a{font-size:15px;color:var(--ink2);min-height:36px;display:flex;align-items:center}
 .foot-col a:hover{color:var(--violet)}
@@ -412,6 +420,9 @@ a.own:hover{border-color:var(--violet)}
   .story h3{font-size:20px}
   .seo-in{grid-template-columns:1.2fr 1fr;gap:56px}
   .foot-in{grid-template-columns:1.6fr 1fr 1fr 1fr}
+  .foot-col{flex-direction:column;flex-wrap:nowrap}
+  .lead-facts{display:grid}
+  .lead h2{font-size:44px}
   .prose{font-size:19px}
   .sheet{align-items:center}
   .sheet-panel{border-radius:14px;padding-bottom:18px}
