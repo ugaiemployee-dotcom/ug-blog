@@ -2,6 +2,7 @@
 var V = "__VERSION__";
 var SHELL = "uap-shell-" + V, PAGES = "uap-pages", IMGS = "uap-img", DATA = "uap-data";
 var PRECACHE = __PRECACHE__;
+var DAILY = __DAILY__; // রোজের API (অন্য ডোমেইন): GET আগে নেট, না পেলে শেষ কপি; POST কখনও ধরা হয় না
 var SCOPE = self.registration.scope;
 var OFFLINE = new URL("offline/", SCOPE).href;
 
@@ -65,9 +66,21 @@ function data(e) {
   }).catch(function () { return caches.match(req.url.split("?")[0]).then(function (m) { return m || new Response("[]", { headers: { "Content-Type": "application/json" } }); }); });
 }
 
+// রোজের API: আজকের প্রশ্ন/প্রম্পট আর সাপ্তাহিক সেরা, আগে নেট; অফলাইনে শেষ কপি
+function daily(e) {
+  var req = e.request;
+  return fetch(req).then(function (res) {
+    if (res && res.ok) { var copy = res.clone(); e.waitUntil(caches.open(DATA).then(function (c) { return c.put(req.url, copy); })); }
+    return res;
+  }).catch(function () {
+    return caches.match(req.url).then(function (m) { return m || new Response('{"offline":true}', { status: 503, headers: { "Content-Type": "application/json" } }); });
+  });
+}
+
 self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
+  if (DAILY && req.url.indexOf(DAILY) === 0) { if (/[?&]action=(today|leaderboard)(&|$)/.test(req.url)) e.respondWith(daily(e)); return; }
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (req.mode === "navigate") { e.respondWith(page(e)); return; }
