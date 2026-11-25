@@ -201,7 +201,11 @@ const fromPost = (p) => ({ slug: p.slug, title: p.card_headline || p.title, body
 const CSS = readFileSync("src/style.css", "utf8");
 const JS = readFileSync("assets/site.js", "utf8");
 const SW_SRC = readFileSync("src/sw.js", "utf8");
-const VER = createHash("sha1").update(CSS + JS + SW_SRC + JSON.stringify(cfg)).digest("hex").slice(0, 10);
+const DJS = readFileSync("assets/daily.js", "utf8");
+const QJS = readFileSync("assets/quiz.js", "utf8");
+const P50 = JSON.parse(readFileSync("data/prompts50.json", "utf8"));
+const VER = createHash("sha1").update(CSS + JS + DJS + QJS + SW_SRC + JSON.stringify(cfg) + JSON.stringify(P50)).digest("hex").slice(0, 10);
+const DAILY = cfg.dailyApi || "";
 
 // ---- shared pieces ----
 const ORG = { "@type": "EducationalOrganization", "@id": `${cfg.mainSiteUrl}/#org`, name: cfg.brand, url: cfg.mainSiteUrl, logo: logoAbs, foundingDate: cfg.founded, founder: { "@type": "Person", name: cfg.mentorName }, sameAs: [cfg.freeClassUrl], email: cfg.email, address: { "@type": "PostalAddress", streetAddress: cfg.address?.street, addressLocality: cfg.address?.locality, addressRegion: "West Bengal", postalCode: cfg.address?.pin, addressCountry: "IN" }, areaServed: [{ "@type": "State", name: "West Bengal" }, { "@type": "Country", name: "India" }], knowsLanguage: ["bn", "en"], description: cfg.orgDescription };
@@ -218,6 +222,7 @@ const ICON = {
   plane: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L3 10.5l6.5 2.5M21 3l-4.5 17-7-7M21 3L9.5 13v6l3.2-3.8"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   filter: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
+  flame: '<svg class="flame" viewBox="0 0 24 24" aria-hidden="true"><path class="fm-o" d="M12 2.5c.6 3.2 3 4.9 4.6 7.3 1.2 1.8 1.9 3.6 1.9 5.4A6.5 6.5 0 0 1 12 21.7a6.5 6.5 0 0 1-6.5-6.5c0-2.6 1.3-4.6 3-6.2.1 1.8.9 3.1 2.2 3.8C10.3 9.4 10.7 5.6 12 2.5z"/><path class="fm-i" d="M12 12.6c1.4 1.3 2.7 2.6 2.7 4.4a2.7 2.7 0 0 1-5.4 0c0-1.4.8-2.4 1.6-3.1.1.7.4 1.2.9 1.5.2-1 .2-1.9.2-2.8z"/></svg>',
 };
 const shareRow = (url, title) => {
   const u = encodeURIComponent(url), t = encodeURIComponent(title);
@@ -256,7 +261,7 @@ const leadCard = (p, root) => {
 const leadStory = (p, root) => `<article class="lead${alertCls(p)}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/"><div class="kicker"><b class="lead-k">প্রধান খবর</b>${tlabel(p)}${when(p)}</div><h2>${esc(p.title)}</h2>${p.photo ? `<figure class="lead-pic">${photoTag(p, root, 'fetchpriority="high" decoding="async"')}</figure>` : leadCard(p, root)}<p class="dek">${esc(p.excerpt)}</p>${p.key_points.length ? `<ul class="lead-points">${p.key_points.slice(0, 3).map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}<div class="lead-f">${p.tools.length ? `<span class="lead-tools">${p.tools.slice(0, 3).map((t) => toolChip(t, root, false)).join("")}</span>` : ""}${badges(p)}<span class="read">পুরো খবর পড়ুন${ICON.arrow}</span></div></a></article>`;
 const secStory = (p, root) => `<article class="sec${alertCls(p)}" ${dataAttrs(p)}><a href="${root}posts/${p.slug}/">${tile(p.tools[0], root)}<div>${kicker(p)}<h3>${esc(p.title)}</h3><p>${esc(p.excerpt)}</p></div></a></article>`;
 const top5 = (root, items, id = "top5-h") => items.length ? `<section class="top5" aria-labelledby="${id}"><h2 class="rule-h" id="${id}">আজকের সেরা ৫</h2><ol>${items.map((p, i) => `<li><a href="${root}posts/${p.slug}/"><i aria-hidden="true">${bnNum(i + 1)}</i><span class="t5-tx"><b>${esc(p.title)}</b><span class="t5-m">${tlabel(p)}${when(p, false)}</span></span></a></li>`).join("")}</ol></section>` : "";
-const digest = (root) => `<section class="digest" aria-labelledby="dg-h"><h2 id="dg-h">আজ ২ মিনিটে</h2><p class="dg-k">সর্বশেষ ${bnNum(Math.min(5, posts.length))}টি খবরের মূল কথা, এক লাইনে</p><ul>${posts.slice(0, 5).map((p) => `<li><a href="${root}posts/${p.slug}/">${esc(p.key_points[0] || p.excerpt)}</a></li>`).join("")}</ul></section>`;
+const digest = (root) => `<section class="digest" aria-labelledby="dg-h" data-digest><h2 id="dg-h">আজ ২ মিনিটে</h2><p class="dg-k">সর্বশেষ ${bnNum(Math.min(5, posts.length))}টি খবরের মূল কথা, এক লাইনে</p><ul>${posts.slice(0, 5).map((p) => `<li><a href="${root}posts/${p.slug}/">${esc(p.key_points[0] || p.excerpt)}</a></li>`).join("")}</ul></section>`;
 
 // AI ফ্ল্যাশের একটা খবর। site.js-এর flashEl() ঠিক এই গঠনই বানায়
 const flashLi = (f, root, full) => {
@@ -307,7 +312,7 @@ const blockOf = (id, label, href, items, root, cls = "") => items.length ? `<sec
 // খবরের ধরনের সারি: কাগজের বিভাগের মতো, পাতার মাথায় আটকে থাকে
 const secBar = (root, active, { filter = false } = {}) => {
   const a = (key, href, label, cls = "", extra = "") => `<a class="sn${cls}${active === key ? " on" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}${extra}>${label}</a>`;
-  return `<div class="secnav"><div class="wrap secnav-in"><nav class="sn-row" aria-label="খবরের বিভাগ">${a("", root, "প্রথম পাতা")}${a("flash", `${root}flash/`, '<i class="live-dot" aria-hidden="true"></i>AI ফ্ল্যাশ')}${a("bazar", `${root}bazar/`, "AI বাজার")}${TYPES.filter((t) => typeCount(t.key) || active === t.key).map((t) => a(t.key, `${root}type/${t.key}/`, esc(t.label), ` t-${t.key}`)).join("")}${a("tools", `${root}tools/`, "AI টুল")}${a("-", ug(cfg.freeClassUrl, "nav"), "ফ্রি ক্লাস", " sn-cta", ' target="_blank" rel="noopener"')}</nav>${filter ? `<button type="button" class="who-chip" data-sheet="fsheet" data-who aria-haspopup="dialog">আপনি কে?</button><button type="button" class="filter-btn" data-sheet="fsheet" aria-haspopup="dialog">${ICON.filter}<span>ফিল্টার</span><i data-fcount hidden></i></button>` : ""}</div></div>`;
+  return `<div class="secnav"><div class="wrap secnav-in"><nav class="sn-row" aria-label="খবরের বিভাগ">${a("", root, "প্রথম পাতা")}${a("quiz", `${root}quiz/`, `${ICON.flame}কুইজ`, " sn-quiz")}${a("flash", `${root}flash/`, '<i class="live-dot" aria-hidden="true"></i>AI ফ্ল্যাশ')}${a("bazar", `${root}bazar/`, "AI বাজার")}${TYPES.filter((t) => typeCount(t.key) || active === t.key).map((t) => a(t.key, `${root}type/${t.key}/`, esc(t.label), ` t-${t.key}`)).join("")}${a("tools", `${root}tools/`, "AI টুল")}${a("-", ug(cfg.freeClassUrl, "nav"), "ফ্রি ক্লাস", " sn-cta", ' target="_blank" rel="noopener"')}</nav>${filter ? `<button type="button" class="who-chip" data-sheet="fsheet" data-who aria-haspopup="dialog">আপনি কে?</button><button type="button" class="filter-btn" data-sheet="fsheet" aria-haspopup="dialog">${ICON.filter}<span>ফিল্টার</span><i data-fcount hidden></i></button>` : ""}</div></div>`;
 };
 // চলমান শিরোনাম: ব্রেকিং ফ্ল্যাশ আগে, তারপর সর্বশেষ খবর। দ্বিতীয় তালিকাটা শুধু চোখের জন্য (থামা ছাড়া ঘোরাতে)
 const tkItems = (root, hid) => [...BRK.map((b) => `<li class="tk-brk"><a href="${root}flash/#f-${b.id}"${hid}><b>ব্রেকিং</b>${esc(b.title)}</a></li>`), ...posts.slice(0, 8).map((p) => `<li><a href="${root}posts/${p.slug}/"${hid}><i>${esc(typeLabel(p.type))}</i>${esc(p.card_headline || p.title)}</a></li>`)].join("");
@@ -336,10 +341,32 @@ const tgBtn = (cls, label = "Telegram-এ জয়েন করুন") => `<a 
 const klass = (root, medium, wide) => `<aside class="notice${wide ? " notice-wide" : ""}" aria-labelledby="notice-h"><p class="notice-k">বিজ্ঞপ্তি</p><div class="notice-b"><h2 id="notice-h">${wide ? "৪ দিনের ফ্রি AI ক্লাস, পুরোটা বাংলায়" : esc(cfg.learnTitle)}</h2><p>${esc(cfg.learnText)}</p><dl class="notice-f"><div><dt>সময়</dt><dd>৪ দিন</dd></div><div><dt>ফি</dt><dd>₹০</dd></div><div><dt>ভাষা</dt><dd>বাংলা</dd></div><div><dt>ধরন</dt><dd>হাতে-কলমে</dd></div></dl></div><div class="notice-a">${hasMentor ? `<img src="${root}assets/mentor.webp" alt="" width="48" height="48" loading="lazy">` : ""}<p><b>${esc(cfg.mentorName)}</b><span>${esc(cfg.mentorTitle)}</span></p><a class="btn" href="${ug(cfg.freeClassUrl, medium)}" target="_blank" rel="noopener">ফ্রি ক্লাসে নাম লেখান${ICON.arrow}</a></div></aside>`;
 const joinCard = () => `<aside class="join"><div><h2>বড় খবর এলেই জানতে চান?</h2><p>দিনে খুব বেশি নয়, আর যখন খুশি বন্ধ করা যায়।</p></div><div class="join-act">${pushCta("btn")}${tgBtn("btn-line")}</div></aside>`;
 const pushStrip = () => `<div class="pstrip" data-pstrip><div class="wrap pstrip-in">${pushCta("pstrip-a", "নোটিফিকেশন চালু করুন")}<span class="pstrip-t">বড় খবর মিস করবেন না</span><button type="button" class="x" data-pstrip-x aria-label="এই সারিটা বন্ধ করুন">×</button></div></div>`;
-const press = () => `<div class="press" aria-hidden="true"><p class="press-word">AI পত্রিকা</p></div>`;
-const CSP = `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data:; font-src 'self'; connect-src 'self' ${new URL(cfg.supabaseUrl || cfg.pushApi).origin}; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'`;
 
-function layout({ root, title, description, canonical, ogImage, ogType = "website", jsonLd = [], body, extraHead = "", noindex = false, kind = "page", active = "-", filter = false, preload = "" }) {
+// ---- রোজের অভ্যাস: আজকের AI প্রশ্ন, আজকের প্রম্পট, ৫০টা প্রম্পট, লিড ফর্ম ----
+const P50G = P50.groups;
+const P50OPEN = P50G.flatMap((g) => P50.prompts.filter((x) => x.aud === g.key).slice(0, 2));
+const P50REST = P50G.map((g) => [g, P50.prompts.filter((x) => x.aud === g.key).slice(2)]);
+const PTD = P50OPEN[Math.floor((NOW + 198e5) / 864e5) % P50OPEN.length];
+const ptdSteps = (x) => ["নিচের বোতামে ট্যাপ করে প্রম্পটটা কপি করুন", `${x.tool.split(/[ (,]/)[0]} খুলুন (ফোনের অ্যাপে বা ব্রাউজারে) আর পেস্ট করুন`, "[ ] বন্ধনীর জায়গায় নিজের তথ্য বসিয়ে পাঠান"];
+const qstrip = (root, card = false) => `<a class="qstrip${card ? " qcard" : ""}" href="${root}quiz/" data-qstrip><span class="qs-ic">${ICON.flame}</span><span class="qs-tx"><b>${card ? "আজকের AI প্রশ্ন খেলুন" : "আজকের AI প্রশ্ন"}</b><span data-qs-t>${card ? "আজকের খবর থেকে ৫টা প্রশ্ন, ১ মিনিটে। রোজ খেলে স্ট্রিক বাড়ান।" : "৫টা প্রশ্ন · ১ মিনিট"}</span></span><span class="qs-go" data-qs-go>খেলুন</span></a>`;
+const ptdCard = (root, compact) => `<section class="ptd${compact ? " ptd-c" : ""}" aria-labelledby="ptd-h" data-ptd data-copyroot><header class="ptd-h"><h2 id="ptd-h">${compact ? `<a href="${root}prompt/">আজকের প্রম্পট</a>` : "আজকের প্রম্পট"}</h2><span class="ptd-tool"><span class="vh">কোন টুলে: </span><span data-pt-tool>${esc(PTD.tool)}</span></span></header><p class="ptd-t" data-pt-title>${esc(PTD.title)}</p>${compact ? "" : `<p class="ptd-why" data-pt-why>${esc(PTD.tip || P50G.find((g) => g.key === PTD.aud)?.lead || "")}</p>`}<p class="ptd-p" data-copytext>${esc(PTD.prompt)}</p><div class="ptd-f"><button type="button" class="btn ptd-copy" data-dcopy>প্রম্পট কপি করুন</button><details class="ptd-steps"${compact ? "" : " open"}><summary>কীভাবে ব্যবহার করবেন</summary><ol data-pt-steps>${ptdSteps(PTD).map((x) => `<li>${esc(x)}</li>`).join("")}</ol><p class="ptd-for" data-pt-for>কাদের জন্য: ${esc(AUD[PTD.aud] || "")}</p></details></div></section>`;
+const DISTRICTS = ["কলকাতা", "উত্তর ২৪ পরগনা", "দক্ষিণ ২৪ পরগনা", "হাওড়া", "হুগলি", "নদিয়া", "পূর্ব বর্ধমান", "পশ্চিম বর্ধমান", "বীরভূম", "বাঁকুড়া", "পুরুলিয়া", "পূর্ব মেদিনীপুর", "পশ্চিম মেদিনীপুর", "ঝাড়গ্রাম", "মুর্শিদাবাদ", "মালদা", "উত্তর দিনাজপুর", "দক্ষিণ দিনাজপুর", "জলপাইগুড়ি", "আলিপুরদুয়ার", "কোচবিহার", "দার্জিলিং", "কালিম্পং", "পশ্চিমবঙ্গের বাইরে"];
+const CONSENT = "আমার নাম-নম্বর Unique AI পত্রিকা ও Unique Gurukul আমাকে AI শেখার খবর ও ফ্রি ক্লাসের তথ্য পাঠাতে ব্যবহার করতে পারে। যেকোনো সময় বন্ধ করা যাবে।";
+const leadForm = (root, src, label, soft = false) => `<form class="lf" data-lead="${src}"${soft ? " data-soft" : ""} novalidate>
+<div class="lf-f"><label for="lf-n-${src}">আপনার নাম</label><input id="lf-n-${src}" name="name" autocomplete="name" maxlength="60" required></div>
+<div class="lf-f"><label for="lf-p-${src}">মোবাইল নম্বর</label><div class="lf-ph"><span aria-hidden="true">+৯১</span><input id="lf-p-${src}" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="16" required placeholder="১০ অঙ্কের নম্বর"></div></div>
+<fieldset class="lf-who"><legend>আপনি কে?</legend><div class="lf-chips">${Object.entries(AUD).map(([k, v]) => `<label><input type="radio" name="persona" value="${k}"><span>${esc(v)}</span></label>`).join("")}</div></fieldset>
+<div class="lf-f"><label for="lf-d-${src}">জেলা <small>(না দিলেও চলবে)</small></label><select id="lf-d-${src}" name="district"><option value="">বেছে নিন</option>${DISTRICTS.map((d) => `<option>${d}</option>`).join("")}</select></div>
+<label class="lf-ok"><input type="checkbox" name="consent" required><span>${CONSENT}</span></label>
+<p class="lf-err" role="alert" hidden></p>
+<button type="submit" class="btn lf-go">${label}</button>
+<p class="lf-note">নম্বর যাচাইয়ের জন্য OTP লাগে না। কী রাখা হয়, পড়ুন <a href="${root}privacy/#lead">গোপনীয়তা নীতিতে</a>।</p>
+</form>`;
+const press = () => `<div class="press" aria-hidden="true"><p class="press-word">AI পত্রিকা</p></div>`;
+const CONNECT = [...new Set([cfg.supabaseUrl || cfg.pushApi, DAILY].filter(Boolean).map((u) => new URL(u).origin))].join(" ");
+const CSP = `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data: blob:; font-src 'self'; connect-src 'self' ${CONNECT}; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'`;
+
+function layout({ root, title, description, canonical, ogImage, ogType = "website", jsonLd = [], body, extraHead = "", noindex = false, kind = "page", active = "-", filter = false, preload = "", quiz = false }) {
   const img = abs(ogImage || "assets/og-default.png");
   const ld = [{ "@context": "https://schema.org", "@graph": [ORG, PUB, ...jsonLd] }];
   const news = ["home", "list", "article"].includes(kind);
@@ -385,11 +412,11 @@ ${extraHead}
 ${preload}<link rel="stylesheet" href="${root}assets/style.css?v=${VER}">
 ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(/</g, "\\u003c")}</script>`).join("\n")}
 </head>
-<body class="k-${kind}" data-root="${root}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}">
+<body class="k-${kind}" data-root="${root}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}" data-daily="${esc(DAILY)}">
 <a class="skip" href="#main">মূল লেখায় যান</a>
 ${kind === "article" ? '<div class="progress" aria-hidden="true"><i></i></div>' : ""}
 <div class="util"><div class="wrap util-in"><span class="u-date" data-today>${dparts(NOW, true)}</span><span class="u-ed">অনলাইন সংস্করণ</span><span class="u-clock" data-clockbox hidden><i class="live-dot" aria-hidden="true"></i><b data-clock></b><small>ভারতীয় সময়</small></span><nav class="u-links" aria-label="প্রধান মেনু"><a href="${root}about/">আমাদের কথা</a><a href="${root}our-tools/">আমাদের টুল</a><a href="${esc(TG)}" target="_blank" rel="noopener">Telegram</a></nav></div></div>
-<header class="mast"><div class="wrap mast-in">${wordmark(root)}<span class="mast-act"><a class="icon-btn" href="${root}search/" aria-label="খবর খুঁজুন">${ICON.search}</a><button class="icon-btn" type="button" data-sheet="psheet" data-push-open hidden aria-label="নোটিফিকেশন">${ICON.bell}</button><a class="mast-cta" href="${ug(cfg.freeClassUrl, "nav")}" target="_blank" rel="noopener">৪ দিনের ফ্রি ক্লাস</a></span></div></header>
+<header class="mast"><div class="wrap mast-in">${wordmark(root)}<span class="mast-act"><a class="streak-b" href="${root}quiz/" data-streak hidden>${ICON.flame}<b></b></a><a class="icon-btn" href="${root}search/" aria-label="খবর খুঁজুন">${ICON.search}</a><button class="icon-btn" type="button" data-sheet="psheet" data-push-open hidden aria-label="নোটিফিকেশন">${ICON.bell}</button><a class="mast-cta" href="${ug(cfg.freeClassUrl, "nav")}" target="_blank" rel="noopener">৪ দিনের ফ্রি ক্লাস</a></span></div></header>
 ${secBar(root, active, { filter })}
 ${kind === "offline" ? "" : ticker(root)}
 ${news ? pushStrip() : ""}
@@ -399,6 +426,7 @@ ${body}
 <footer class="foot"><div class="wrap foot-in">
 <div class="foot-brand">${wordmark(root)}<p>${esc(cfg.footerAbout)}</p><p class="foot-links"><a href="${esc(TG)}" target="_blank" rel="noopener">Telegram চ্যানেল</a><a href="${ug(cfg.freeClassUrl, "footer")}" target="_blank" rel="noopener">৪ দিনের ফ্রি ক্লাস</a></p></div>
 <nav class="foot-col" aria-label="খবরের ধরন"><b>খবরের ধরন</b>${TYPES.map((t) => `<a href="${root}type/${t.key}/">${esc(t.label)}</a>`).join("")}</nav>
+<nav class="foot-col" aria-label="রোজের কাজ"><b>রোজের কাজ</b><a href="${root}quiz/">আজকের AI প্রশ্ন</a><a href="${root}prompt/">আজকের প্রম্পট</a><a href="${root}prompts-50/">৫০টা কাজের AI প্রম্পট</a></nav>
 <nav class="foot-col" aria-label="নিউজরুম"><b>নিউজরুম</b><a href="${root}flash/">AI ফ্ল্যাশ</a><a href="${root}bazar/">AI বাজার</a><a href="${root}tools/">সব AI টুলের তালিকা</a>${Object.entries(cfg.categories).map(([k, v]) => `<a href="${root}category/${k}/">${esc(v)}</a>`).join("")}<a href="${root}our-tools/">Unique Gurukul-এর টুল</a></nav>
 <nav class="foot-col" aria-label="পত্রিকা"><b>পত্রিকা</b><a href="${root}about/">আমাদের কথা</a><a href="${root}contact/">যোগাযোগ</a><a href="${root}privacy/">গোপনীয়তা নীতি</a><a href="${root}terms/">শর্ত ও দাবিত্যাগ</a><a href="${root}feed.xml">RSS ফিড</a></nav>
 </div>${press()}<div class="foot-pub"><div class="wrap"><p><a href="${ug(cfg.mainSiteUrl, "footer")}">${esc(cfg.brand)}</a>-এর একটি উদ্যোগ</p><p>© ${bnNum(new Date().getFullYear()).replace(/,/g, "")} ${esc(cfg.brand)}। সব অধিকার সংরক্ষিত।</p></div></div></footer>
@@ -407,6 +435,7 @@ ${filter ? filterSheet() : ""}
 ${pushSheet()}
 ${installCard(root)}
 <script src="${root}assets/site.js?v=${VER}" defer></script>
+<script src="${root}assets/daily.js?v=${VER}" defer></script>${quiz ? `\n<script src="${root}assets/quiz.js?v=${VER}" defer></script>` : ""}
 </body>
 </html>`;
 }
@@ -430,6 +459,7 @@ cpSync("assets", join(OUT, "assets"), { recursive: true });
 // site.js: মন্তব্যের লাইন আর সারির শুরুর ফাঁকা জায়গা বাদ দিয়ে পাঠানো হয় (ফাইলটা ছোট হয়, কোড একই থাকে)
 writeFileSync(join(OUT, "assets/site.js"), JS.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n") + "\n");
 writeFileSync(join(OUT, "assets/style.css"), CSS);
+for (const [f, src] of [["daily.js", DJS], ["quiz.js", QJS]]) writeFileSync(join(OUT, "assets", f), src.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n") + "\n");
 writeFileSync(join(OUT, ".nojekyll"), "");
 if (existsSync("CNAME")) cpSync("CNAME", join(OUT, "CNAME"));
 
@@ -489,12 +519,13 @@ for (let page = 1; page <= pages; page++) {
 <div class="wrap paper" id="fwrap" hidden><div class="paper-main">${feedHead("বাছাই করা খবর")}<div class="feed" id="feed"></div><div class="feed-more" data-more hidden><button type="button" class="btn-line">আরও খবর দেখুন</button></div></div></div>
 <div id="front">
 ${pinned.length ? `<div class="wrap">${pinned.map((p) => `<a class="alert-bar" href="./posts/${p.slug}/"><b>সতর্কতা</b><span>${esc(p.title)}</span></a>`).join("")}</div>` : ""}
+<div class="wrap">${qstrip(root)}</div>
 <div class="wrap fp">
 ${lead ? leadStory(lead, root) : ""}
 ${flashBox(root, 6, posts.slice(HEAD, HEAD + 6), " fp-flash")}
 <div class="secs">${posts.slice(1, 3).map((p) => secStory(p, root)).join("")}</div>
 ${posts.length > 3 ? `<section class="fp-more" aria-labelledby="more-h"><h2 class="rule-h" id="more-h">আরও শিরোনাম</h2><ol>${posts.slice(3, HEAD).map((p) => `<li><a href="${root}posts/${p.slug}/"><b>${esc(p.title)}</b><span class="t5-m">${tlabel(p)}${when(p)}</span></a></li>`).join("")}</ol></section>` : ""}
-<aside class="fp-r" aria-label="সেরা খবর ও সারাংশ">${top5(root, TOP5)}${digest(root)}</aside>
+<aside class="fp-r" aria-label="আজকের প্রম্পট, সেরা খবর ও সারাংশ">${ptdCard(root, true)}${top5(root, TOP5)}${digest(root)}</aside>
 </div>
 <div class="wrap">${bazar(root, { limit: 8 })}</div>
 ${alerts.length ? `<div class="wrap">${blockOf("scam-alert", "সতর্কতা ডেস্ক", `${root}type/scam-alert/`, alerts, root, " blk-alert")}</div>` : ""}
@@ -664,6 +695,7 @@ ${p.tools.length ? `<div class="tools-row tools-top"><span>এই খবরে:<
 ${toc}
 <div class="prose">${utmHtml(richBody, "article-body")}</div>
 ${p.faq.length ? `<section class="faq"><h2>সাধারণ প্রশ্ন</h2>${p.faq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section>` : ""}
+${qstrip(root, true)}
 ${klass(root, "article-class", false)}
 ${shareRow(url, p.title)}
 ${p.tags.length ? `<ul class="tags" aria-label="ট্যাগ">${p.tags.map((t) => `<li>#${esc(t)}</li>`).join("")}</ul>` : ""}
@@ -807,16 +839,20 @@ const mail = `<a href="mailto:${esc(cfg.email)}">${esc(cfg.email)}</a>`;
 infoPage("privacy", "গোপনীয়তা নীতি", `${cfg.siteName} আপনার সম্পর্কে কী তথ্য রাখে আর কী রাখে না, সহজ বাংলায়।`, `
 <p>এই পাতায় বলা আছে ${esc(cfg.siteName)} (${esc(host(SITE))}) ব্যবহার করলে আপনার কোন তথ্য আমাদের কাছে আসে আর কোনটা আসে না। পত্রিকাটি ${esc(cfg.brand)}-এর একটি উদ্যোগ। শেষ হালনাগাদ: ${UPDATED}।</p>
 <h2>সংক্ষেপে</h2>
-<ul><li>পত্রিকা পড়তে অ্যাকাউন্ট খুলতে হয় না, নাম, ফোন নম্বর বা ইমেইল দিতে হয় না।</li><li>পত্রিকা নিজে আপনার ব্রাউজারে কোনো কুকি বসায় না।</li><li>আমরা আপনার তথ্য কাউকে বিক্রি করি না।</li></ul>
+<ul><li>পত্রিকা পড়তে অ্যাকাউন্ট খুলতে হয় না, নাম, ফোন নম্বর বা ইমেইল দিতে হয় না।</li><li>কুইজের সার্টিফিকেট বা ৫০টা প্রম্পট চাইলে তবেই নাম আর নম্বর চাওয়া হয়, আপনার সম্মতি নিয়ে।</li><li>পত্রিকা নিজে আপনার ব্রাউজারে কোনো কুকি বসায় না।</li><li>আমরা আপনার তথ্য কাউকে বিক্রি করি না।</li></ul>
 <h2>আপনার ফোনেই যা থাকে</h2>
-<p>আপনি "আপনি কে?" প্রশ্নে কী বেছেছেন, কোন ফিল্টার রেখেছেন, কটা খবর পড়েছেন, এগুলো শুধু আপনার ফোন বা কম্পিউটারের ব্রাউজারে (localStorage) জমা থাকে, আমাদের কাছে আসে না। নেট না থাকলেও যাতে আগে খোলা খবর পড়া যায়, সেজন্য পত্রিকার পাতা আর ছবি আপনার ব্রাউজারেই রেখে দেওয়া হয়। ব্রাউজারের সাইট ডেটা মুছে দিলে এসব মুছে যায়।</p>
+<p>কোন ফিল্টার রেখেছেন, কটা খবর পড়েছেন, কুইজের আগের ফল, এগুলো আপনার ফোন বা কম্পিউটারের ব্রাউজারে (localStorage) জমা থাকে। "আপনি কে?" প্রশ্নে যা বেছেছেন, সেটা নিচে বলা পাতা দেখার হিসেবের সাথে আমাদের কাছে আসে। নেট না থাকলেও যাতে আগে খোলা খবর পড়া যায়, সেজন্য পত্রিকার পাতা আর ছবি আপনার ব্রাউজারেই রেখে দেওয়া হয়। ব্রাউজারের সাইট ডেটা মুছে দিলে এসব মুছে যায়।</p>
 <h2>নোটিফিকেশন</h2>
 <p>আপনি নিজে "নোটিফিকেশন চালু করুন" বোতামে ট্যাপ করে অনুমতি দিলে তবেই নোটিফিকেশন আসে। তখন আপনার ব্রাউজার একটা ঠিকানা (subscription) তৈরি করে, যেটা আর আপনি কোন ধরনের খবর চেয়েছেন, শুধু সেটুকু আমাদের সার্ভারে (Supabase) জমা থাকে, যাতে খবর পাঠানো যায়। এতে আপনার নাম বা ফোন নম্বর থাকে না। নোটিফিকেশন বন্ধ করলে সেই ঠিকানা মুছে দেওয়া হয়।</p>
+<h2 id="quiz">আজকের AI প্রশ্ন আর পাতা দেখার হিসেব</h2>
+<p>প্রথমবার পত্রিকা খুললে আপনার ব্রাউজার একটা এলোমেলো নম্বর (ডিভাইস আইডি) তৈরি করে রাখে। এতে আপনার নাম বা ফোনের কোনো তথ্য থাকে না। কুইজের উত্তর, স্ট্রিক আর সার্টিফিকেট এই নম্বর ধরেই মেলানো হয়। প্রতিটা পাতা খুললে আমরা শুধু এটুকু জমা রাখি: কোন পাতা, কোন সাইট থেকে এলেন (শুধু সাইটের নাম, পুরো লিংক নয়), লিংকে utm চিহ্ন থাকলে সেটা, ডিভাইস আইডি আর "আপনি কে?" বাছাই। আপনার IP ঠিকানা জমা রাখা হয় না; অপব্যবহার আটকাতে শুধু তার একটা অপরিবর্তনীয় সংকেত (hash) কিছুক্ষণ ব্যবহার হয়। ব্রাউজারে "Do Not Track" চালু থাকলে utm আর "আপনি কে?" পাঠানো হয় না।</p>
+<h2 id="lead">নাম আর ফোন নম্বর</h2>
+<p>সার্টিফিকেট বা ৫০টা প্রম্পটের জন্য আপনি নিজে নাম, মোবাইল নম্বর, পরিচয় আর চাইলে জেলা দিলে, এবং সম্মতির ঘরে টিক দিলে তবেই সেগুলো আমাদের কাছে জমা হয়। এগুলো দিয়ে Unique AI পত্রিকা ও Unique Gurukul আপনাকে AI শেখার খবর আর ফ্রি ক্লাসের তথ্য পাঠাতে পারে। নম্বর যাচাই করা হয় না (OTP নেই)। সাপ্তাহিক সেরা তালিকায় শুধু আপনার নামের প্রথম অংশ আর জেলার আদ্যক্ষর দেখানো হয়। মেসেজ বন্ধ করতে বা তথ্য মুছে দিতে চাইলে ${mail} ঠিকানায় লিখুন।</p>
 <h2>আমরা কী গুনে রাখি</h2>
 <p>পত্রিকা থেকে কেউ Unique Gurukul-এর ফ্রি ক্লাস বা মূল ওয়েবসাইটের লিংকে ক্লিক করলে আমরা তিনটা জিনিস গুনে রাখি: কোন পাতা থেকে ক্লিক হল, কোন লিংকে, আর কখন। কে ক্লিক করলেন তা আমরা রাখি না। আপনার নাম, IP ঠিকানা বা ফোনের তথ্য এই হিসেবে থাকে না।</p>
 <p>ওই লিংকগুলোর শেষে একটা ছোট চিহ্ন জোড়া থাকে (যেমন <strong>utm_source=patrika</strong>), যাতে আমাদের অন্য সাইট বুঝতে পারে আপনি পত্রিকা থেকে এসেছেন।</p>
 <h2>যে পরিষেবাগুলো ব্যবহার করি</h2>
-<ul><li><strong>GitHub Pages:</strong> পত্রিকার পাতাগুলো এখান থেকে আপনার কাছে পৌঁছয়। যেকোনো ওয়েবসাইটের মতো, পাতা পাঠানোর সময় তাদের সার্ভারে আপনার IP ঠিকানা সাময়িকভাবে ধরা পড়ে। এটা GitHub-এর নিজের নীতি অনুযায়ী চলে।</li><li><strong>Supabase:</strong> উপরে বলা ক্লিকের গোনাগুনতি আর নোটিফিকেশনের ঠিকানা এখানে জমা থাকে।</li></ul>
+<ul><li><strong>GitHub Pages:</strong> পত্রিকার পাতাগুলো এখান থেকে আপনার কাছে পৌঁছয়। যেকোনো ওয়েবসাইটের মতো, পাতা পাঠানোর সময় তাদের সার্ভারে আপনার IP ঠিকানা সাময়িকভাবে ধরা পড়ে। এটা GitHub-এর নিজের নীতি অনুযায়ী চলে।</li><li><strong>Supabase:</strong> উপরে বলা ক্লিকের গোনাগুনতি, নোটিফিকেশনের ঠিকানা, কুইজের উত্তর, পাতা দেখার হিসেব আর আপনার দেওয়া নাম-নম্বর এখানে জমা থাকে।</li></ul>
 <p>পত্রিকার ফন্ট, ছবি আর আইকন আমাদের নিজের জায়গা থেকেই আসে, বাইরের কোনো সাইট থেকে নয়।</p>
 <h2>বিজ্ঞাপন</h2>
 <p>এই মুহূর্তে পত্রিকায় বাইরের কোনো বিজ্ঞাপন নেই। ভবিষ্যতে Google AdSense-এর মতো বিজ্ঞাপন চালু হলে Google ও তার সহযোগীরা কুকি ব্যবহার করে আপনার আগ্রহ অনুযায়ী বিজ্ঞাপন দেখাতে পারে। তখন এই পাতায় তা পরিষ্কার করে জানানো হবে, আর আপনি Google-এর বিজ্ঞাপন সেটিংস থেকে তা বন্ধ করতে পারবেন।</p>
@@ -855,6 +891,87 @@ infoPage("terms", "শর্ত ও দাবিত্যাগ", `${cfg.siteNam
 <p>পত্রিকার লেখা আর ছবি ${esc(cfg.brand)}-এর। লিংক দিয়ে শেয়ার করতে পারেন। পুরো লেখা কপি করে অন্য কোথাও ছাপতে চাইলে আগে অনুমতি নিন।</p>
 <p><a href="../privacy/">গোপনীয়তা নীতি</a>, <a href="../contact/">যোগাযোগ</a></p>`);
 
+
+// ---- রোজের পাতা: /quiz/, /certificate/, /prompt/, /prompts-50/ ----
+write(
+  "quiz/index.html",
+  layout({
+    root: "../",
+    kind: "quiz",
+    active: "quiz",
+    quiz: true,
+    title: `আজকের AI প্রশ্ন: রোজ ৫টা প্রশ্ন, ১ মিনিট | ${cfg.siteName}`,
+    description: "রোজ সকাল ৮টায় AI-এর খবর আর সাধারণ জ্ঞান থেকে ৫টা নতুন প্রশ্ন, বাংলায়। ১ মিনিটে খেলুন, সঙ্গে সঙ্গে ঠিক উত্তর আর ব্যাখ্যা, রোজ খেলে স্ট্রিক আর ৭ দিনে সার্টিফিকেট।",
+    canonical: `${SITE}/quiz/`,
+    jsonLd: [crumbs([["হোম", `${SITE}/`], ["আজকের AI প্রশ্ন", `${SITE}/quiz/`]]), { "@type": "WebPage", name: "আজকের AI প্রশ্ন", url: `${SITE}/quiz/`, inLanguage: "bn", description: "রোজ ৫টা নতুন প্রশ্ন: AI-এর খবর আর সাধারণ জ্ঞান, বাংলায়।", isPartOf: { "@id": `${SITE}/#website` }, publisher: { "@id": PUB["@id"] }, about: ["কৃত্রিম বুদ্ধিমত্তা", "সাধারণ জ্ঞান"] }],
+    body: `<div class="wrap qz-wrap">
+<section class="qz" data-quiz data-freeurl="${esc(cfg.freeClassUrl)}" aria-labelledby="qz-h">
+<header class="qz-head"><h1 id="qz-h">আজকের AI প্রশ্ন</h1><p class="qz-sub"><span data-qdate>${dparts(NOW, true)}</span><span>৫টা প্রশ্ন, ১ মিনিট</span></p></header>
+<div class="qz-stage" data-qstage aria-live="polite" aria-busy="true"><div class="qz-load"><i></i><i></i><i></i><p>আজকের প্রশ্ন আনা হচ্ছে…</p></div><noscript><p class="qz-msg">কুইজ খেলতে ব্রাউজারে JavaScript চালু রাখুন।</p></noscript></div>
+</section>
+<aside class="qz-side" aria-label="সাপ্তাহিক সেরা ও নিয়ম">
+<section class="lb" data-lb hidden aria-labelledby="lb-h"><h2 id="lb-h">এই সপ্তাহের সেরা ১০</h2><ol></ol><p class="lb-n">যাঁরা নাম দিয়ে রাজি হয়েছেন, শুধু তাঁদের নামের প্রথম অংশ দেখানো হয়।</p></section>
+<section class="qz-how" aria-labelledby="how-h"><h2 id="how-h">কীভাবে খেলবেন</h2><ol><li>রোজ সকাল ৮টায় ৫টা নতুন প্রশ্ন আসে, আজকের AI খবর আর সাধারণ জ্ঞান থেকে।</li><li>প্রতিটা প্রশ্নে একটা উত্তর বেছে নিন। পাঁচটা হলে জমা দিন, সঙ্গে সঙ্গে ঠিক উত্তর আর ব্যাখ্যা দেখবেন।</li><li>রোজ খেললে স্ট্রিক বাড়ে। একদিন বাদ পড়লে সপ্তাহে একবার "ছুটির পাস" নিজে থেকেই স্ট্রিক বাঁচিয়ে দেয়।</li><li>টানা ৭ দিন খেললে নিজের নামে "AI সচেতন" সার্টিফিকেট পাবেন।</li></ol></section>
+<p class="qz-more"><a href="../prompt/">আজকের প্রম্পট</a><a href="../prompts-50/">৫০টা কাজের AI প্রম্পট</a><a href="../certificate/">আমার সার্টিফিকেট</a></p>
+</aside>
+</div>
+<div class="wrap lf-hold" data-certform hidden>${leadForm("../", "certificate", "সার্টিফিকেট তৈরি করুন")}</div>`,
+  })
+);
+write(
+  "certificate/index.html",
+  layout({
+    root: "../",
+    kind: "quiz",
+    active: "quiz",
+    quiz: true,
+    noindex: true,
+    title: `আমার AI সচেতন সার্টিফিকেট | ${cfg.siteName}`,
+    description: "টানা ৭ দিন আজকের AI প্রশ্ন খেললে পাওয়া সার্টিফিকেট আবার ডাউনলোড বা শেয়ার করুন।",
+    canonical: `${SITE}/certificate/`,
+    body: `${pageHead(`<a href="../quiz/">আজকের AI প্রশ্ন</a>`, "আমার সার্টিফিকেট", 'টানা ৭ দিন আজকের AI প্রশ্ন খেললে এই ফোনে আপনার "AI সচেতন" সার্টিফিকেট তৈরি হয়। এখান থেকে আবার ডাউনলোড বা শেয়ার করতে পারেন।')}
+<div class="wrap narrow cert-page"><div data-certpage aria-live="polite"><p class="qz-wait">সার্টিফিকেট খোঁজা হচ্ছে…</p></div></div>
+<div class="wrap narrow lf-hold" data-certform hidden>${leadForm("../", "certificate", "সার্টিফিকেট তৈরি করুন")}</div>`,
+  })
+);
+write(
+  "prompt/index.html",
+  layout({
+    root: "../",
+    active: "prompt",
+    title: `আজকের প্রম্পট: রোজ একটা কাজের AI প্রম্পট | ${cfg.siteName}`,
+    description: "রোজ একটা করে কাজের AI প্রম্পট, বাংলায়: কপি করুন, নিজের তথ্য বসান, ফোনে ফ্রি টুলেই চালান। কোন টুলে চলবে আর কীভাবে, ধাপে ধাপে।",
+    canonical: `${SITE}/prompt/`,
+    jsonLd: [crumbs([["হোম", `${SITE}/`], ["আজকের প্রম্পট", `${SITE}/prompt/`]]), { "@type": "WebPage", name: "আজকের প্রম্পট", url: `${SITE}/prompt/`, inLanguage: "bn", isPartOf: { "@id": `${SITE}/#website` }, publisher: { "@id": PUB["@id"] } }],
+    body: `${pageHead(`<a href="../">প্রথম পাতা</a>`, "আজকের প্রম্পট", "রোজ একটা করে কাজের AI প্রম্পট। কপি করুন, [ ] বন্ধনীর জায়গায় নিজের কথা বসান, আর ফোনে ফ্রি টুলেই চালান।")}
+<div class="wrap narrow ptd-page">${ptdCard("../", false)}
+<div class="ptd-next"><a class="qstrip-link" href="../prompts-50/"><b>৫০টা কাজের AI প্রম্পট</b><span>ছাত্র, চাকরিপ্রার্থী, শিক্ষক, দোকানদার আর ক্রিয়েটরদের জন্য, এক পাতায়</span></a>${qstrip("../", true)}</div></div>`,
+  })
+);
+let pn = 0;
+const p50Item = (x, locked) => { pn++; return `<li class="p50-i${locked ? " is-x" : ""}" data-copyroot><h3><i>${bnNum(pn)}</i>${esc(x.title)}</h3><p class="p50-tool">কোন টুলে: <b>${esc(x.tool)}</b></p><div class="p50-body"${locked ? ' data-p50-x inert aria-hidden="true"' : ""}><p class="p50-p" data-copytext>${esc(x.prompt)}</p>${x.tip ? `<p class="p50-tip">${esc(x.tip)}</p>` : ""}<button type="button" class="btn-line p50-copy" data-dcopy>কপি করুন</button></div></li>`; };
+write(
+  "prompts-50/index.html",
+  layout({
+    root: "../",
+    active: "prompt",
+    title: `৫০টা কাজের AI প্রম্পট, বাংলায় | ${cfg.siteName}`,
+    description: "ছাত্র, চাকরিপ্রার্থী, শিক্ষক, দোকানদার আর ক্রিয়েটরদের জন্য বাংলায় লেখা ৫০টা কাজের AI প্রম্পট: রেজিউমে, WBCS রিভিশন, পাঠ পরিকল্পনা, পুজোর অফার, রিল স্ক্রিপ্ট। ফোনে ফ্রি টুলেই চলে।",
+    canonical: `${SITE}/prompts-50/`,
+    jsonLd: [crumbs([["হোম", `${SITE}/`], ["৫০টা কাজের AI প্রম্পট", `${SITE}/prompts-50/`]]), { "@type": "WebPage", name: "৫০টা কাজের AI প্রম্পট", url: `${SITE}/prompts-50/`, inLanguage: "bn", isPartOf: { "@id": `${SITE}/#website` }, publisher: { "@id": PUB["@id"] }, mainEntity: { "@type": "ItemList", numberOfItems: P50.prompts.length, itemListElement: [...P50OPEN, ...P50REST.flatMap((r) => r[1])].map((x, i) => ({ "@type": "ListItem", position: i + 1, name: x.title })) } }],
+    body: `${pageHead(`<a href="../prompt/">আজকের প্রম্পট</a>`, "৫০টা কাজের AI প্রম্পট", "ছাত্র, চাকরিপ্রার্থী, শিক্ষক, দোকানদার আর ক্রিয়েটরদের জন্য বাংলায় লেখা। সবগুলো ফোনে ফ্রি টুলেই চলে। কপি করে [ ] বন্ধনীর জায়গায় নিজের কথা বসান।")}
+<div class="wrap p50-wrap">
+<nav class="p50-jump" aria-label="কাদের জন্য">${P50G.map((g) => `<a href="#p-${g.key}">${esc(g.label)}</a>`).join("")}</nav>
+<div class="p50 locked" data-p50>
+<section class="p50-g p50-open" aria-labelledby="p-open"><h2 id="p-open">শুরুর ১০টা, সবার জন্য খোলা</h2><p>প্রতিটা দলের সবচেয়ে কাজের দুটো করে।</p><ol class="p50-l">${P50OPEN.map((x) => p50Item(x, false)).join("")}</ol></section>
+<section class="p50-gate" data-p50-lock aria-labelledby="gate-h"><h2 id="gate-h">বাকি ৪০টা প্রম্পট খুলুন</h2><p>নাম আর নম্বর দিলেই নিচের সবগুলো এই ফোনে খুলে যাবে, আর পরে নতুন প্রম্পট এলে জানিয়ে দেব।</p>${leadForm("../", "prompts50", "৪০টা প্রম্পট খুলুন", true)}</section>
+<p class="p50-ok" data-p50-thanks tabindex="-1" hidden role="status">সবগুলো প্রম্পট খুলে গেছে। কপি করে কাজে লাগান।</p>
+${P50REST.map(([g, items]) => `<section class="p50-g" id="p-${g.key}" aria-labelledby="ph-${g.key}"><h2 id="ph-${g.key}">${esc(g.label)}</h2><p>${esc(g.lead)}</p><ol class="p50-l">${items.map((x) => p50Item(x, true)).join("")}</ol></section>`).join("")}
+</div>
+<p class="p50-foot">AI-এর উত্তর সবসময় ঠিক হয় না। সাল, সংখ্যা আর নিয়মকানুন বই বা সরকারি সাইটে মিলিয়ে নিন। <a href="../quiz/">আজকের AI প্রশ্ন খেলুন</a></p>
+</div>`,
+  })
+);
 // 404 + অফলাইন পাতা (absolute paths, because they can be served from any depth)
 const base = new URL(SITE + "/").pathname;
 write(
@@ -910,17 +1027,20 @@ write("manifest.webmanifest", JSON.stringify({
   ],
 }, null, 1));
 const PRECACHE = [
-  "./", "offline/", "flash/", ...(BZ.length ? ["bazar/"] : []), `assets/style.css?v=${VER}`, `assets/site.js?v=${VER}`,
+  "./", "offline/", "flash/", "quiz/", "prompt/", "prompts-50/", ...(BZ.length ? ["bazar/"] : []), `assets/style.css?v=${VER}`, `assets/site.js?v=${VER}`, `assets/daily.js?v=${VER}`, `assets/quiz.js?v=${VER}`,
   ...["bengali-400", "bengali-600", "bengali-700", "latin-400", "latin-600", "latin-700"].map((f) => `assets/fonts/hind-siliguri-${f}-normal.woff2`),
   "assets/fonts/anek-bangla-bengali-800-normal.woff2", "assets/fonts/anek-bangla-latin-800-normal.woff2",
   "assets/app/icon-192.png", "assets/app/badge-96.png", ...(hasMentor ? ["assets/mentor.webp"] : []), "manifest.webmanifest",
 ];
-write("sw.js", SW_SRC.replace("__VERSION__", VER).replace("__PRECACHE__", JSON.stringify(PRECACHE)));
+write("sw.js", SW_SRC.replace("__VERSION__", VER).replace("__PRECACHE__", JSON.stringify(PRECACHE)).replace("__DAILY__", JSON.stringify(DAILY)));
 
 // sitemap, robots, feed
 const urls = [
   { loc: `${SITE}/`, lastmod: posts[0]?.date },
   { loc: `${SITE}/flash/`, lastmod: posts[0]?.date },
+  { loc: `${SITE}/quiz/` },
+  { loc: `${SITE}/prompt/` },
+  { loc: `${SITE}/prompts-50/` },
   ...(BZ.length ? [{ loc: `${SITE}/bazar/`, lastmod: BZ[0].p.date }] : []),
   { loc: `${SITE}/about/` },
   { loc: `${SITE}/contact/` },
