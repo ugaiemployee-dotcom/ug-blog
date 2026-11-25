@@ -263,7 +263,8 @@
     list.forEach(function (b) {
       var s = tpl.content.firstElementChild.cloneNode(true), id = "f-" + b.id;
       s.setAttribute("data-id", id); s.id = "c-" + id;
-      var tm = $("time", s); tm.setAttribute("datetime", b.time); tm.textContent = new Intl.DateTimeFormat("bn-IN", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" }).format(new Date(b.t));
+      var tm = $("time", s), ago = (Date.now() - b.t) / 6e4; tm.setAttribute("datetime", b.time);
+      tm.textContent = ago < 2 ? "এইমাত্র" : ago < 60 ? bn(Math.floor(ago)) + " মিনিট আগে" : ago < 1440 ? bn(Math.floor(ago / 60)) + " ঘণ্টা আগে" : "গতকাল";
       var chip = $("[data-b-chip]", s); if (TL[b.type]) { chip.textContent = TL[b.type]; chip.className = "tl t-" + b.type; } else chip.remove();
       $("[data-b-h]", s).textContent = b.title; $("[data-b-body]", s).textContent = b.body;
       var bd = $("[data-b-badges]", s);
@@ -310,7 +311,7 @@
     instShown = true; instButtons();
     inst.hidden = false; requestAnimationFrame(function () { inst.classList.add("open"); });
   };
-  var maybeInstall = function () { if (cur >= 2 && slides[cur] && slides[cur].getAttribute("data-kind") !== "end") showInst(false); };
+  var maybeInstall = function () { if (cur >= 3 && slides[cur] && slides[cur].getAttribute("data-kind") !== "end") showInst(false); };
   var doInstall = function () {
     if (deferred) {
       var d = deferred; deferred = null;
@@ -373,7 +374,7 @@
   var coachStart = function () {
     if (!coach || coachOn || !slides.length || $(".sheet.open")) return;
     coachOn = true; step = 0; coach.hidden = false; coachPaint();
-    requestAnimationFrame(function () { coach.classList.add("open"); $(".coach-next", coach).focus(); });
+    requestAnimationFrame(function () { coach.classList.add("open"); var cc = $(".coach-card", coach); cc.setAttribute("tabindex", "-1"); cc.focus(); });
     addEventListener("resize", coachPaint);
   };
   if (coach) {
@@ -392,5 +393,9 @@
   if (D.fonts && D.fonts.ready) D.fonts.ready.then(fitAll);
   var rt; addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { fitAll(); if (slides[cur]) feed.scrollTop = slides[cur].offsetTop; }, 150); });
   D.addEventListener("visibilitychange", function () { if (D.hidden) stopSpeak(); else fillEnd(); });
-  H.classList.add("app-ready");
+  // প্রথমবার খোলার সময় service worker তখনও তৈরি হয়নি, তাই সামনের ক'টা ছবি সরাসরি ছবির ক্যাশে (sw.js-এর uap-img) রাখা, অফলাইনের জন্য (ব্রাউজারের ক্যাশ থেকেই আসে)
+  if ("serviceWorker" in navigator && !navigator.serviceWorker.controller && W.caches) navigator.serviceWorker.ready.then(function () {
+    setTimeout(function () { caches.open("uap-img").then(function (c) { slides.slice(0, 4).forEach(function (s) { var im = $(".c-pic img", s); if (im && im.complete && im.currentSrc) c.add(im.currentSrc).catch(function () {}); }); }).catch(function () {}); }, 1500);
+  }).catch(function () {});
+
 })();
