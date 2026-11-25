@@ -203,8 +203,11 @@ const JS = readFileSync("assets/site.js", "utf8");
 const SW_SRC = readFileSync("src/sw.js", "utf8");
 const DJS = readFileSync("assets/daily.js", "utf8");
 const QJS = readFileSync("assets/quiz.js", "utf8");
+const ACSS = readFileSync("src/app.css", "utf8");
+const AJS = readFileSync("assets/app.js", "utf8");
+const APP_BG = "#FAF8F3"; // কার্ড ফিডের উষ্ণ সাদা কাগজ (manifest আর /app/-এর theme-color)
 const P50 = JSON.parse(readFileSync("data/prompts50.json", "utf8"));
-const VER = createHash("sha1").update(CSS + JS + DJS + QJS + SW_SRC + JSON.stringify(cfg) + JSON.stringify(P50)).digest("hex").slice(0, 10);
+const VER = createHash("sha1").update(CSS + JS + DJS + QJS + ACSS + AJS + SW_SRC + JSON.stringify(cfg) + JSON.stringify(P50)).digest("hex").slice(0, 10);
 const DAILY = cfg.dailyApi || "";
 
 // ---- shared pieces ----
@@ -348,6 +351,8 @@ const P50OPEN = P50G.flatMap((g) => P50.prompts.filter((x) => x.aud === g.key).s
 const P50REST = P50G.map((g) => [g, P50.prompts.filter((x) => x.aud === g.key).slice(2)]);
 const PTD = P50OPEN[Math.floor((NOW + 198e5) / 864e5) % P50OPEN.length];
 const ptdSteps = (x) => ["নিচের বোতামে ট্যাপ করে প্রম্পটটা কপি করুন", `${x.tool.split(/[ (,]/)[0]} খুলুন (ফোনের অ্যাপে বা ব্রাউজারে) আর পেস্ট করুন`, "[ ] বন্ধনীর জায়গায় নিজের তথ্য বসিয়ে পাঠান"];
+// প্রথম পাতায় কার্ড ফিডের ডাক (ফোনে বড়, ডেস্কটপে সরু)
+const appCta = (root) => `<a class="appcta" href="${root}app/?src=home"><span class="ac-ic" aria-hidden="true"><i></i><i></i><i></i></span><span class="ac-tx"><b>আজকের খবর কার্ডে পড়ুন</b><span>এক স্ক্রিনে এক খবর, উপরে টানলেই পরেরটা</span></span><span class="ac-go">খুলুন${ICON.arrow}</span></a>`;
 const qstrip = (root, card = false) => `<a class="qstrip${card ? " qcard" : ""}" href="${root}quiz/" data-qstrip><span class="qs-ic">${ICON.flame}</span><span class="qs-tx"><b>${card ? "আজকের AI প্রশ্ন খেলুন" : "আজকের AI প্রশ্ন"}</b><span data-qs-t>${card ? "আজকের খবর থেকে ৫টা প্রশ্ন, ১ মিনিটে। রোজ খেলে স্ট্রিক বাড়ান।" : "৫টা প্রশ্ন · ১ মিনিট"}</span></span><span class="qs-go" data-qs-go>খেলুন</span></a>`;
 const ptdCard = (root, compact) => `<section class="ptd${compact ? " ptd-c" : ""}" aria-labelledby="ptd-h" data-ptd data-copyroot><header class="ptd-h"><h2 id="ptd-h">${compact ? `<a href="${root}prompt/">আজকের প্রম্পট</a>` : "আজকের প্রম্পট"}</h2><span class="ptd-tool"><span class="vh">কোন টুলে: </span><span data-pt-tool>${esc(PTD.tool)}</span></span></header><p class="ptd-t" data-pt-title>${esc(PTD.title)}</p>${compact ? "" : `<p class="ptd-why" data-pt-why>${esc(PTD.tip || P50G.find((g) => g.key === PTD.aud)?.lead || "")}</p>`}<p class="ptd-p" data-copytext>${esc(PTD.prompt)}</p><div class="ptd-f"><button type="button" class="btn ptd-copy" data-dcopy>প্রম্পট কপি করুন</button><details class="ptd-steps"${compact ? "" : " open"}><summary>কীভাবে ব্যবহার করবেন</summary><ol data-pt-steps>${ptdSteps(PTD).map((x) => `<li>${esc(x)}</li>`).join("")}</ol><p class="ptd-for" data-pt-for>কাদের জন্য: ${esc(AUD[PTD.aud] || "")}</p></details></div></section>`;
 const DISTRICTS = ["কলকাতা", "উত্তর ২৪ পরগনা", "দক্ষিণ ২৪ পরগনা", "হাওড়া", "হুগলি", "নদিয়া", "পূর্ব বর্ধমান", "পশ্চিম বর্ধমান", "বীরভূম", "বাঁকুড়া", "পুরুলিয়া", "পূর্ব মেদিনীপুর", "পশ্চিম মেদিনীপুর", "ঝাড়গ্রাম", "মুর্শিদাবাদ", "মালদা", "উত্তর দিনাজপুর", "দক্ষিণ দিনাজপুর", "জলপাইগুড়ি", "আলিপুরদুয়ার", "কোচবিহার", "দার্জিলিং", "কালিম্পং", "পশ্চিমবঙ্গের বাইরে"];
@@ -459,9 +464,12 @@ cpSync("assets", join(OUT, "assets"), { recursive: true });
 // site.js: মন্তব্যের লাইন আর সারির শুরুর ফাঁকা জায়গা বাদ দিয়ে পাঠানো হয় (ফাইলটা ছোট হয়, কোড একই থাকে)
 writeFileSync(join(OUT, "assets/site.js"), JS.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n") + "\n");
 writeFileSync(join(OUT, "assets/style.css"), CSS);
-for (const [f, src] of [["daily.js", DJS], ["quiz.js", QJS]]) writeFileSync(join(OUT, "assets", f), src.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n") + "\n");
+writeFileSync(join(OUT, "assets/app.css"), ACSS);
+for (const [f, src] of [["daily.js", DJS], ["quiz.js", QJS], ["app.js", AJS]]) writeFileSync(join(OUT, "assets", f), src.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n") + "\n");
 writeFileSync(join(OUT, ".nojekyll"), "");
 if (existsSync("CNAME")) cpSync("CNAME", join(OUT, "CNAME"));
+// public/: ভেতরের সব ফাইল হুবহু dist-এর গোড়ায় যায় (.well-known-এর মতো ডট-ফোল্ডার সহ)
+if (existsSync("public")) cpSync("public", OUT, { recursive: true, filter: (src) => !/(^|[\\/])\.gitkeep$/.test(src) });
 
 const feedHead = (title) => `<div class="feed-head"><h2 class="rule-h" id="feed-title" data-default="${esc(title)}">${esc(title)}</h2><span class="feed-count" data-feed-count aria-live="polite"></span><button type="button" class="btn-text" data-clear hidden>ফিল্টার মুছুন</button></div>`;
 const pageHead = (kicker, h1, lead, extra = "") => `<section class="page-head"><div class="wrap">${kicker ? `<p class="page-k">${kicker}</p>` : ""}<h1>${h1}</h1>${lead ? `<p>${lead}</p>` : ""}${extra}</div></section>`;
@@ -519,7 +527,7 @@ for (let page = 1; page <= pages; page++) {
 <div class="wrap paper" id="fwrap" hidden><div class="paper-main">${feedHead("বাছাই করা খবর")}<div class="feed" id="feed"></div><div class="feed-more" data-more hidden><button type="button" class="btn-line">আরও খবর দেখুন</button></div></div></div>
 <div id="front">
 ${pinned.length ? `<div class="wrap">${pinned.map((p) => `<a class="alert-bar" href="./posts/${p.slug}/"><b>সতর্কতা</b><span>${esc(p.title)}</span></a>`).join("")}</div>` : ""}
-<div class="wrap">${qstrip(root)}</div>
+<div class="wrap">${appCta(root)}${qstrip(root)}</div>
 <div class="wrap fp">
 ${lead ? leadStory(lead, root) : ""}
 ${flashBox(root, 6, posts.slice(HEAD, HEAD + 6), " fp-flash")}
@@ -999,20 +1007,209 @@ write(
   })
 );
 
+// ---- /app/: কার্ড ফিড (এক স্ক্রিনে এক খবর, উল্টো পিঠে "আজই করুন") ----
+const APP_N = 12;
+const AI = {
+  flip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a8 8 0 0 1 14-5l2 2M20 4v4h-4M20 13a8 8 0 0 1-14 5l-2-2M4 20v-4h4"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12h-6.1z"/></svg>',
+  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 2.5 20h19zM12 10v4.5M12 17.4v.1"/></svg>',
+  speak: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
+  save: '<svg class="ic-bm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4h11v16.5L12 16.6l-5.5 3.9z"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6.5a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.6 4.6L19.5 7"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>',
+  hand: '<svg class="coach-hand" viewBox="0 0 44 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 60V10M10 22 22 10l12 12"/></svg>',
+  ios: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M6 11H5v9h14v-9h-1"/></svg>',
+};
+const wc = (s) => String(s || "").trim().split(/\s+/).filter(Boolean).length;
+const str = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+// কাজের পিঠ: চুক্তি অনুযায়ী prompt / steps / scam; ভুল বা ফাঁকা হলে null (তখন "মূল কথা" দেখায়)
+const cleanAction = (a) => {
+  if (!a || typeof a !== "object" || !["prompt", "steps", "scam"].includes(a.kind)) return null;
+  const steps = (Array.isArray(a.steps) ? a.steps : []).map((s) => str(s, 260)).filter(Boolean).slice(0, 6);
+  const prompt = str(a.prompt, 1500);
+  if (a.kind === "prompt" ? !prompt : !steps.length) return steps.length ? { kind: "steps", title: str(a.title, 90), steps, prompt: "", note: str(a.note, 260) } : null;
+  return { kind: a.kind, title: str(a.title, 90), steps, prompt, note: str(a.note, 260) };
+};
+const appBadges = (p) => {
+  const b = [];
+  if (p.price === "free") b.push('<li class="b-free">ফ্রি</li>');
+  if (p.price === "paid") b.push("<li>পেইড</li>");
+  if (p.india === "available") b.push('<li class="b-available">ভারতে চালু</li>');
+  return b.length ? `<ul class="c-badges" aria-label="এক নজরে">${b.join("")}</ul>` : "";
+};
+const waHref = (txt) => `https://wa.me/?text=${encodeURIComponent(txt)}`;
+const cardBack = (p, root, a) => {
+  const full = `<a class="ab ab-line" href="${root}posts/${p.slug}/">পুরো খবর${AI.next}</a>`;
+  const foot = `<div class="b-foot"><button type="button" class="ab ab-line" data-flip>${AI.back}খবরে ফিরুন</button>${full}</div>`;
+  const of = `<p class="b-of">${esc(p.card_headline || p.title)}</p>`;
+  if (!a) {
+    const facts = p.quick_facts.slice(0, 4);
+    return `<div class="face c-back" aria-hidden="true" inert><header class="b-head"><span class="b-k">${AI.bolt}মূল কথা</span><button type="button" class="b-x" data-flip>${AI.back}ফিরুন</button></header>
+<div class="b-body"><h3>এক নজরে পুরো খবর</h3>${of}
+${p.key_points.length ? `<ul class="b-pts">${p.key_points.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : `<p class="b-pts-p">${esc(p.excerpt)}</p>`}
+${facts.length ? `<dl class="b-facts">${facts.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.value)}</dd></div>`).join("")}</dl>` : ""}
+<a class="b-ptd" href="${root}prompt/"><span><b>আজকের প্রম্পট</b><span>কপি করে এখনই নিজের কাজে লাগান</span></span>${AI.next}</a></div>${foot}</div>`;
+  }
+  const scam = a.kind === "scam";
+  const title = a.title || (scam ? "কীভাবে চিনবেন, কী করবেন" : a.kind === "prompt" ? "এই প্রম্পটটা কপি করে চালান" : "৩ ধাপে নিজে করুন");
+  return `<div class="face c-back${scam ? " is-scam" : ""}" aria-hidden="true" inert><header class="b-head"><span class="b-k">${scam ? AI.warn : AI.bolt}${scam ? "সতর্ক থাকুন" : "আজই করুন"}${scam ? "" : " <small>৬০ সেকেন্ডে</small>"}</span><button type="button" class="b-x" data-flip>${AI.back}ফিরুন</button></header>
+<div class="b-body"><h3>${esc(title)}</h3>${of}
+${a.steps.length ? `<ol class="b-steps">${a.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}
+${a.prompt ? `<div class="b-prompt"><span>প্রম্পট</span><p data-copytext>${esc(a.prompt)}</p><button type="button" class="b-copy" data-acopy>${AI.copy}<span>প্রম্পট কপি করুন</span></button></div>` : ""}
+${a.note ? `<p class="b-note"><b>${scam ? "মনে রাখুন:" : "টিপ:"}</b> ${esc(a.note)}</p>` : ""}</div>${foot}</div>`;
+};
+const actRow = (wa, saveAttrs, label = "আজই করুন") => `<div class="c-act"><button type="button" class="ab ab-i" data-listen hidden>${AI.speak}<span>শুনুন</span></button>${saveAttrs ? `<button type="button" class="ab ab-i" data-save aria-pressed="false" ${saveAttrs}>${AI.save}<span>সেভ</span></button>` : ""}<a class="ab ab-wa" ${wa} target="_blank" rel="noopener">${ICON.wa}শেয়ার</a><button type="button" class="ab ab-go" data-flip>${AI.flip}${label}</button></div>`;
+const appCard = (p, i, n, root) => {
+  const url = `${SITE}/posts/${p.slug}/`;
+  const head = p.card_headline || p.title;
+  const local = (f) => f && !/^https?:/.test(f);
+  const pic = p.photo ? { src: root + p.photo, size: p.photoSize, alt: p.photo_alt || head, ai: /\/news\/ai\//.test(p.photo_url || "") } : p.cover ? { src: local(p.cover) ? root + p.cover : p.cover, size: local(p.cover) ? imgSize(p.cover) : [1200, 630], alt: p.cover_alt || head, ai: false } : null;
+  // সারাংশ: excerpt; ছোট হলে মূল কথা থেকে পয়েন্ট জুড়ে মোটামুটি ৬০ শব্দ (কার্ডে যতটা ধরে, app.js ততটাই রাখে)
+  const sum = p.excerpt || p.key_points[0] || "";
+  let words = wc(sum);
+  const pts = [];
+  for (const k of p.key_points) { if (words >= 46 || pts.length >= 3) break; if (k === sum || words + wc(k) > 66) continue; pts.push(k); words += wc(k); }
+  const a = cleanAction(p.action);
+  const benefit = str(p.benefit, 90);
+  const src = str(p.source_name || (typeof p.source === "string" && !/^https?:/.test(p.source) ? p.source : ""), 40);
+  const wa = waHref(`${head}${benefit ? `\n\nআপনার লাভ: ${benefit}` : ""}\n\nপুরো খবর: ${url}?utm_source=whatsapp&utm_medium=card-share`);
+  return `<section class="slide${p.type === "scam-alert" ? " is-alert" : ""}" id="c-${p.slug}" data-id="${p.slug}" data-kind="post" aria-roledescription="খবরের কার্ড" aria-label="খবর ${bnNum(i + 1)} / ${bnNum(n)}: ${esc(head)}"><div class="card"><div class="card-in">
+<article class="face c-front">${pic ? `<div class="c-pic"><img src="${esc(pic.src)}" alt="${esc(pic.alt)}" width="${pic.size[0]}" height="${pic.size[1]}" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>${pic.ai ? '<span class="c-ai">AI-নির্মিত ছবি</span>' : ""}</div>` : ""}
+<div class="c-body"><div class="c-meta">${tlabel(p)}${when(p)}${appBadges(p)}</div>
+<h2 class="c-h">${esc(head)}</h2>
+<div class="c-sum"><p>${esc(sum)}</p>${pts.length ? `<ul>${pts.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}</div>
+${benefit ? `<p class="c-ben"><b>আপনার লাভ</b><span>${esc(benefit)}</span></p>` : ""}
+<div class="c-more">${src ? `<span class="c-src">সূত্র: ${esc(src)}</span>` : ""}<a class="c-full" href="${root}posts/${p.slug}/">পুরো খবর${AI.next}</a></div></div>
+${actRow(`href="${esc(wa)}"`, `data-title="${esc(head)}" data-url="${root}posts/${p.slug}/"`, a && a.kind === "scam" ? "কী করবেন" : "আজই করুন")}</article>
+${cardBack(p, root, a)}
+</div></div></section>`;
+};
+// AI ফ্ল্যাশের কার্ডের ছাঁচ: app.js এতে লেখা বসিয়ে পোস্টের পরে জোড়ে
+const briefTpl = (root) => `<template id="brief-tpl"><section class="slide is-brief" data-kind="brief" aria-roledescription="খবরের কার্ড"><div class="card"><div class="card-in">
+<article class="face c-front"><div class="c-band"><i class="live-dot" aria-hidden="true"></i>AI ফ্ল্যাশ<small>ছোট খবর</small></div>
+<div class="c-body"><div class="c-meta"><span data-b-chip></span><time></time><ul class="c-badges" data-b-badges></ul></div>
+<h2 class="c-h" data-b-h></h2><div class="c-sum"><p data-b-body></p></div>
+<div class="c-more"><a class="c-full" href="${root}flash/" data-b-full>সব ফ্ল্যাশ${AI.next}</a></div></div>
+${actRow("href=\"#\" data-b-wa", "")}</article>
+<div class="face c-back" aria-hidden="true" inert><header class="b-head"><span class="b-k">${AI.bolt}আজই করুন <small>৬০ সেকেন্ডে</small></span><button type="button" class="b-x" data-flip>${AI.back}ফিরুন</button></header>
+<div class="b-body"><h3>আজকের প্রম্পট দিয়ে হাত পাকান</h3><p class="b-of">ছোট খবরে আলাদা কাজ থাকে না। তার বদলে আজকের বাছাই করা প্রম্পটটা কপি করে নিজের কাজে চালিয়ে দেখুন।</p>
+<a class="b-ptd" href="${root}prompt/"><span><b>আজকের প্রম্পট</b><span>কপি করে এখনই নিজের কাজে লাগান</span></span>${AI.next}</a>
+<a class="b-ptd" href="${root}quiz/"><span><b>আজকের AI প্রশ্ন</b><span>৫টা প্রশ্ন, ১ মিনিট</span></span>${AI.next}</a></div>
+<div class="b-foot"><button type="button" class="ab ab-line" data-flip>${AI.back}খবরে ফিরুন</button><a class="ab ab-line" href="${root}flash/" data-b-full>সব ফ্ল্যাশ${AI.next}</a></div></div>
+</div></div></section></template>`;
+const FIX = [
+  ["Xiaomi / Redmi / POCO", ["Settings → Apps → Manage apps → Chrome (বা AI পত্রিকা) খুলুন", "Autostart চালু করুন", "Battery saver → No restrictions বেছে নিন", "Notifications → Allow notifications চালু আছে কি না দেখুন"]],
+  ["Vivo / iQOO", ["Settings → Battery → Background power consumption management → Chrome (বা AI পত্রিকা) → Don't restrict", "Settings → Apps → Autostart → অ্যাপটা চালু করুন", "Settings → Notifications-এ অ্যাপের নোটিফিকেশন Allow করুন"]],
+  ["Oppo", ["Settings → Battery → More settings → Optimise battery use → Chrome (বা AI পত্রিকা) → Don't optimise", "Settings → Apps → Auto launch → অ্যাপটা চালু করুন", "Settings → Notifications-এ অ্যাপের নোটিফিকেশন Allow করুন"]],
+  ["Realme", ["Settings → Battery → More settings → Optimise battery use → Chrome (বা AI পত্রিকা) → Don't optimise", "Settings → Apps → Auto launch → অ্যাপটা চালু করুন", "Settings → Notifications-এ অ্যাপের নোটিফিকেশন Allow করুন"]],
+  ["Samsung", ["Settings → Apps → Chrome (বা AI পত্রিকা) → Battery → Unrestricted", "Settings → Battery → Background usage limits → Never sleeping apps-এ অ্যাপটা যোগ করুন", "Settings → Notifications → App notifications-এ অ্যাপটা চালু রাখুন"]],
+];
+const appSheet = (root) => `<div class="sheet" id="asheet" role="dialog" aria-modal="true" aria-labelledby="asheet-h" hidden><div class="sheet-bg" data-close></div><div class="sheet-panel"><div class="sheet-head"><h2 id="asheet-h">সেটিংস</h2><button type="button" class="x" data-close aria-label="বন্ধ করুন">×</button></div>
+<fieldset class="set-fs"><legend>লেখার মাপ</legend><div class="opts">${[["s", "ছোট"], ["m", "মাঝারি"], ["l", "বড়"]].map(([v, l]) => `<label><input type="radio" name="fs" value="${v}"${v === "m" ? " checked" : ""}><span>${l}</span></label>`).join("")}</div></fieldset>
+<div class="set-row"><div><b>নোটিফিকেশন</b><span>বড় খবর এলেই ফোনে জানাব। যখন খুশি বন্ধ করা যায়।</span></div>${pushCta("set-btn", "চালু করুন").replace('data-alt="', 'data-alt="Telegram-এ পান" data-alt0="')}</div>
+<div class="set-row" data-app-install hidden><div><b>অ্যাপ ইনস্টল করুন</b><span>হোম স্ক্রিন থেকে এক ট্যাপে খুলবে, নেট না থাকলেও শেষ খবরগুলো পড়া যাবে।</span></div><button type="button" class="set-btn" data-app-install hidden>${AI.down}ইনস্টল</button></div>
+<p class="set-ios" data-ios-hint hidden>iPhone-এ: Safari-র নিচের ${AI.ios} Share বোতামে ট্যাপ করুন, তারপর "Add to Home Screen" বেছে নিন।</p>
+<h3 class="set-h">সেভ করা খবর</h3><div data-saved></div>
+<h3 class="set-h">নোটিফিকেশন আসছে না?</h3><p class="set-lead">কিছু ফোন ব্যাটারি বাঁচাতে নোটিফিকেশন আটকে দেয়। নিজের ফোনের নাম বেছে ধাপগুলো মিলিয়ে নিন।</p>
+<div class="fix">${FIX.map(([n, s]) => `<details><summary>${n}</summary><ol>${s.map((x) => `<li>${esc(x)}</li>`).join("")}</ol></details>`).join("")}</div>
+<p class="fix-n">ফোনের মডেল আর Android ভার্সন অনুযায়ী মেনুর নাম সামান্য আলাদা হতে পারে। মূল কথা দুটো: ব্যাটারি অপটিমাইজেশন বন্ধ, আর Autostart চালু।</p>
+<a class="set-web" href="${root}">পুরো ওয়েবসাইট খুলুন</a></div></div>`;
+const appPage = () => {
+  const root = "../";
+  const list = posts.slice(0, APP_N);
+  const lead = list[0];
+  const leadSrc = lead ? (lead.photo ? root + lead.photo : lead.cover && !/^https?:/.test(lead.cover) ? root + lead.cover : "") : "";
+  const invite = waHref(`রোজের AI খবর সহজ বাংলায়, এক স্ক্রিনে এক কার্ড। আমি Unique AI পত্রিকায় পড়ছি, আপনিও দেখুন:\n${SITE}/app/?utm_source=whatsapp&utm_medium=invite`);
+  const title = `আজকের AI খবর কার্ডে | ${cfg.siteName}`;
+  const desc = "আজকের AI খবর এক স্ক্রিনে এক কার্ডে: উপরে টানলেই পরের খবর, আর প্রতিটা কার্ডের পেছনে আজই করার মতো একটা কাজ।";
+  return `<!doctype html>
+<html lang="bn" data-fs="m">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="${CSP}">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(desc)}">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="${SITE}/app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="${esc(cfg.siteName)}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:url" content="${SITE}/app/">
+<meta property="og:image" content="${esc(abs("assets/og-default.png"))}">
+<meta property="og:locale" content="bn_IN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="${APP_BG}">
+<meta name="color-scheme" content="light">
+<meta name="application-name" content="${esc(cfg.shortName || cfg.siteName)}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="${esc(cfg.shortName || cfg.siteName)}">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="${root}manifest.webmanifest">
+<link rel="icon" href="${root}assets/app/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="${root}assets/app/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="${root}assets/app/apple-touch-icon.png">
+<link rel="preload" href="${root}assets/fonts/anek-bangla-bengali-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="${root}assets/fonts/hind-siliguri-bengali-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+${leadSrc ? `<link rel="preload" as="image" href="${esc(leadSrc)}" fetchpriority="high">\n` : ""}<link rel="stylesheet" href="${root}assets/style.css?v=${VER}">
+<link rel="stylesheet" href="${root}assets/app.css?v=${VER}">
+</head>
+<body class="k-app" data-root="${root}" data-site="${esc(SITE)}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}" data-daily="${esc(DAILY)}" data-tl="${TL_JSON}">
+<div class="app">
+<header class="atop"><div class="a-brand"><img src="${root}assets/app/icon-192.png" alt="" width="36" height="36"><div><h1><small>Unique</small> AI পত্রিকা</h1><p class="a-count"><b><span class="a-cur" data-cur>${bnNum(1)}</span> / <span data-total>${bnNum(list.length)}</span></b> আজকের</p></div></div><span class="a-unread" data-unread>${bnNum(list.length)}টা না-পড়া</span><button type="button" class="a-gear" data-sheet="asheet" aria-label="সেটিংস">${AI.gear}</button></header>
+<div class="a-prog" data-prog aria-hidden="true">${list.map(() => "<i></i>").join("")}<i class="end"></i></div>
+<main class="feedx" id="feed" tabindex="0" aria-label="আজকের খবরের কার্ড। পরের খবরের জন্য উপরে টানুন বা নিচের তীর চাপুন।">
+${list.map((p, i) => appCard(p, i, list.length, root)).join("\n")}
+<section class="slide" id="c-end" data-id="end" data-kind="end" aria-label="আজকের সব খবর শেষ"><div class="endc">
+<span class="e-ok">${AI.check}</span><h2>আজকের সব খবর শেষ ✓</h2><p class="e-sub">ভালো পড়লেন। নতুন খবর এলেই এখানে পাবেন।</p>
+<div class="e-streak" data-streak-box><p data-streak-t><b>স্ট্রিক শুরু করুন</b> · টানা ৭ দিন আজকের AI প্রশ্ন খেললে সার্টিফিকেট</p><ol class="e-dots" aria-hidden="true">${[1, 2, 3, 4, 5, 6, 7].map((d) => `<li>${bnNum(d)}</li>`).join("")}</ol><a class="e-cert" href="${root}certificate/" data-cert hidden>সার্টিফিকেট নিন</a></div>
+<div class="e-grid"><a class="e-b" href="${root}quiz/"><b>আজকের AI প্রশ্ন</b><span>৫টা প্রশ্ন, ১ মিনিট</span></a><a class="e-b" href="${root}prompt/"><b>দিনের প্রম্পট</b><span>কপি করে কাজে লাগান</span></a>
+<a class="e-b e-wa" href="${esc(invite)}" target="_blank" rel="noopener">${ICON.wa}<b>বন্ধুকে WhatsApp-এ পাঠান</b></a>
+<a class="e-b e-class" href="${ug(cfg.freeClassUrl, "app-end")}" target="_blank" rel="noopener"><i><b>ফ্রি ৪ দিনের ক্লাস</b><span>Unique Gurukul-এ হাতে-কলমে AI শিখুন</span></i>${AI.next}</a></div>
+<button type="button" class="e-inst" data-app-install hidden>${AI.down}অ্যাপ ইনস্টল করুন</button>
+<button type="button" class="e-top" data-top>আবার প্রথম খবরে যান</button>
+</div></section>
+</main>
+<noscript><p class="a-ns">কার্ডগুলো উপরে টেনে পড়ুন। সব সুবিধার জন্য ব্রাউজারে JavaScript চালু রাখুন।</p></noscript>
+</div>
+${briefTpl(root)}
+<div class="ainst" id="ainst" role="dialog" aria-labelledby="ainst-h" hidden><div class="ainst-h"><img src="${root}assets/app/icon-192.png" alt="" width="48" height="48"><div><b id="ainst-h">অ্যাপ ইনস্টল করুন</b><span>${esc(cfg.siteName)} হোম স্ক্রিনে রাখুন</span></div></div>
+<ul><li>এক ট্যাপে খোলে</li><li>নেট ছাড়াও শেষ খবর</li><li>লগইন লাগে না</li></ul>
+<p class="ainst-ios" data-ios-hint hidden>Safari-র নিচের ${AI.ios} Share বোতামে ট্যাপ করুন, তারপর "Add to Home Screen" বেছে নিন।</p>
+<div class="ainst-act"><button type="button" class="ab ab-line" data-ainst-x>এখন নয়</button><button type="button" class="ab ab-go" data-ainst-go>${AI.down}অ্যাপ ইনস্টল করুন</button></div></div>
+<div class="coach" id="coach" role="dialog" aria-modal="true" aria-labelledby="coach-h" hidden><div class="coach-spot"></div><div class="coach-card">${AI.hand}<p class="coach-n"></p><h2 id="coach-h"></h2><p></p><div class="coach-f"><span class="coach-dots" aria-hidden="true"><i></i><i></i><i></i></span><button type="button" class="coach-skip">বাদ দিন</button><button type="button" class="coach-next">পরের টিপ</button></div></div></div>
+<div class="atoast" id="atoast" role="status" aria-live="polite"></div>
+${appSheet(root)}
+${pushSheet()}
+<script src="${root}assets/site.js?v=${VER}" defer></script>
+<script src="${root}assets/daily.js?v=${VER}" defer></script>
+<script src="${root}assets/app.js?v=${VER}" defer></script>
+</body>
+</html>`;
+};
+write("app/index.html", appPage());
+
 // ---- PWA: manifest + service worker ----
 write("manifest.webmanifest", JSON.stringify({
-  id: "/",
+  id: "/app/",
   name: cfg.siteName,
   short_name: cfg.shortName || "AI পত্রিকা",
   description: cfg.description,
   lang: "bn",
   dir: "ltr",
-  start_url: "/?source=pwa",
+  start_url: "/app/?src=pwa",
   scope: "/",
   display: "standalone",
   orientation: "portrait",
-  theme_color: "#5D16E9",
-  background_color: "#FFFFFF",
+  theme_color: APP_BG,
+  background_color: APP_BG,
   categories: ["news", "education"],
   icons: [
     { src: "/assets/app/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
@@ -1021,13 +1218,14 @@ write("manifest.webmanifest", JSON.stringify({
     { src: "/assets/app/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
   ],
   shortcuts: [
+    { name: "আজকের খবর কার্ডে", url: "/app/?src=pwa-shortcut", icons: [{ src: "/assets/app/icon-192.png", sizes: "192x192" }] },
     { name: "সর্বশেষ খবর", url: "/?source=pwa-shortcut", icons: [{ src: "/assets/app/icon-192.png", sizes: "192x192" }] },
     { name: "সতর্কতা ও স্ক্যাম", url: "/type/scam-alert/?source=pwa-shortcut", icons: [{ src: "/assets/app/icon-192.png", sizes: "192x192" }] },
     { name: "খবর খুঁজুন", url: "/search/?source=pwa-shortcut", icons: [{ src: "/assets/app/icon-192.png", sizes: "192x192" }] },
   ],
 }, null, 1));
 const PRECACHE = [
-  "./", "offline/", "flash/", "quiz/", "prompt/", "prompts-50/", ...(BZ.length ? ["bazar/"] : []), `assets/style.css?v=${VER}`, `assets/site.js?v=${VER}`, `assets/daily.js?v=${VER}`, `assets/quiz.js?v=${VER}`,
+  "./", "app/", "offline/", "flash/", "quiz/", "prompt/", "prompts-50/", ...(BZ.length ? ["bazar/"] : []), `assets/style.css?v=${VER}`, `assets/site.js?v=${VER}`, `assets/daily.js?v=${VER}`, `assets/quiz.js?v=${VER}`, `assets/app.css?v=${VER}`, `assets/app.js?v=${VER}`,
   ...["bengali-400", "bengali-600", "bengali-700", "latin-400", "latin-600", "latin-700"].map((f) => `assets/fonts/hind-siliguri-${f}-normal.woff2`),
   "assets/fonts/anek-bangla-bengali-800-normal.woff2", "assets/fonts/anek-bangla-latin-800-normal.woff2",
   "assets/app/icon-192.png", "assets/app/badge-96.png", ...(hasMentor ? ["assets/mentor.webp"] : []), "manifest.webmanifest",

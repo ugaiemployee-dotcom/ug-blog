@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.uniquegurukul.patrika",
+      "sha256_cert_fingerprints": [
+        "AB:8F:51:49:07:66:82:37:B6:96:80:E7:3B:A0:23:64:CF:6E:FA:1E:87:BC:74:26:1C:EF:20:60:CD:DA:8A:78"
+      ]
+    }
+  }
+]

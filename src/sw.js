@@ -50,7 +50,7 @@ function images(e) {
       var net = fetch(req).then(function (res) {
         if (res && res.ok) { c.put(req, res.clone()).then(function () { return trim(IMGS, 120); }); }
         return res;
-      }).catch(function () { return hit || Response.error(); });
+      }).catch(function () { return hit || caches.match(req, { ignoreSearch: true }).then(function (m) { return m || Response.error(); }); });
       if (hit) { e.waitUntil(net.catch(function () {})); return hit; }
       return net;
     });
