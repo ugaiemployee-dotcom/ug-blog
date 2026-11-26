@@ -376,11 +376,12 @@ function layout({ root, title, description, canonical, ogImage, ogType = "websit
   const ld = [{ "@context": "https://schema.org", "@graph": [ORG, PUB, ...jsonLd] }];
   const news = ["home", "list", "article"].includes(kind);
   return `<!doctype html>
-<html lang="bn">
+<html lang="bn" translate="no">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
+<meta name="google" content="notranslate">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description.length > 160 ? description.slice(0, 157).replace(/\s+\S*$/, "") + "…" : description)}">
@@ -402,6 +403,7 @@ ${cfg.googleSiteVerification ? `<meta name="google-site-verification" content="$
 <meta name="twitter:image" content="${esc(img)}">
 <meta name="theme-color" content="#5D16E9">
 <meta name="color-scheme" content="light">
+<meta name="google" content="notranslate">
 <meta name="application-name" content="${esc(cfg.shortName || cfg.siteName)}">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="${esc(cfg.shortName || cfg.siteName)}">
@@ -1147,7 +1149,7 @@ const appPage = () => {
   const tiles = TYPES.filter((t) => typeCount[t.key] > 0).slice(0, 6);
   const free = ug(cfg.freeClassUrl, "app");
   return `<!doctype html>
-<html lang="bn" data-fs="m">
+<html lang="bn" data-fs="m" translate="no">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
