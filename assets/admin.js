@@ -72,7 +72,7 @@
     var box = $("[data-stats]"); box.textContent = "";
     [["আজ পাঠক", st.readers_today], ["৭ দিনে পাঠক", st.readers_7d], ["আজ অ্যাপে", st.app_today], ["৭ দিনে অ্যাপে", st.app_7d],
      ["AI প্রশ্ন আজ", st.asks_today], ["AI প্রশ্ন ৭ দিনে", st.asks_7d], ["নাম-নম্বর ৭ দিনে", st.leads_7d], ["মোট নাম-নম্বর", st.leads_total],
-     ["শেয়ার ৭ দিনে", (ev["evt-share"] || 0) + (ev["evt-invite"] || 0)], ["বন্ধু এল ৭ দিনে", st.refs_7d], ["\"আজই করুন\" খোলা ৭ দিনে", ev["evt-act"] || 0], ["ক্লাসে ক্লিক ৭ দিনে", ev["evt-class"] || 0]
+     ["শেয়ার ৭ দিনে", (ev["evt-share"] || 0) + (ev["evt-invite"] || 0)], ["বন্ধু এল ৭ দিনে", st.refs_7d], ["\"আজই করুন\" খোলা ৭ দিনে", ev["evt-act"] || 0], ["ক্লাসে ক্লিক ৭ দিনে", ev["evt-class"] || 0], ["বিস্তারিত পড়তে গেলেন ৭ দিনে", ev["evt-more"] || 0], ["AI অর্ব চাপা ৭ দিনে", ev["evt-orb"] || 0]
     ].forEach(function (x) { var d = el("div", "ad-st"); d.appendChild(el("b", "", bn(x[1] || 0))); d.appendChild(el("span", "", x[0])); box.appendChild(d); });
     $("[data-upd]").textContent = upd ? new Date(upd).toLocaleString("bn-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
     var L = $("[data-leads]"); L.textContent = "";
