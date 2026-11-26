@@ -1107,11 +1107,11 @@ const appCard = (p, i, n, root) => {
   return `<section class="slide${scam ? " is-alert" : ""}" id="c-${p.slug}" data-id="${p.slug}" data-kind="post" data-ben="${esc(benefit)}" data-india="${esc(indiaLabel[p.india] || "")}" data-price="${esc(priceLabel[p.price] || "")}" aria-roledescription="খবরের কার্ড" aria-label="খবর ${bnNum(i + 1)} / ${bnNum(n)}: ${esc(head)}">
 <article class="cd"><div class="cd-pic">${ph ? `<img src="${esc(ph.src)}" alt="${esc(ph.alt)}" width="${ph.size[0]}" height="${ph.size[1]}" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>` : `<span class="cd-pic-f" aria-hidden="true">${AI.spark}</span>`}${ph && ph.ai ? '<span class="cd-ai">AI-নির্মিত ছবি</span>' : ""}<span class="cd-pos" data-pos></span>${WAVE("cd-wave")}</div>
 <div class="cd-body"><div class="cd-meta">${tlabel(p)}${when(p)}<button type="button" class="cd-listen" data-listen hidden>${AI.play}<span>শুনুন</span></button></div>
-<h2 class="c-h">${esc(head)}</h2>
+<h2 class="c-h"><a href="${root}posts/${p.slug}/" data-more>${esc(head)}</a></h2>
 <div class="c-sum"><p>${esc(sum)}</p>${pts.length ? `<ul>${pts.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}</div>
 ${benefit ? `<p class="cd-ben"><b>আপনার লাভ</b><span>${esc(benefit)}</span></p>` : ""}
 <div class="cd-ask" data-askcard><span class="cd-ask-h"><i class="mini-orb" aria-hidden="true">${AI.spark}</i>পাঠকরা AI-কে জিজ্ঞেস করছেন</span><span class="chips" data-chips></span></div>
-<div class="cd-act"><button type="button" class="ib" data-save aria-pressed="false" aria-label="সেভ করুন" data-title="${esc(head)}" data-url="${root}posts/${p.slug}/">${AI.save}</button><a class="ib ib-wa" href="${esc(wa)}" target="_blank" rel="noopener" aria-label="WhatsApp-এ পাঠান" data-share>${ICON.wa}</a><a class="ib" href="${root}posts/${p.slug}/" aria-label="পুরো খবর পড়ুন">${AI.news}</a><button type="button" class="go${scam ? " go-scam" : ""}" data-act>${scam ? AI.warn : AI.spark}${scam ? "কী করবেন" : a ? "আজই করুন" : "মূল কথা"}</button></div></div></article>
+<div class="cd-act"><button type="button" class="ib" data-save aria-pressed="false" aria-label="সেভ করুন" data-title="${esc(head)}" data-url="${root}posts/${p.slug}/">${AI.save}</button><a class="ib ib-wa" href="${esc(wa)}" target="_blank" rel="noopener" aria-label="WhatsApp-এ পাঠান" data-share>${ICON.wa}</a><a class="more" href="${root}posts/${p.slug}/" data-more>বিস্তারিত${AI.next}</a><button type="button" class="go${scam ? " go-scam" : ""}" data-act>${scam ? AI.warn : AI.spark}${scam ? "কী করবেন" : a ? "আজই করুন" : "মূল কথা"}</button></div></div></article>
 <template data-acttpl>${actBody(p, root, a)}</template>
 </section>`;
 };

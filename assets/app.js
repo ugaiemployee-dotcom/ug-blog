@@ -675,9 +675,9 @@
     fetch(APP, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "ref", code: m[1].toUpperCase(), device_id: did() }) }).catch(function () {});
   })();
   D.addEventListener("click", function (e) {
-    var t = e.target.closest && e.target.closest("[data-share],[data-act],[data-orb],[data-class],[data-banner],[data-banner-slide],[data-q]");
+    var t = e.target.closest && e.target.closest("[data-share],[data-act],[data-orb],[data-class],[data-banner],[data-banner-slide],[data-q],[data-more]");
     if (!t) return;
-    evt(t.hasAttribute("data-invite") ? "invite" : t.hasAttribute("data-share") ? "share" : t.hasAttribute("data-act") ? "act" : t.hasAttribute("data-orb") ? "orb" : t.hasAttribute("data-class") ? "class" : t.hasAttribute("data-q") ? "ask_chip" : "banner");
+    evt(t.hasAttribute("data-invite") ? "invite" : t.hasAttribute("data-share") ? "share" : t.hasAttribute("data-act") ? "act" : t.hasAttribute("data-orb") ? "orb" : t.hasAttribute("data-class") ? "class" : t.hasAttribute("data-q") ? "ask_chip" : t.hasAttribute("data-more") ? "more" : "banner");
   }, true);
 
   // ---- শুরু ----

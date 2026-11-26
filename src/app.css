@@ -412,3 +412,10 @@ html[data-fs="l"] .k-app{--fs:1.12}
 .rf-slots i{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1.5px dashed #E3C98A;color:#C9A35A;font-style:normal;font-size:18px;font-weight:700}
 .rf-slots i.on{border:0;background:var(--g);color:var(--v2)}
 .rf-n{margin-left:auto;font-size:14px;font-weight:700;color:var(--g-ink)}
+
+/* বিস্তারিত: পত্রিকার পুরো খবরে যাওয়ার পথ (শিরোনামে ট্যাপ বা "বিস্তারিত" বোতাম) */
+.c-h a{color:inherit;text-decoration:none}
+.more{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 12px;margin-left:2px;border:1px solid var(--line2);border-radius:99px;color:var(--v);font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;transition:transform .12s,background-color .15s}
+.more svg{width:15px;height:15px}
+.more:active{transform:scale(.96);background:var(--tint)}
+@media (max-width:370px){.more{padding:0 10px;font-size:13.5px}.more svg{display:none}}
