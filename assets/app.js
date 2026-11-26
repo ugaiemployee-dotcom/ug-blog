@@ -73,7 +73,7 @@
   var slides = [], cur = 0;
   var read = ls.json("uap_app_read") || {};
   Object.keys(read).forEach(function (k) { if (!(read[k] >= ist(-30))) delete read[k]; });
-  var news = function () { return slides.filter(function (s) { return s.getAttribute("data-kind") !== "end"; }); };
+  var news = function () { return slides.filter(function (s) { var k = s.getAttribute("data-kind"); return k !== "end" && k !== "banner"; }); };
   var paint = function () {
     var n = news(), total = n.length;
     n.forEach(function (s, i) { var pos = $("[data-pos]", s); if (pos) pos.textContent = bn(i + 1) + " / " + bn(total); });
@@ -350,7 +350,8 @@
     q = String(q || "").replace(/\s+/g, " ").trim();
     if (q.length < 3) { toast("প্রশ্নটা একটু বড় করে লিখুন।"); return; }
     if (/(?:\+?91[\s-]?)?[6-9]\d{9}\b|[\w.+-]+@[\w-]+\.[\w.]+|otp|password|পাসওয়ার্ড|আধার|aadhaar|cvv/i.test(q)) { sysMsg("ব্যক্তিগত তথ্য (ফোন নম্বর, ইমেল, OTP, আধার) প্রশ্নে লিখবেন না। ওটা বাদ দিয়ে আবার লিখুন।"); return; }
-    if (left === 0) { sysMsg("আজকের ৩টা নিজের প্রশ্ন শেষ। কাল সকালে আবার করতে পারবেন। তৈরি প্রশ্নগুলোর উত্তর এখনও দেখা যাবে।"); leadNudge(); return; }
+    if (perDay === 0) { sysMsg("এখন নিজের প্রশ্ন করা বন্ধ আছে। উপরের তৈরি প্রশ্নগুলোয় ট্যাপ করে উত্তর দেখুন।"); return; }
+    if (left === 0) { sysMsg("আজকের নিজের প্রশ্ন শেষ। কাল সকালে আবার করতে পারবেন। তৈরি প্রশ্নগুলোর উত্তর এখনও দেখা যাবে।"); leadNudge(); return; }
     if (!navigator.onLine) { sysMsg("নেট নেই। নেট চালু করে আবার পাঠান। তৈরি প্রশ্নগুলোর উত্তর নেট ছাড়াও দেখা যাবে।"); return; }
     var id = askSlide && askSlide.getAttribute("data-id");
     if (!ASK || !id || askSlide.getAttribute("data-kind") !== "post") { sysMsg("এই কার্ডে নিজের প্রশ্ন করা যায় না। কোনো বড় খবরের কার্ডে গিয়ে AI-কে জিজ্ঞেস করুন।"); return; }
@@ -384,7 +385,7 @@
     openSheetEl("ask", opener);
     ls.set("uap_orb_used", "1"); hideOrbTip();
     if (firstQ) setTimeout(function () { answerChip(firstQ); }, reduced ? 0 : 300);
-    if (ASK && W.fetch && navigator.onLine && did()) fetch(ASK + "?action=quota&device_id=" + encodeURIComponent(did())).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j && typeof j.left === "number") { left = j.left; perDay = j.per_day || 3; quotaPaint(); } }).catch(function () {});
+    if (ASK && W.fetch && navigator.onLine && did()) fetch(ASK + "?action=quota&device_id=" + encodeURIComponent(did())).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j && typeof j.left === "number") { left = j.left; perDay = typeof j.per_day === "number" ? j.per_day : 3; quotaPaint(); } }).catch(function () {});
   };
   if (askChips) askChips.addEventListener("click", function (e) { var c = e.target.closest && e.target.closest("[data-q]"); if (c) answerChip(c.getAttribute("data-q")); });
   if (askForm) askForm.addEventListener("submit", function (e) { e.preventDefault(); sendAsk(askInput.value); });
@@ -595,6 +596,89 @@
   var hint = $("[data-swipehint]"), hintT;
   var hideSwipeHint = function () { if (hint && !hint.hidden) { hint.hidden = true; ls.set("uap_app_swiped", "1"); } clearTimeout(hintT); };
   if (hint && !ls.get("uap_app_swiped")) hintT = setTimeout(function () { if (cur === 0 && view === "feed" && !openBs) { hint.hidden = false; hintT = setTimeout(hideSwipeHint, 7000); } }, 1800);
+
+  // ---- লাইভ সেটিংস (অ্যাডমিন প্যানেল থেকে): ক্লাসের কার্ড, ঘোষণা, বন্ধু আনার পুরস্কার, AI প্রশ্নের সীমা ----
+  var APP = B.getAttribute("data-app") || "";
+  var evt = function (e) {
+    if (!APP || !W.fetch) return;
+    try { fetch(APP, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "evt", e: e }) }).catch(function () {}); } catch (x) {}
+  };
+  var httpsOk = function (u) { return typeof u === "string" && /^https:\/\/[^\s"<>]+$/.test(u); };
+  var CFG = null, refInfo = null;
+  var applyCfg = function (c) {
+    if (!c || typeof c !== "object") return;
+    CFG = c;
+    var k = c.klass || {}, hero = $("[data-class]");
+    if (hero) {
+      hero.hidden = k.show === false;
+      [["kicker", "[data-k-kicker]"], ["title", "[data-k-title]"], ["sub", "[data-k-sub]"], ["cta", "[data-k-cta]"]].forEach(function (p) { var n = $(p[1], hero); if (n && typeof k[p[0]] === "string" && k[p[0]]) n.textContent = k[p[0]]; });
+      if (httpsOk(k.url)) hero.href = k.url + (k.url.indexOf("?") < 0 ? "?" : "&") + "utm_source=patrika&utm_medium=app";
+    }
+    var bn0 = c.banner || {}, ban = $("[data-banner]");
+    $$('.slide[data-kind="banner"]', feed).forEach(function (x) { x.remove(); });
+    if (ban) {
+      var on = bn0.show === true && bn0.title;
+      ban.hidden = !on;
+      if (on) {
+        ban.className = "ban ban-" + (/^(violet|gold|red|green)$/.test(bn0.tone) ? bn0.tone : "violet");
+        $("[data-bn-t]", ban).textContent = bn0.title; $("[data-bn-x]", ban).textContent = bn0.text || "";
+        var cta = $("[data-bn-c]", ban); cta.textContent = bn0.cta || ""; cta.hidden = !(bn0.cta && httpsOk(bn0.url));
+        if (httpsOk(bn0.url)) ban.href = bn0.url; else ban.removeAttribute("href");
+        // ফিডে তিন নম্বর খবরের পরে একটা ঘোষণার কার্ড
+        var posts = $$('.slide[data-kind="post"]', feed), after = posts[2] || posts[posts.length - 1];
+        if (after) {
+          var sl = el("section", "slide is-banner"); sl.setAttribute("data-kind", "banner"); sl.setAttribute("data-id", "banner"); sl.setAttribute("aria-label", "ঘোষণা");
+          var card = ban.cloneNode(true); card.hidden = false; card.removeAttribute("data-banner"); card.classList.add("ban-slide"); card.setAttribute("data-banner-slide", "");
+          var tip = el("span", "ban-up", "উপরে টানুন, পরের খবর"); card.appendChild(tip);
+          sl.appendChild(card); after.parentNode.insertBefore(sl, after.nextSibling); collect();
+        }
+      }
+    }
+    var r = c.refer || {}, rc = $("[data-refer]");
+    if (rc) {
+      if (r.enabled && r.reward) {
+        $("[data-rf-t]", rc).textContent = bn(r.need || 3) + " জন বন্ধু আনলে: " + r.reward;
+        $("[data-rf-p]", rc).textContent = "আপনার লিংকে বন্ধু প্রথমবার অ্যাপ খুললেই গোনা হবে।";
+        loadRef();
+      } else { $("[data-rf-slots]", rc).hidden = true; }
+    }
+    var a = c.ask || {};
+    if (a.enabled === false) { left = 0; perDay = 0; }
+    else if (a.per_device > 0) perDay = a.per_device;
+    quotaPaint();
+  };
+  var paintRef = function () {
+    var rc = $("[data-refer]"), r = (CFG && CFG.refer) || {}; if (!rc || !refInfo || !r.enabled) return;
+    var need = Math.max(1, Math.min(20, r.need || 3)), have = Math.min(need, refInfo.refs || 0), box = $("[data-rf-slots]", rc);
+    box.textContent = "";
+    for (var i = 0; i < need; i++) box.appendChild(el("i", i < have ? "on" : "", i < have ? "✓" : "+"));
+    box.appendChild(el("span", "rf-n", bn(have) + " / " + bn(need)));
+    box.hidden = false;
+    if (have >= need) $("[data-rf-p]", rc).textContent = "অভিনন্দন! পুরস্কার পেতে Unique Gurukul-এ যোগাযোগ করুন, আপনার কোড: " + refInfo.code;
+  };
+  var loadRef = function () {
+    if (!APP || !did() || refInfo) { paintRef(); return; }
+    fetch(APP + "?action=me&device_id=" + encodeURIComponent(did())).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || typeof j.code !== "string" || !/^[A-Z0-9]{6,10}$/.test(j.code)) return;
+      refInfo = j; ls.set("uap_ref_code", j.code);
+      $$("a[data-invite]").forEach(function (a) { a.href = a.href.replace(/(utm_medium%3Dinvite)(%26ref%3D[A-Z0-9]+)?/, "$1%26ref%3D" + j.code); });
+      paintRef();
+    }).catch(function () {});
+  };
+  var cfgCached = ls.json("uap_cfg"); if (cfgCached) applyCfg(cfgCached);
+  if (APP && W.fetch) fetch(APP + "?action=config").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j && j.klass) { ls.put("uap_cfg", j); applyCfg(j); } }).catch(function () {});
+  // আমন্ত্রণে এলে (প্রথমবার) একবার জানানো
+  (function () {
+    var m = /[?&]ref=([A-Za-z0-9]{6,10})\b/.exec(location.search);
+    if (!m || !APP || ls.get("uap_ref_sent") || !did()) return;
+    ls.set("uap_ref_sent", "1");
+    fetch(APP, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "ref", code: m[1].toUpperCase(), device_id: did() }) }).catch(function () {});
+  })();
+  D.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("[data-share],[data-act],[data-orb],[data-class],[data-banner],[data-banner-slide],[data-q]");
+    if (!t) return;
+    evt(t.hasAttribute("data-invite") ? "invite" : t.hasAttribute("data-share") ? "share" : t.hasAttribute("data-act") ? "act" : t.hasAttribute("data-orb") ? "orb" : t.hasAttribute("data-class") ? "class" : t.hasAttribute("data-q") ? "ask_chip" : "banner");
+  }, true);
 
   // ---- শুরু ----
   collect(); slides.forEach(function (s) { chipsFor(s, true); }); markSaved(); savedList(); fillToday(); meStats(); shapeDock();

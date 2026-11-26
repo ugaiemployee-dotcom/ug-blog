@@ -207,7 +207,7 @@ const ACSS = readFileSync("src/app.css", "utf8");
 const AJS = readFileSync("assets/app.js", "utf8");
 const APP_BG = "#FFFFFF"; // কার্ড ফিডের উষ্ণ সাদা কাগজ (manifest আর /app/-এর theme-color)
 const P50 = JSON.parse(readFileSync("data/prompts50.json", "utf8"));
-const VER = createHash("sha1").update(CSS + JS + DJS + QJS + ACSS + AJS + SW_SRC + JSON.stringify(cfg) + JSON.stringify(P50)).digest("hex").slice(0, 10);
+const VER = createHash("sha1").update(readFileSync("assets/admin.js", "utf8") + readFileSync("src/admin.css", "utf8") + CSS + JS + DJS + QJS + ACSS + AJS + SW_SRC + JSON.stringify(cfg) + JSON.stringify(P50)).digest("hex").slice(0, 10);
 const DAILY = cfg.dailyApi || "";
 
 // ---- shared pieces ----
@@ -468,6 +468,7 @@ cpSync("assets", join(OUT, "assets"), { recursive: true });
 writeFileSync(join(OUT, "assets/site.js"), JS.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n") + "\n");
 writeFileSync(join(OUT, "assets/style.css"), CSS);
 writeFileSync(join(OUT, "assets/app.css"), ACSS);
+writeFileSync(join(OUT, "assets/admin.css"), readFileSync("src/admin.css", "utf8"));
 for (const [f, src] of [["daily.js", DJS], ["quiz.js", QJS], ["app.js", AJS]]) writeFileSync(join(OUT, "assets", f), src.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n") + "\n");
 writeFileSync(join(OUT, ".nojekyll"), "");
 if (existsSync("CNAME")) cpSync("CNAME", join(OUT, "CNAME"));
@@ -1183,7 +1184,7 @@ const appPage = () => {
 ${leadSrc ? `<link rel="preload" as="image" href="${esc(leadSrc)}" fetchpriority="high">\n` : ""}<link rel="stylesheet" href="${root}assets/style.css?v=${VER}">
 <link rel="stylesheet" href="${root}assets/app.css?v=${VER}">
 </head>
-<body class="k-app" data-root="${root}" data-site="${esc(SITE)}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}" data-daily="${esc(DAILY)}" data-ask="${esc(cfg.askApi || "")}" data-tl="${TL_JSON}">
+<body class="k-app" data-root="${root}" data-site="${esc(SITE)}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}" data-daily="${esc(DAILY)}" data-ask="${esc(cfg.askApi || "")}" data-app="${esc(cfg.appApi || "")}" data-tl="${TL_JSON}">
 <div class="app" id="app">
 
 <section class="view on" id="v-feed" data-view="feed" aria-label="আজকের খবর">
@@ -1192,7 +1193,7 @@ ${list.map((p, i) => appCard(p, i, list.length, root)).join("\n")}
 <section class="slide is-end" id="c-end" data-id="end" data-kind="end" aria-label="আজকের সব খবর শেষ"><div class="endc">
 <span class="e-orb" aria-hidden="true">${AI.check}</span><h2>আজকের সব খবর পড়া শেষ</h2><p>নতুন খবর এলেই এখানে পাবেন। এবার আজকের কুইজটা খেলে নিন।</p>
 <button type="button" class="btn-v" data-tab="today">${AI.star}আজকের কুইজ আর ফ্রি ক্লাস</button>
-<a class="btn-o" href="${esc(invite)}" target="_blank" rel="noopener" data-share>${ICON.wa}বন্ধুকে পাঠান</a>
+<a class="btn-o" href="${esc(invite)}" target="_blank" rel="noopener" data-share data-invite>${ICON.wa}বন্ধুকে পাঠান</a>
 <button type="button" class="btn-t" data-top>${AI.up}আবার প্রথম খবরে যান</button>
 </div></section>
 </main>
@@ -1211,11 +1212,12 @@ ${list.map((p, i) => appCard(p, i, list.length, root)).join("\n")}
 <section class="view" id="v-today" data-view="today" aria-labelledby="today-h" hidden><div class="vscroll">
 ${vhead(`<span id="today-h" data-today-h>আজকের পত্রিকা</span>`, `<span data-today-sub>${bnNum(list.length)}টা খবর আজ</span>`, `<span class="vhd-orb" aria-hidden="true">${AI.check}</span>`)}
 <div class="vpad">
-<a class="hero-c" href="${free}" target="_blank" rel="noopener" data-class><span class="hc-k">Unique Gurukul-এর উদ্যোগ</span><b>AI হাতে-কলমে শিখুন</b><span class="hc-s">৪ দিনের লাইভ ক্লাস · সম্পূর্ণ ফ্রি · বাংলায়</span><span class="hc-go">জায়গা রাখুন</span></a>
+<a class="ban" href="#" target="_blank" rel="noopener" data-banner hidden><b data-bn-t></b><span data-bn-x></span><span class="ban-go" data-bn-c></span></a>
+<a class="hero-c" href="${free}" target="_blank" rel="noopener" data-class><span class="hc-k" data-k-kicker>Unique Gurukul-এর উদ্যোগ</span><b data-k-title>AI হাতে-কলমে শিখুন</b><span class="hc-s" data-k-sub>৪ দিনের লাইভ ক্লাস · সম্পূর্ণ ফ্রি · বাংলায়</span><span class="hc-go" data-k-cta>জায়গা রাখুন</span></a>
 <div class="card-w streak" data-streak-box><div class="st-h"><b data-streak-t>টানা পড়া শুরু করুন</b><span data-streak-s>৭ দিনে সার্টিফিকেট</span></div><ol class="st-dots" aria-hidden="true">${[1, 2, 3, 4, 5, 6, 7].map((d) => `<li>${bnNum(d)}</li>`).join("")}</ol><a class="st-cert" href="${root}certificate/" data-cert hidden>${AI.cap}সার্টিফিকেট নিন</a></div>
 <div class="tiles2"><a class="t2" href="${root}quiz/"><span class="t2-ic">${AI.star}</span><b>আজকের কুইজ</b><span>৫টা প্রশ্ন · ১ মিনিট</span></a><a class="t2" href="${root}prompt/"><span class="t2-ic">${AI.copy}</span><b>দিনের প্রম্পট</b><span>কপি করে কাজে লাগান</span></a></div>
 <a class="row-c" href="${root}prompts-50/"><span class="rc-ic">${AI.spark}</span><span><b>৫০টা কাজের AI প্রম্পট</b><span>বাংলায় লেখা, ফোনের ফ্রি টুলেই চলে</span></span>${AI.chev}</a>
-<a class="row-c" href="${esc(invite)}" target="_blank" rel="noopener" data-share><span class="rc-ic rc-wa">${ICON.wa}</span><span><b>বন্ধুকে পাঠান</b><span>WhatsApp-এ এক ট্যাপে</span></span>${AI.chev}</a>
+<a class="row-c" href="${esc(invite)}" target="_blank" rel="noopener" data-share data-invite><span class="rc-ic rc-wa">${ICON.wa}</span><span><b>বন্ধুকে পাঠান</b><span>WhatsApp-এ এক ট্যাপে</span></span>${AI.chev}</a>
 <a class="row-c" href="${root}flash/"><span class="rc-ic">${AI.bolt}</span><span><b>AI ফ্ল্যাশ</b><span>সারাদিনের ছোট খবর</span></span>${AI.chev}</a>
 </div></div></section>
 
@@ -1223,7 +1225,7 @@ ${vhead(`<span id="today-h" data-today-h>আজকের পত্রিকা</
 <header class="vhd vhd-me"><div class="vhd-in"><span class="av" data-me-av aria-hidden="true">${AI.user}</span><h1 id="me-h" data-me-name>নমস্কার, পাঠক</h1><p class="me-tag" data-me-tag>Unique AI পত্রিকা</p></div>${WAVE("vhd-wave")}</header>
 <div class="vpad">
 <div class="stats"><span><b data-st-streak>০</b><small>টানা দিন</small></span><span><b data-st-read>০</b><small>খবর পড়া</small></span><span><b data-st-saved>০</b><small>সেভ করা</small></span></div>
-<div class="card-w invite"><b>বন্ধুদেরও জানান</b><p>রোজের AI খবর সহজ বাংলায়, ফ্রি। আপনার বন্ধু বা পরিবারের কারও কাজে লাগতে পারে।</p><a class="btn-v" href="${esc(invite)}" target="_blank" rel="noopener" data-share>${ICON.wa}বন্ধুকে পাঠান</a></div>
+<div class="card-w invite" data-refer><b data-rf-t>বন্ধুদেরও জানান</b><p data-rf-p>রোজের AI খবর সহজ বাংলায়, ফ্রি। আপনার বন্ধু বা পরিবারের কারও কাজে লাগতে পারে।</p><div class="rf-slots" data-rf-slots hidden></div><a class="btn-v" href="${esc(invite)}" target="_blank" rel="noopener" data-share data-invite>${ICON.wa}বন্ধুকে পাঠান</a></div>
 <details class="card-w me-lead" data-me-lead><summary><span class="rc-ic">${AI.cap}</span><b>সার্টিফিকেট আর ফ্রি ক্লাসের খবর পেতে নাম দিন</b>${AI.chev}</summary><p>নাম আর নম্বর দিলে ৭ দিনের সার্টিফিকেটে আপনার নাম বসবে, আর নতুন ফ্রি ক্লাস শুরু হলে জানিয়ে দেব।</p>${leadForm(root, "class", "জমা দিন", false)}</details>
 <h2 class="grp">সেটিংস</h2>
 <div class="rows">
@@ -1267,6 +1269,75 @@ ${pushSheet()}
 </html>`;
 };
 write("app/index.html", appPage());
+// ---- /app-admin/: মালিকের অ্যাডমিন প্যানেল (লগইন: Telegram-এ আসা কোড) ----
+const adminPage = () => `<!doctype html>
+<html lang="bn" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="${CSP}">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="google" content="notranslate">
+<meta name="theme-color" content="#5D16E9">
+<title>অ্যাডমিন | ${esc(cfg.siteName)}</title>
+<link rel="icon" href="../assets/app/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../assets/style.css?v=${VER}">
+<link rel="stylesheet" href="../assets/admin.css?v=${VER}">
+</head>
+<body class="k-admin" data-app="${esc(cfg.appApi || "")}">
+<header class="ad-top"><img src="../assets/app/icon-192.png" alt="" width="34" height="34"><h1>AI পত্রিকা · অ্যাডমিন</h1><button type="button" data-out hidden>বেরোন</button></header>
+
+<section class="ad-login" data-login>
+<div class="ad-card"><h2>লগইন</h2><p>আপনার Telegram-এ (মালিকের বটে) ৬ অঙ্কের একটা কোড যাবে। সেটা এখানে লিখুন।</p>
+<button type="button" class="ad-btn" data-send>Telegram-এ কোড পাঠান</button>
+<div data-step2 hidden><input class="ad-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••" aria-label="৬ অঙ্কের কোড" data-code><button type="button" class="ad-btn ad-full" data-in>ঢুকুন</button></div>
+<p class="ad-msg" data-lmsg role="status"></p></div>
+</section>
+
+<main class="ad-wrap" data-panel hidden>
+<nav class="ad-tabs" aria-label="অংশ"><a href="#s-stats">হিসাব</a><a href="#s-class">ফ্রি ক্লাস</a><a href="#s-banner">ঘোষণা</a><a href="#s-refer">বন্ধু আনা</a><a href="#s-ask">AI প্রশ্ন</a><a href="#s-leads">নাম-নম্বর</a><a href="#s-q">পাঠকের প্রশ্ন</a></nav>
+
+<section class="ad-card" id="s-stats"><h2>হিসাব</h2><p>আজ আর গত ৭ দিনের। শেষ আপডেট: <span data-upd>—</span></p><div class="ad-stats" data-stats></div></section>
+
+<section class="ad-card" id="s-class"><h2>ফ্রি ক্লাসের কার্ড</h2><p>অ্যাপের "আজ" পাতার সবচেয়ে বড় কার্ড।</p>
+<label class="ad-sw">কার্ড দেখাবে<input type="checkbox" data-f="klass.show"></label>
+<div class="ad-f"><label>ছোট উপরের লেখা</label><input type="text" maxlength="60" data-f="klass.kicker"></div>
+<div class="ad-f"><label>শিরোনাম</label><input type="text" maxlength="80" data-f="klass.title"></div>
+<div class="ad-f"><label>নিচের লাইন <small>(যেমন তারিখ, সময়)</small></label><input type="text" maxlength="120" data-f="klass.sub"></div>
+<div class="ad-row2"><div class="ad-f"><label>বোতামের লেখা</label><input type="text" maxlength="30" data-f="klass.cta"></div><div class="ad-f"><label>লিংক <small>(https://)</small></label><input type="url" maxlength="300" data-f="klass.url"></div></div>
+</section>
+
+<section class="ad-card" id="s-banner"><h2>ঘোষণা / অফার</h2><p>চালু করলে অ্যাপে তিন নম্বর খবরের পরে একটা বড় কার্ড আর "আজ" পাতার উপরে দেখাবে।</p>
+<label class="ad-sw">ঘোষণা চালু<input type="checkbox" data-f="banner.show"></label>
+<div class="ad-f"><label>শিরোনাম</label><input type="text" maxlength="80" data-f="banner.title"></div>
+<div class="ad-f"><label>লেখা</label><textarea maxlength="200" data-f="banner.text"></textarea></div>
+<div class="ad-row2"><div class="ad-f"><label>বোতামের লেখা</label><input type="text" maxlength="30" data-f="banner.cta"></div><div class="ad-f"><label>লিংক <small>(https://)</small></label><input type="url" maxlength="300" data-f="banner.url"></div></div>
+<div class="ad-row2"><div class="ad-f"><label>কোন তারিখ পর্যন্ত <small>(ফাঁকা = যতদিন চালু)</small></label><input type="date" data-f="banner.until"></div><div class="ad-f"><label>রং</label><select data-f="banner.tone"><option value="violet">বেগুনি</option><option value="gold">সোনালি</option><option value="red">লাল (জরুরি)</option><option value="green">সবুজ</option></select></div></div>
+</section>
+
+<section class="ad-card" id="s-refer"><h2>বন্ধু আনার পুরস্কার</h2><p>চালু করলে "আমার" পাতায় পুরস্কার আর কতজন বন্ধু এল দেখাবে। বন্ধু প্রথমবার অ্যাপ খুললে তবেই গোনা হয়; একই ফোন দু'বার গোনা হয় না।</p>
+<label class="ad-sw">পুরস্কার চালু<input type="checkbox" data-f="refer.enabled"></label>
+<div class="ad-row2"><div class="ad-f"><label>কতজন বন্ধু</label><input type="number" min="1" max="20" data-f="refer.need"></div><div class="ad-f"><label>পুরস্কার <small>(যেমন: ফ্রি AI সার্টিফিকেট কোর্স)</small></label><input type="text" maxlength="120" data-f="refer.reward"></div></div>
+<div class="ad-prev" data-toprefs></div>
+</section>
+
+<section class="ad-card" id="s-ask"><h2>AI-কে বলুন</h2><p>খরচ শূন্য রাখতে শুধু ফ্রি AI চলে। সীমা বাড়ালে ফ্রি কোটা তাড়াতাড়ি ফুরোতে পারে।</p>
+<label class="ad-sw">পাঠকের নিজের প্রশ্ন চালু<input type="checkbox" data-f="ask.enabled"></label>
+<div class="ad-row2"><div class="ad-f"><label>একজন দিনে কটা প্রশ্ন</label><input type="number" min="0" max="10" data-f="ask.per_device"></div><div class="ad-f"><label>সারাদিনে মোট কটা</label><input type="number" min="0" max="5000" data-f="ask.daily_cap"></div></div>
+</section>
+
+<section class="ad-card" id="s-leads"><h2>নতুন নাম-নম্বর</h2><p>অ্যাপ আর পত্রিকা থেকে যাঁরা নিজে নাম-নম্বর দিয়েছেন (শেষ ২৫ জন)।</p><ul class="ad-list" data-leads></ul></section>
+
+<section class="ad-card" id="s-q"><h2>পাঠকেরা AI-কে কী জিজ্ঞেস করছেন</h2><p>শেষ ২০টা প্রশ্ন। নতুন খবর বা কোর্সের আইডিয়া এখান থেকে পাবেন।</p><ul class="ad-list" data-qs></ul></section>
+</main>
+<div class="ad-save" data-savebar hidden><button type="button" class="ad-btn" data-save>সেভ করুন</button></div>
+<p class="ad-msg ad-toast" data-smsg role="status"></p>
+<script src="../assets/admin.js?v=${VER}" defer></script>
+</body>
+</html>`;
+write("app-admin/index.html", adminPage());
+
 
 // ---- PWA: manifest + service worker ----
 write("manifest.webmanifest", JSON.stringify({

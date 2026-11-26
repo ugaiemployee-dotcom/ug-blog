@@ -299,5 +299,6 @@
   },
   "learnTitle": "এটা হাতে-কলমে শিখতে চান?",
   "learnText": "Unique Gurukul-এ AI টুল, ওয়েবসাইট বানানো আর অটোমেশন বাংলায় ধাপে ধাপে শেখানো হয়। শুরু করতে পারেন ৪ দিনের ফ্রি ক্লাস দিয়ে।",
-  "askApi": "https://wiynqetgssigxyjvdvqh.supabase.co/functions/v1/patrika-ask"
+  "askApi": "https://wiynqetgssigxyjvdvqh.supabase.co/functions/v1/patrika-ask",
+  "appApi": "https://wiynqetgssigxyjvdvqh.supabase.co/functions/v1/patrika-app"
 }
