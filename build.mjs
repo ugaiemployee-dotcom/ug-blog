@@ -205,7 +205,7 @@ const DJS = readFileSync("assets/daily.js", "utf8");
 const QJS = readFileSync("assets/quiz.js", "utf8");
 const ACSS = readFileSync("src/app.css", "utf8");
 const AJS = readFileSync("assets/app.js", "utf8");
-const APP_BG = "#FAF8F3"; // কার্ড ফিডের উষ্ণ সাদা কাগজ (manifest আর /app/-এর theme-color)
+const APP_BG = "#FFFFFF"; // কার্ড ফিডের উষ্ণ সাদা কাগজ (manifest আর /app/-এর theme-color)
 const P50 = JSON.parse(readFileSync("data/prompts50.json", "utf8"));
 const VER = createHash("sha1").update(CSS + JS + DJS + QJS + ACSS + AJS + SW_SRC + JSON.stringify(cfg) + JSON.stringify(P50)).digest("hex").slice(0, 10);
 const DAILY = cfg.dailyApi || "";
@@ -419,6 +419,7 @@ ${ld.map((x) => `<script type="application/ld+json">${JSON.stringify(x).replace(
 </head>
 <body class="k-${kind}" data-root="${root}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}" data-daily="${esc(DAILY)}">
 <a class="skip" href="#main">মূল লেখায় যান</a>
+<div class="inapp-bar"><a class="ia-back" href="${root}app/" data-ia-back><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>অ্যাপে ফিরুন</a><b><img src="${root}assets/app/icon-192.png" alt="" width="28" height="28">AI পত্রিকা</b></div>
 ${kind === "article" ? '<div class="progress" aria-hidden="true"><i></i></div>' : ""}
 <div class="util"><div class="wrap util-in"><span class="u-date" data-today>${dparts(NOW, true)}</span><span class="u-ed">অনলাইন সংস্করণ</span><span class="u-clock" data-clockbox hidden><i class="live-dot" aria-hidden="true"></i><b data-clock></b><small>ভারতীয় সময়</small></span><nav class="u-links" aria-label="প্রধান মেনু"><a href="${root}about/">আমাদের কথা</a><a href="${root}our-tools/">আমাদের টুল</a><a href="${esc(TG)}" target="_blank" rel="noopener">Telegram</a></nav></div></div>
 <header class="mast"><div class="wrap mast-in">${wordmark(root)}<span class="mast-act"><a class="streak-b" href="${root}quiz/" data-streak hidden>${ICON.flame}<b></b></a><a class="icon-btn" href="${root}search/" aria-label="খবর খুঁজুন">${ICON.search}</a><button class="icon-btn" type="button" data-sheet="psheet" data-push-open hidden aria-label="নোটিফিকেশন">${ICON.bell}</button><a class="mast-cta" href="${ug(cfg.freeClassUrl, "nav")}" target="_blank" rel="noopener">৪ দিনের ফ্রি ক্লাস</a></span></div></header>
@@ -1007,26 +1008,52 @@ write(
   })
 );
 
-// ---- /app/: কার্ড ফিড (এক স্ক্রিনে এক খবর, উল্টো পিঠে "আজই করুন") ----
+// ---- /app/: অ্যাপ (খবর · খুঁজুন · AI-কে বলুন · আজ · আমার) ----
+// এক স্ক্রিনে এক খবর। মাঝে AI অর্ব: এই খবর নিয়ে প্রশ্ন। "আজই করুন" নিচ থেকে শিট হয়ে ওঠে। সব লেখা Hind Siliguri-তে।
 const APP_N = 12;
 const AI = {
-  flip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a8 8 0 0 1 14-5l2 2M20 4v4h-4M20 13a8 8 0 0 1-14 5l-2-2M4 20v-4h4"/></svg>',
   bolt: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12h-6.1z"/></svg>',
-  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 2.5 20h19zM12 10v4.5M12 17.4v.1"/></svg>',
-  speak: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
-  save: '<svg class="ic-bm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4h11v16.5L12 16.6l-5.5 3.9z"/></svg>',
-  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
-  next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  spark: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></svg>',
+  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 2.5 20h19zM12 10v4.5M12 17.4v.1"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5l13 7.5-13 7.5z"/></svg>',
+  save: '<svg class="ic-bm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4h11v16.5L12 16.6l-5.5 3.9z"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6.5a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></svg>',
-  gear: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.6 4.6L19.5 7"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>',
-  hand: '<svg class="coach-hand" viewBox="0 0 44 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 60V10M10 22 22 10l12 12"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
   ios: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M6 11H5v9h14v-9h-1"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
+  find: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.4 5 5.6.8-4 3.9.9 5.6L12 15.7 7.1 18.3l.9-5.6-4-3.9 5.6-.8z"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  text: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5h11v2M9.5 5v14M7.5 19h4M14 12v-1.5h7V12M17.5 10.5V19M16 19h3"/></svg>',
+  help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5V14M12 17h.01"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></svg>',
+  cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>',
 };
+// খবরের ধরন অনুযায়ী আইকন (খুঁজুন পাতার টাইল)
+const TICON = {
+  "new-tool": '<path d="M12 3l2.4 5 5.6.8-4 3.9.9 5.6L12 15.7 7.1 18.3l.9-5.6-4-3.9 5.6-.8z"/>',
+  update: '<path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"/>',
+  "free-offer": '<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S10 8 12 8zM12 8c2-4 6-4 6-1.5S14 8 12 8z"/>',
+  "jobs-income": '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  education: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
+  "govt-policy": '<path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10M2 10l10-6 10 6z"/>',
+  "scam-alert": '<path d="M12 3.5 2.5 20h19zM12 10v4.5M12 17.4v.1"/>',
+  "india-bengal": '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  research: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/>',
+};
+const ticon = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TICON[k] || TICON["new-tool"]}</svg>`;
 const wc = (s) => String(s || "").trim().split(/\s+/).filter(Boolean).length;
 const str = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
-// কাজের পিঠ: চুক্তি অনুযায়ী prompt / steps / scam; ভুল বা ফাঁকা হলে null (তখন "মূল কথা" দেখায়)
+// কাজের ধাপ: চুক্তি অনুযায়ী prompt / steps / scam; ভুল বা ফাঁকা হলে null (তখন "মূল কথা" দেখায়)
 const cleanAction = (a) => {
   if (!a || typeof a !== "object" || !["prompt", "steps", "scam"].includes(a.kind)) return null;
   const steps = (Array.isArray(a.steps) ? a.steps : []).map((s) => str(s, 260)).filter(Boolean).slice(0, 6);
@@ -1034,103 +1061,96 @@ const cleanAction = (a) => {
   if (a.kind === "prompt" ? !prompt : !steps.length) return steps.length ? { kind: "steps", title: str(a.title, 90), steps, prompt: "", note: str(a.note, 260) } : null;
   return { kind: a.kind, title: str(a.title, 90), steps, prompt, note: str(a.note, 260) };
 };
-const appBadges = (p) => {
-  const b = [];
-  if (p.price === "free") b.push('<li class="b-free">ফ্রি</li>');
-  if (p.price === "paid") b.push("<li>পেইড</li>");
-  if (p.india === "available") b.push('<li class="b-available">ভারতে চালু</li>');
-  return b.length ? `<ul class="c-badges" aria-label="এক নজরে">${b.join("")}</ul>` : "";
-};
 const waHref = (txt) => `https://wa.me/?text=${encodeURIComponent(txt)}`;
-const cardBack = (p, root, a) => {
-  const full = `<a class="ab ab-line" href="${root}posts/${p.slug}/">পুরো খবর${AI.next}</a>`;
-  const foot = `<div class="b-foot"><button type="button" class="ab ab-line" data-flip>${AI.back}খবরে ফিরুন</button>${full}</div>`;
-  const of = `<p class="b-of">${esc(p.card_headline || p.title)}</p>`;
-  if (!a) {
-    const facts = p.quick_facts.slice(0, 4);
-    return `<div class="face c-back" aria-hidden="true" inert><header class="b-head"><span class="b-k">${AI.bolt}মূল কথা</span><button type="button" class="b-x" data-flip>${AI.back}ফিরুন</button></header>
-<div class="b-body"><h3>এক নজরে পুরো খবর</h3>${of}
-${p.key_points.length ? `<ul class="b-pts">${p.key_points.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : `<p class="b-pts-p">${esc(p.excerpt)}</p>`}
-${facts.length ? `<dl class="b-facts">${facts.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.value)}</dd></div>`).join("")}</dl>` : ""}
-<a class="b-ptd" href="${root}prompt/"><span><b>আজকের প্রম্পট</b><span>কপি করে এখনই নিজের কাজে লাগান</span></span>${AI.next}</a></div>${foot}</div>`;
-  }
-  const scam = a.kind === "scam";
-  const title = a.title || (scam ? "কীভাবে চিনবেন, কী করবেন" : a.kind === "prompt" ? "এই প্রম্পটটা কপি করে চালান" : "৩ ধাপে নিজে করুন");
-  return `<div class="face c-back${scam ? " is-scam" : ""}" aria-hidden="true" inert><header class="b-head"><span class="b-k">${scam ? AI.warn : AI.bolt}${scam ? "সতর্ক থাকুন" : "আজই করুন"}${scam ? "" : " <small>৬০ সেকেন্ডে</small>"}</span><button type="button" class="b-x" data-flip>${AI.back}ফিরুন</button></header>
-<div class="b-body"><h3>${esc(title)}</h3>${of}
-${a.steps.length ? `<ol class="b-steps">${a.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}
-${a.prompt ? `<div class="b-prompt"><span>প্রম্পট</span><p data-copytext>${esc(a.prompt)}</p><button type="button" class="b-copy" data-acopy>${AI.copy}<span>প্রম্পট কপি করুন</span></button></div>` : ""}
-${a.note ? `<p class="b-note"><b>${scam ? "মনে রাখুন:" : "টিপ:"}</b> ${esc(a.note)}</p>` : ""}</div>${foot}</div>`;
-};
-const actRow = (wa, saveAttrs, label = "আজই করুন") => `<div class="c-act"><button type="button" class="ab ab-i" data-listen hidden>${AI.speak}<span>শুনুন</span></button>${saveAttrs ? `<button type="button" class="ab ab-i" data-save aria-pressed="false" ${saveAttrs}>${AI.save}<span>সেভ</span></button>` : ""}<a class="ab ab-wa" ${wa} target="_blank" rel="noopener">${ICON.wa}শেয়ার</a><button type="button" class="ab ab-go" data-flip>${AI.flip}${label}</button></div>`;
-const appCard = (p, i, n, root) => {
-  const url = `${SITE}/posts/${p.slug}/`;
+const WAVE = (cls, fill = "#fff", stroke = "#F0BE5C") => `<svg class="${cls}" viewBox="0 0 390 46" preserveAspectRatio="none" aria-hidden="true"><path d="M0 28C90 6 170 8 240 24S350 44 390 18V46H0Z" fill="${fill}"/><path class="wv-line" d="M0 28C90 6 170 8 240 24S350 44 390 18" fill="none" stroke="${stroke}" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`;
+const priceLabel = { free: "ফ্রি", paid: "পেইড", freemium: "আংশিক ফ্রি" };
+const indiaLabel = { available: "হ্যাঁ, ভারতে এখন চালু আছে।", soon: "শীঘ্রই ভারতে আসার কথা।", "not-yet": "এখনও ভারতে চালু হয়নি।", unavailable: "এখনও ভারতে চালু হয়নি।" };
+const pic = (p, root) => {
   const head = p.card_headline || p.title;
   const local = (f) => f && !/^https?:/.test(f);
-  const pic = p.photo ? { src: root + p.photo, size: p.photoSize, alt: p.photo_alt || head, ai: /\/news\/ai\//.test(p.photo_url || "") } : p.cover ? { src: local(p.cover) ? root + p.cover : p.cover, size: local(p.cover) ? imgSize(p.cover) : [1200, 630], alt: p.cover_alt || head, ai: false } : null;
-  // সারাংশ: excerpt; ছোট হলে মূল কথা থেকে পয়েন্ট জুড়ে মোটামুটি ৬০ শব্দ (কার্ডে যতটা ধরে, app.js ততটাই রাখে)
+  return p.photo ? { src: root + p.photo, size: p.photoSize, alt: p.photo_alt || head, ai: /\/news\/ai\//.test(p.photo_url || "") } : p.cover ? { src: local(p.cover) ? root + p.cover : p.cover, size: local(p.cover) ? imgSize(p.cover) : [1200, 630], alt: p.cover_alt || head, ai: false } : null;
+};
+// "আজই করুন" শিটের ভেতরের লেখা (template-এ থাকে, ট্যাপ করলে শিটে বসে)
+const actBody = (p, root, a) => {
+  const scam = a && a.kind === "scam";
+  const p50 = `<a class="as-p50" href="${root}prompts-50/"><span class="as-p50-ic">${AI.spark}</span><span><b>এমন ৫০টা কাজের AI প্রম্পট, বাংলায়</b><span>ছাত্র, শিক্ষক, দোকানদার, ক্রিয়েটর সবার জন্য · ফ্রি</span></span>${AI.chev}</a>`;
+  const full = `<a class="as-full" href="${root}posts/${p.slug}/">পুরো খবর পড়ুন${AI.next}</a>`;
+  if (!a) {
+    const pts = p.key_points.slice(0, 5);
+    return `<div class="as-head" data-kind="facts"><span class="as-ic">${AI.bolt}</span><span><b>মূল কথা</b><small>এক নজরে পুরো খবর</small></span></div>
+<div class="as-body">${pts.length ? `<ul class="as-pts">${pts.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : `<p class="as-lead">${esc(p.excerpt)}</p>`}
+<a class="as-p50" href="${root}prompt/"><span class="as-p50-ic">${AI.spark}</span><span><b>আজকের প্রম্পট</b><span>কপি করে এখনই নিজের কাজে লাগান</span></span>${AI.chev}</a>${full}</div>`;
+  }
+  const title = a.title || (scam ? "কীভাবে চিনবেন, কী করবেন" : a.kind === "prompt" ? "এই প্রম্পটটা কপি করে চালান" : "ধাপে ধাপে নিজে করুন");
+  const tok = (s) => esc(s).replace(/\[([^\]]{1,40})\]/g, '<span class="tok">$1</span>');
+  return `<div class="as-head${scam ? " is-scam" : ""}"><span class="as-ic">${scam ? AI.warn : AI.spark}</span><span><b>${scam ? "সতর্ক থাকুন" : "আজই করুন"}</b><small>${esc(title)}</small></span></div>
+<div class="as-body">${a.steps.length ? `<ol class="as-steps">${a.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}
+${a.prompt ? `<div class="as-prompt" data-copyroot><span>প্রম্পট</span><p data-copytext>${tok(a.prompt)}</p><button type="button" class="as-copy" data-acopy>${AI.copy}<span>প্রম্পট কপি করুন</span></button></div>` : ""}
+${a.note ? `<p class="as-note${scam ? " is-scam" : ""}"><b>${scam ? "মনে রাখুন:" : "টিপ:"}</b> ${esc(a.note)}</p>` : ""}
+${scam ? "" : p50}${full}</div>`;
+};
+const appCard = (p, i, n, root) => {
+  const head = p.card_headline || p.title;
+  const ph = pic(p, root);
   const sum = p.excerpt || p.key_points[0] || "";
   let words = wc(sum);
   const pts = [];
-  for (const k of p.key_points) { if (words >= 46 || pts.length >= 3) break; if (k === sum || words + wc(k) > 66) continue; pts.push(k); words += wc(k); }
+  for (const k of p.key_points) { if (words >= 40 || pts.length >= 2) break; if (k === sum || words + wc(k) > 60) continue; pts.push(k); words += wc(k); }
   const a = cleanAction(p.action);
   const benefit = str(p.benefit, 90);
-  const src = str(p.source_name || (typeof p.source === "string" && !/^https?:/.test(p.source) ? p.source : ""), 40);
-  const wa = waHref(`${head}${benefit ? `\n\nআপনার লাভ: ${benefit}` : ""}\n\nপুরো খবর: ${url}?utm_source=whatsapp&utm_medium=card-share`);
-  return `<section class="slide${p.type === "scam-alert" ? " is-alert" : ""}" id="c-${p.slug}" data-id="${p.slug}" data-kind="post" aria-roledescription="খবরের কার্ড" aria-label="খবর ${bnNum(i + 1)} / ${bnNum(n)}: ${esc(head)}"><div class="card"><div class="card-in">
-<article class="face c-front">${pic ? `<div class="c-pic"><img src="${esc(pic.src)}" alt="${esc(pic.alt)}" width="${pic.size[0]}" height="${pic.size[1]}" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>${pic.ai ? '<span class="c-ai">AI-নির্মিত ছবি</span>' : ""}</div>` : ""}
-<div class="c-body"><div class="c-meta">${tlabel(p)}${when(p)}${appBadges(p)}</div>
+  const url = `${SITE}/posts/${p.slug}/`;
+  const wa = waHref(`${head}${benefit ? `\n\nআপনার লাভ: ${benefit}` : ""}\n\nপড়ুন Unique AI পত্রিকায়: ${url}?utm_source=whatsapp&utm_medium=card-share`);
+  const scam = p.type === "scam-alert";
+  return `<section class="slide${scam ? " is-alert" : ""}" id="c-${p.slug}" data-id="${p.slug}" data-kind="post" data-ben="${esc(benefit)}" data-india="${esc(indiaLabel[p.india] || "")}" data-price="${esc(priceLabel[p.price] || "")}" aria-roledescription="খবরের কার্ড" aria-label="খবর ${bnNum(i + 1)} / ${bnNum(n)}: ${esc(head)}">
+<article class="cd"><div class="cd-pic">${ph ? `<img src="${esc(ph.src)}" alt="${esc(ph.alt)}" width="${ph.size[0]}" height="${ph.size[1]}" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>` : `<span class="cd-pic-f" aria-hidden="true">${AI.spark}</span>`}${ph && ph.ai ? '<span class="cd-ai">AI-নির্মিত ছবি</span>' : ""}<span class="cd-pos" data-pos></span>${WAVE("cd-wave")}</div>
+<div class="cd-body"><div class="cd-meta">${tlabel(p)}${when(p)}<button type="button" class="cd-listen" data-listen hidden>${AI.play}<span>শুনুন</span></button></div>
 <h2 class="c-h">${esc(head)}</h2>
 <div class="c-sum"><p>${esc(sum)}</p>${pts.length ? `<ul>${pts.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` : ""}</div>
-${benefit ? `<p class="c-ben"><b>আপনার লাভ</b><span>${esc(benefit)}</span></p>` : ""}
-<div class="c-more">${src ? `<span class="c-src">সূত্র: ${esc(src)}</span>` : ""}<a class="c-full" href="${root}posts/${p.slug}/">পুরো খবর${AI.next}</a></div></div>
-${actRow(`href="${esc(wa)}"`, `data-title="${esc(head)}" data-url="${root}posts/${p.slug}/"`, a && a.kind === "scam" ? "কী করবেন" : "আজই করুন")}</article>
-${cardBack(p, root, a)}
-</div></div></section>`;
+${benefit ? `<p class="cd-ben"><b>আপনার লাভ</b><span>${esc(benefit)}</span></p>` : ""}
+<div class="cd-ask" data-askcard><span class="cd-ask-h"><i class="mini-orb" aria-hidden="true">${AI.spark}</i>পাঠকরা AI-কে জিজ্ঞেস করছেন</span><span class="chips" data-chips></span></div>
+<div class="cd-act"><button type="button" class="ib" data-save aria-pressed="false" aria-label="সেভ করুন" data-title="${esc(head)}" data-url="${root}posts/${p.slug}/">${AI.save}</button><a class="ib ib-wa" href="${esc(wa)}" target="_blank" rel="noopener" aria-label="WhatsApp-এ পাঠান" data-share>${ICON.wa}</a><a class="ib" href="${root}posts/${p.slug}/" aria-label="পুরো খবর পড়ুন">${AI.news}</a><button type="button" class="go${scam ? " go-scam" : ""}" data-act>${scam ? AI.warn : AI.spark}${scam ? "কী করবেন" : a ? "আজই করুন" : "মূল কথা"}</button></div></div></article>
+<template data-acttpl>${actBody(p, root, a)}</template>
+</section>`;
 };
-// AI ফ্ল্যাশের কার্ডের ছাঁচ: app.js এতে লেখা বসিয়ে পোস্টের পরে জোড়ে
-const briefTpl = (root) => `<template id="brief-tpl"><section class="slide is-brief" data-kind="brief" aria-roledescription="খবরের কার্ড"><div class="card"><div class="card-in">
-<article class="face c-front"><div class="c-band"><i class="live-dot" aria-hidden="true"></i>AI ফ্ল্যাশ<small>ছোট খবর</small></div>
-<div class="c-body"><div class="c-meta"><span data-b-chip></span><time></time><ul class="c-badges" data-b-badges></ul></div>
+// AI ফ্ল্যাশ: ছবি নেই, তাই বেগুনি ঢেউয়ের মাথা। app.js লেখা বসিয়ে পোস্টের পরে জোড়ে
+const briefTpl = (root) => `<template id="brief-tpl"><section class="slide is-brief" data-kind="brief" aria-roledescription="খবরের কার্ড"><article class="cd"><div class="cd-pic cd-flash"><span class="fl-k"><i class="live-dot" aria-hidden="true"></i>AI ফ্ল্যাশ</span><span class="fl-s">ছোট খবর, এক মিনিটে</span><span class="cd-pos" data-pos></span>${WAVE("cd-wave")}</div>
+<div class="cd-body"><div class="cd-meta"><span data-b-chip></span><time></time><button type="button" class="cd-listen" data-listen hidden>${AI.play}<span>শুনুন</span></button></div>
 <h2 class="c-h" data-b-h></h2><div class="c-sum"><p data-b-body></p></div>
-<div class="c-more"><a class="c-full" href="${root}flash/" data-b-full>সব ফ্ল্যাশ${AI.next}</a></div></div>
-${actRow("href=\"#\" data-b-wa", "")}</article>
-<div class="face c-back" aria-hidden="true" inert><header class="b-head"><span class="b-k">${AI.bolt}আজই করুন <small>৬০ সেকেন্ডে</small></span><button type="button" class="b-x" data-flip>${AI.back}ফিরুন</button></header>
-<div class="b-body"><h3>আজকের প্রম্পট দিয়ে হাত পাকান</h3><p class="b-of">ছোট খবরে আলাদা কাজ থাকে না। তার বদলে আজকের বাছাই করা প্রম্পটটা কপি করে নিজের কাজে চালিয়ে দেখুন।</p>
-<a class="b-ptd" href="${root}prompt/"><span><b>আজকের প্রম্পট</b><span>কপি করে এখনই নিজের কাজে লাগান</span></span>${AI.next}</a>
-<a class="b-ptd" href="${root}quiz/"><span><b>আজকের AI প্রশ্ন</b><span>৫টা প্রশ্ন, ১ মিনিট</span></span>${AI.next}</a></div>
-<div class="b-foot"><button type="button" class="ab ab-line" data-flip>${AI.back}খবরে ফিরুন</button><a class="ab ab-line" href="${root}flash/" data-b-full>সব ফ্ল্যাশ${AI.next}</a></div></div>
-</div></div></section></template>`;
+<div class="cd-ask" data-askcard><span class="cd-ask-h"><i class="mini-orb" aria-hidden="true">${AI.spark}</i>পাঠকরা AI-কে জিজ্ঞেস করছেন</span><span class="chips" data-chips></span></div>
+<div class="cd-act"><a class="ib ib-wa" href="#" data-b-wa target="_blank" rel="noopener" aria-label="WhatsApp-এ পাঠান" data-share>${ICON.wa}</a><a class="ib" href="${root}flash/" data-b-full aria-label="সব ফ্ল্যাশ">${AI.news}</a><button type="button" class="go" data-act>${AI.spark}আজই করুন</button></div></div></article>
+<template data-acttpl><div class="as-head"><span class="as-ic">${AI.spark}</span><span><b>আজই করুন</b><small>আজকের প্রম্পট দিয়ে হাত পাকান</small></span></div><div class="as-body"><p class="as-lead">ছোট খবরে আলাদা কাজ থাকে না। তার বদলে আজকের বাছাই করা প্রম্পটটা কপি করে নিজের কাজে চালিয়ে দেখুন।</p><a class="as-p50" href="${root}prompt/"><span class="as-p50-ic">${AI.spark}</span><span><b>আজকের প্রম্পট</b><span>কপি করে এখনই নিজের কাজে লাগান</span></span>${AI.chev}</a><a class="as-p50" href="${root}prompts-50/"><span class="as-p50-ic">${AI.spark}</span><span><b>৫০টা কাজের AI প্রম্পট</b><span>বাংলায়, ফ্রি</span></span>${AI.chev}</a></div></template>
+</section></template>`;
 const FIX = [
-  ["Xiaomi / Redmi / POCO", ["Settings → Apps → Manage apps → Chrome (বা AI পত্রিকা) খুলুন", "Autostart চালু করুন", "Battery saver → No restrictions বেছে নিন", "Notifications → Allow notifications চালু আছে কি না দেখুন"]],
-  ["Vivo / iQOO", ["Settings → Battery → Background power consumption management → Chrome (বা AI পত্রিকা) → Don't restrict", "Settings → Apps → Autostart → অ্যাপটা চালু করুন", "Settings → Notifications-এ অ্যাপের নোটিফিকেশন Allow করুন"]],
-  ["Oppo", ["Settings → Battery → More settings → Optimise battery use → Chrome (বা AI পত্রিকা) → Don't optimise", "Settings → Apps → Auto launch → অ্যাপটা চালু করুন", "Settings → Notifications-এ অ্যাপের নোটিফিকেশন Allow করুন"]],
-  ["Realme", ["Settings → Battery → More settings → Optimise battery use → Chrome (বা AI পত্রিকা) → Don't optimise", "Settings → Apps → Auto launch → অ্যাপটা চালু করুন", "Settings → Notifications-এ অ্যাপের নোটিফিকেশন Allow করুন"]],
-  ["Samsung", ["Settings → Apps → Chrome (বা AI পত্রিকা) → Battery → Unrestricted", "Settings → Battery → Background usage limits → Never sleeping apps-এ অ্যাপটা যোগ করুন", "Settings → Notifications → App notifications-এ অ্যাপটা চালু রাখুন"]],
+  ["Xiaomi / Redmi / POCO", ["Settings → Apps → Manage apps → AI পত্রিকা (বা Chrome) খুলুন", "Autostart চালু করুন", "Battery saver → No restrictions বেছে নিন", "Notifications → Allow notifications চালু আছে কি না দেখুন"]],
+  ["Vivo / iQOO", ["Settings → Battery → Background power consumption management → AI পত্রিকা (বা Chrome) → Don't restrict", "Settings → Apps → Autostart → অ্যাপটা চালু করুন", "Settings → Notifications-এ অ্যাপের নোটিফিকেশন Allow করুন"]],
+  ["Oppo / Realme", ["Settings → Battery → More settings → Optimise battery use → AI পত্রিকা (বা Chrome) → Don't optimise", "Settings → Apps → Auto launch → অ্যাপটা চালু করুন", "Settings → Notifications-এ অ্যাপের নোটিফিকেশন Allow করুন"]],
+  ["Samsung", ["Settings → Apps → AI পত্রিকা (বা Chrome) → Battery → Unrestricted", "Settings → Battery → Background usage limits → Never sleeping apps-এ অ্যাপটা যোগ করুন", "Settings → Notifications → App notifications-এ অ্যাপটা চালু রাখুন"]],
 ];
-const appSheet = (root) => `<div class="sheet" id="asheet" role="dialog" aria-modal="true" aria-labelledby="asheet-h" hidden><div class="sheet-bg" data-close></div><div class="sheet-panel"><div class="sheet-head"><h2 id="asheet-h">সেটিংস</h2><button type="button" class="x" data-close aria-label="বন্ধ করুন">×</button></div>
-<fieldset class="set-fs"><legend>লেখার মাপ</legend><div class="opts">${[["s", "ছোট"], ["m", "মাঝারি"], ["l", "বড়"]].map(([v, l]) => `<label><input type="radio" name="fs" value="${v}"${v === "m" ? " checked" : ""}><span>${l}</span></label>`).join("")}</div></fieldset>
-<div class="set-row"><div><b>নোটিফিকেশন</b><span>বড় খবর এলেই ফোনে জানাব। যখন খুশি বন্ধ করা যায়।</span></div>${pushCta("set-btn", "চালু করুন").replace('data-alt="', 'data-alt="Telegram-এ পান" data-alt0="')}</div>
-<div class="set-row" data-app-install hidden><div><b>অ্যাপ ইনস্টল করুন</b><span>হোম স্ক্রিন থেকে এক ট্যাপে খুলবে, নেট না থাকলেও শেষ খবরগুলো পড়া যাবে।</span></div><button type="button" class="set-btn" data-app-install hidden>${AI.down}ইনস্টল</button></div>
-<p class="set-ios" data-ios-hint hidden>iPhone-এ: Safari-র নিচের ${AI.ios} Share বোতামে ট্যাপ করুন, তারপর "Add to Home Screen" বেছে নিন।</p>
-<h3 class="set-h">সেভ করা খবর</h3><div data-saved></div>
-<h3 class="set-h">নোটিফিকেশন আসছে না?</h3><p class="set-lead">কিছু ফোন ব্যাটারি বাঁচাতে নোটিফিকেশন আটকে দেয়। নিজের ফোনের নাম বেছে ধাপগুলো মিলিয়ে নিন।</p>
-<div class="fix">${FIX.map(([n, s]) => `<details><summary>${n}</summary><ol>${s.map((x) => `<li>${esc(x)}</li>`).join("")}</ol></details>`).join("")}</div>
-<p class="fix-n">ফোনের মডেল আর Android ভার্সন অনুযায়ী মেনুর নাম সামান্য আলাদা হতে পারে। মূল কথা দুটো: ব্যাটারি অপটিমাইজেশন বন্ধ, আর Autostart চালু।</p>
-<a class="set-web" href="${root}">পুরো ওয়েবসাইট খুলুন</a></div></div>`;
+const dockTab = (v, ic, label, on = false) => `<button type="button" class="tab${on ? " on" : ""}" data-tab="${v}" aria-label="${label}"${on ? ' aria-current="page"' : ""}><span class="tab-ic">${ic}</span><span class="tab-l">${label}</span></button>`;
+const NOTCH = "M0 14Q0 2 12 2H151A44 44 0 0 0 239 2H378Q390 2 390 14";
+const dock = () => `<nav class="dock" aria-label="অ্যাপ মেনু"><div class="dock-glass" aria-hidden="true"></div>
+<svg class="dock-edge" viewBox="0 0 390 50" preserveAspectRatio="xMidYMin meet" aria-hidden="true" data-edge><defs><linearGradient id="dg" x1="0" x2="1"><stop offset="0" stop-color="#8B5CF6" stop-opacity=".12"/><stop offset=".35" stop-color="#7C6CFF"/><stop offset=".5" stop-color="#5DA9FF"/><stop offset=".65" stop-color="#7C6CFF"/><stop offset="1" stop-color="#8B5CF6" stop-opacity=".12"/></linearGradient></defs><path class="de-glow" d="${NOTCH}" fill="none" stroke="url(#dg)" stroke-width="6"/><path class="de-line" d="${NOTCH}" fill="none" stroke="url(#dg)" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>
+<div class="dock-row">${dockTab("feed", AI.news, "খবর", true)}${dockTab("find", AI.find, "খুঁজুন")}<span class="tab tab-mid" aria-hidden="true"><span class="tab-ic"></span><span class="tab-l">AI-কে বলুন</span></span>${dockTab("today", AI.star, "আজ")}${dockTab("me", AI.user, "আমার")}</div>
+<button type="button" class="orb" data-orb aria-label="এই খবর নিয়ে AI-কে জিজ্ঞেস করুন"><span class="orb-core">${AI.spark}</span></button></nav>`;
+const vhead = (title, sub, extra = "") => `<header class="vhd"><div class="vhd-in"><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ""}${extra}</div>${WAVE("vhd-wave")}</header>`;
 const appPage = () => {
   const root = "../";
   const list = posts.slice(0, APP_N);
   const lead = list[0];
   const leadSrc = lead ? (lead.photo ? root + lead.photo : lead.cover && !/^https?:/.test(lead.cover) ? root + lead.cover : "") : "";
-  const invite = waHref(`রোজের AI খবর সহজ বাংলায়, এক স্ক্রিনে এক কার্ড। আমি Unique AI পত্রিকায় পড়ছি, আপনিও দেখুন:\n${SITE}/app/?utm_source=whatsapp&utm_medium=invite`);
-  const title = `আজকের AI খবর কার্ডে | ${cfg.siteName}`;
-  const desc = "আজকের AI খবর এক স্ক্রিনে এক কার্ডে: উপরে টানলেই পরের খবর, আর প্রতিটা কার্ডের পেছনে আজই করার মতো একটা কাজ।";
+  const invite = waHref(`রোজের AI খবর সহজ বাংলায়, এক স্ক্রিনে এক খবর। আর যেকোনো খবর নিয়ে AI-কে প্রশ্নও করা যায়। আমি Unique AI পত্রিকায় পড়ছি, আপনিও দেখুন:\n${SITE}/app/?utm_source=whatsapp&utm_medium=invite`);
+  const title = `আজকের AI খবর | ${cfg.siteName}`;
+  const desc = "আজকের AI খবর এক স্ক্রিনে এক কার্ডে: উপরে টানলেই পরের খবর, প্রতিটা খবরে আজই করার মতো একটা কাজ, আর যেকোনো খবর নিয়ে AI-কে প্রশ্ন।";
+  // খুঁজুন পাতার তালিকা: শেষ ৬০টা খবর (ছোট তথ্য, JSON হিসেবে; চালানো হয় না)
+  const findData = posts.slice(0, 60).map((p) => { const ph = pic(p, root); return { s: p.slug, t: p.card_headline || p.title, k: p.type || "", d: p.date, i: ph ? ph.src : "", x: str(p.excerpt, 160) }; });
+  const typeCount = Object.fromEntries(TYPES.map((t) => [t.key, posts.filter((p) => p.type === t.key).length]));
+  const tiles = TYPES.filter((t) => typeCount[t.key] > 0).slice(0, 6);
+  const free = ug(cfg.freeClassUrl, "app");
   return `<!doctype html>
 <html lang="bn" data-fs="m">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>${esc(title)}</title>
@@ -1156,37 +1176,87 @@ const appPage = () => {
 <link rel="icon" href="${root}assets/app/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="${root}assets/app/icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="${root}assets/app/apple-touch-icon.png">
-<link rel="preload" href="${root}assets/fonts/anek-bangla-bengali-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="${root}assets/fonts/hind-siliguri-bengali-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="${root}assets/fonts/hind-siliguri-bengali-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 ${leadSrc ? `<link rel="preload" as="image" href="${esc(leadSrc)}" fetchpriority="high">\n` : ""}<link rel="stylesheet" href="${root}assets/style.css?v=${VER}">
 <link rel="stylesheet" href="${root}assets/app.css?v=${VER}">
 </head>
-<body class="k-app" data-root="${root}" data-site="${esc(SITE)}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}" data-daily="${esc(DAILY)}" data-tl="${TL_JSON}">
-<div class="app">
-<header class="atop"><div class="a-brand"><img src="${root}assets/app/icon-192.png" alt="" width="36" height="36"><div><h1><small>Unique</small> AI পত্রিকা</h1><p class="a-count"><b><span class="a-cur" data-cur>${bnNum(1)}</span> / <span data-total>${bnNum(list.length)}</span></b> আজকের</p></div></div><span class="a-unread" data-unread>${bnNum(list.length)}টা না-পড়া</span><button type="button" class="a-gear" data-sheet="asheet" aria-label="সেটিংস">${AI.gear}</button></header>
-<div class="a-prog" data-prog aria-hidden="true">${list.map(() => "<i></i>").join("")}<i class="end"></i></div>
-<main class="feedx" id="feed" tabindex="0" aria-label="আজকের খবরের কার্ড। পরের খবরের জন্য উপরে টানুন বা নিচের তীর চাপুন।">
+<body class="k-app" data-root="${root}" data-site="${esc(SITE)}" data-v="${VER}" data-sb="${esc(cfg.supabaseUrl || "")}" data-sbk="${esc(cfg.supabaseKey || "")}" data-free="${esc(host(cfg.freeClassUrl))}" data-main="${esc(host(cfg.mainSiteUrl))}" data-push="${cfg.pushEnabled ? 1 : 0}" data-push-api="${esc(cfg.pushApi || "")}" data-briefs="${esc(cfg.briefsApi || "")}" data-daily="${esc(DAILY)}" data-ask="${esc(cfg.askApi || "")}" data-tl="${TL_JSON}">
+<div class="app" id="app">
+
+<section class="view on" id="v-feed" data-view="feed" aria-label="আজকের খবর">
+<main class="feedx" id="feed" tabindex="0" aria-label="আজকের খবরের কার্ড। পরের খবরের জন্য উপরে টানুন।">
 ${list.map((p, i) => appCard(p, i, list.length, root)).join("\n")}
-<section class="slide" id="c-end" data-id="end" data-kind="end" aria-label="আজকের সব খবর শেষ"><div class="endc">
-<span class="e-ok">${AI.check}</span><h2>আজকের সব খবর শেষ ✓</h2><p class="e-sub">ভালো পড়লেন। নতুন খবর এলেই এখানে পাবেন।</p>
-<div class="e-streak" data-streak-box><p data-streak-t><b>স্ট্রিক শুরু করুন</b> · টানা ৭ দিন আজকের AI প্রশ্ন খেললে সার্টিফিকেট</p><ol class="e-dots" aria-hidden="true">${[1, 2, 3, 4, 5, 6, 7].map((d) => `<li>${bnNum(d)}</li>`).join("")}</ol><a class="e-cert" href="${root}certificate/" data-cert hidden>সার্টিফিকেট নিন</a></div>
-<div class="e-grid"><a class="e-b" href="${root}quiz/"><b>আজকের AI প্রশ্ন</b><span>৫টা প্রশ্ন, ১ মিনিট</span></a><a class="e-b" href="${root}prompt/"><b>দিনের প্রম্পট</b><span>কপি করে কাজে লাগান</span></a>
-<a class="e-b e-wa" href="${esc(invite)}" target="_blank" rel="noopener">${ICON.wa}<b>বন্ধুকে WhatsApp-এ পাঠান</b></a>
-<a class="e-b e-class" href="${ug(cfg.freeClassUrl, "app-end")}" target="_blank" rel="noopener"><i><b>ফ্রি ৪ দিনের ক্লাস</b><span>Unique Gurukul-এ হাতে-কলমে AI শিখুন</span></i>${AI.next}</a></div>
-<button type="button" class="e-inst" data-app-install hidden>${AI.down}অ্যাপ ইনস্টল করুন</button>
-<button type="button" class="e-top" data-top>আবার প্রথম খবরে যান</button>
+<section class="slide is-end" id="c-end" data-id="end" data-kind="end" aria-label="আজকের সব খবর শেষ"><div class="endc">
+<span class="e-orb" aria-hidden="true">${AI.check}</span><h2>আজকের সব খবর পড়া শেষ</h2><p>নতুন খবর এলেই এখানে পাবেন। এবার আজকের প্রশ্নটা খেলে নিন।</p>
+<button type="button" class="btn-v" data-tab="today">${AI.star}আজকের কুইজ আর ফ্রি ক্লাস</button>
+<a class="btn-o" href="${esc(invite)}" target="_blank" rel="noopener" data-share>${ICON.wa}বন্ধুকে পাঠান</a>
+<button type="button" class="btn-t" data-top>${AI.up}আবার প্রথম খবরে যান</button>
 </div></section>
 </main>
-<noscript><p class="a-ns">কার্ডগুলো উপরে টেনে পড়ুন। সব সুবিধার জন্য ব্রাউজারে JavaScript চালু রাখুন।</p></noscript>
+<p class="swipe-hint" data-swipehint hidden><span>${AI.up}</span>উপরে টানুন, পরের খবর</p>
+</section>
+
+<section class="view" id="v-find" data-view="find" aria-labelledby="find-h" hidden><div class="vscroll">
+<header class="vhd vhd-find"><div class="vhd-in"><h1 id="find-h">খুঁজুন</h1><label class="srch"><span class="srch-ic">${AI.find}</span><input type="search" data-find-q placeholder="ChatGPT, ফ্রি টুল, প্রতারণা…" enterkeyhint="search" autocomplete="off" aria-label="খবর খুঁজুন"><button type="button" class="srch-x" data-find-x aria-label="মুছুন" hidden>${AI.x}</button></label></div>${WAVE("vhd-wave")}</header>
+<div class="tiles" role="group" aria-label="খবরের ধরন">${tiles.map((t) => `<button type="button" class="tile${t.key === "scam-alert" ? " tile-warn" : ""}" data-find-k="${t.key}" aria-pressed="false"><span class="tile-ic">${ticon(t.key)}</span><span>${esc(t.label)}</span></button>`).join("")}</div>
+<div class="fsec-h"><h2 data-find-h>এখন ট্রেন্ডিং</h2><button type="button" class="link" data-find-all hidden>সব দেখুন</button></div>
+<ul class="flist" data-find-list></ul>
+<p class="f-empty" data-find-empty hidden>এই নামে কিছু পাওয়া গেল না। অন্য শব্দে খুঁজে দেখুন, বা <a href="${root}search/">পুরো পত্রিকায় খুঁজুন</a>।</p>
+<script type="application/json" id="find-data">${JSON.stringify(findData).replace(/</g, "\\u003c")}</script>
+</div></section>
+
+<section class="view" id="v-today" data-view="today" aria-labelledby="today-h" hidden><div class="vscroll">
+${vhead(`<span id="today-h" data-today-h>আজকের পত্রিকা</span>`, `<span data-today-sub>${bnNum(list.length)}টা খবর আজ</span>`, `<span class="vhd-orb" aria-hidden="true">${AI.check}</span>`)}
+<div class="vpad">
+<a class="hero-c" href="${free}" target="_blank" rel="noopener" data-class><span class="hc-k">Unique Gurukul-এর উদ্যোগ</span><b>AI হাতে-কলমে শিখুন</b><span class="hc-s">৪ দিনের লাইভ ক্লাস · সম্পূর্ণ ফ্রি · বাংলায়</span><span class="hc-go">জায়গা রাখুন</span></a>
+<div class="card-w streak" data-streak-box><div class="st-h"><b data-streak-t>টানা পড়া শুরু করুন</b><span data-streak-s>৭ দিনে সার্টিফিকেট</span></div><ol class="st-dots" aria-hidden="true">${[1, 2, 3, 4, 5, 6, 7].map((d) => `<li>${bnNum(d)}</li>`).join("")}</ol><a class="st-cert" href="${root}certificate/" data-cert hidden>${AI.cap}সার্টিফিকেট নিন</a></div>
+<div class="tiles2"><a class="t2" href="${root}quiz/"><span class="t2-ic">${AI.star}</span><b>আজকের কুইজ</b><span>৫টা প্রশ্ন · ১ মিনিট</span></a><a class="t2" href="${root}prompt/"><span class="t2-ic">${AI.copy}</span><b>দিনের প্রম্পট</b><span>কপি করে কাজে লাগান</span></a></div>
+<a class="row-c" href="${root}prompts-50/"><span class="rc-ic">${AI.spark}</span><span><b>৫০টা কাজের AI প্রম্পট</b><span>বাংলায় লেখা, ফোনের ফ্রি টুলেই চলে</span></span>${AI.chev}</a>
+<a class="row-c" href="${esc(invite)}" target="_blank" rel="noopener" data-share><span class="rc-ic rc-wa">${ICON.wa}</span><span><b>বন্ধুকে পাঠান</b><span>WhatsApp-এ এক ট্যাপে</span></span>${AI.chev}</a>
+<a class="row-c" href="${root}flash/"><span class="rc-ic">${AI.bolt}</span><span><b>AI ফ্ল্যাশ</b><span>সারাদিনের ছোট খবর</span></span>${AI.chev}</a>
+</div></div></section>
+
+<section class="view" id="v-me" data-view="me" aria-labelledby="me-h" hidden><div class="vscroll">
+<header class="vhd vhd-me"><div class="vhd-in"><span class="av" data-me-av aria-hidden="true">${AI.user}</span><h1 id="me-h" data-me-name>নমস্কার, পাঠক</h1><p class="me-tag" data-me-tag>Unique AI পত্রিকা</p></div>${WAVE("vhd-wave")}</header>
+<div class="vpad">
+<div class="stats"><span><b data-st-streak>০</b><small>টানা দিন</small></span><span><b data-st-read>০</b><small>খবর পড়া</small></span><span><b data-st-saved>০</b><small>সেভ করা</small></span></div>
+<div class="card-w invite"><b>বন্ধুদেরও জানান</b><p>রোজের AI খবর সহজ বাংলায়, ফ্রি। আপনার বন্ধু বা পরিবারের কারও কাজে লাগতে পারে।</p><a class="btn-v" href="${esc(invite)}" target="_blank" rel="noopener" data-share>${ICON.wa}বন্ধুকে পাঠান</a></div>
+<div class="card-w me-lead" data-me-lead><b>সার্টিফিকেট আর ফ্রি ক্লাসের খবর পেতে</b><p>নাম আর নম্বর দিলে ৭ দিনের সার্টিফিকেটে আপনার নাম বসবে, আর নতুন ফ্রি ক্লাস শুরু হলে জানিয়ে দেব।</p>${leadForm(root, "class", "জমা দিন", false)}</div>
+<h2 class="grp">সেটিংস</h2>
+<div class="rows">
+<div class="row"><span class="r-ic">${AI.text}</span><span class="r-t">লেখার মাপ</span><span class="seg" role="radiogroup" aria-label="লেখার মাপ">${[["s", "ছোট"], ["m", "মাঝারি"], ["l", "বড়"]].map(([v, l]) => `<label><input type="radio" name="fs" value="${v}"${v === "m" ? " checked" : ""}><span>${l}</span></label>`).join("")}</span></div>
+<div class="row"><span class="r-ic">${AI.bell}</span><span class="r-t">বড় খবরের নোটিফিকেশন</span>${pushCta("r-btn", "চালু করুন").replace('data-alt="', 'data-alt="Telegram-এ পান" data-alt0="')}</div>
+<div class="row" data-app-install hidden><span class="r-ic">${AI.down}</span><span class="r-t">অ্যাপ ইনস্টল করুন</span><button type="button" class="r-btn" data-app-install hidden>ইনস্টল</button></div>
+<p class="r-ios" data-ios-hint hidden>iPhone-এ: Safari-র নিচের ${AI.ios} Share বোতামে ট্যাপ করুন, তারপর "Add to Home Screen" বেছে নিন।</p>
+<details class="row-d"><summary><span class="r-ic">${AI.save}</span><span class="r-t">সেভ করা খবর</span><span class="r-v" data-saved-n></span>${AI.chev}</summary><div data-saved></div></details>
+<details class="row-d"><summary><span class="r-ic">${AI.help}</span><span class="r-t">নোটিফিকেশন আসছে না?</span>${AI.chev}</summary><p class="fix-l">কিছু ফোন ব্যাটারি বাঁচাতে নোটিফিকেশন আটকে দেয়। নিজের ফোনের নাম বেছে ধাপগুলো মিলিয়ে নিন।</p><div class="fix">${FIX.map(([n, s]) => `<details><summary>${n}</summary><ol>${s.map((x) => `<li>${esc(x)}</li>`).join("")}</ol></details>`).join("")}</div></details>
+<a class="row" href="${root}privacy/"><span class="r-ic">${AI.shield}</span><span class="r-t">গোপনীয়তা নীতি</span>${AI.chev}</a>
+<a class="row" href="${root}about/"><span class="r-ic">${AI.cap}</span><span class="r-t">আমাদের কথা</span>${AI.chev}</a>
+<a class="row" href="${root}"><span class="r-ic">${AI.globe}</span><span class="r-t">পুরো ওয়েবসাইট</span>${AI.chev}</a>
+</div>
+<p class="me-foot">${esc(cfg.siteName)} · ${esc(cfg.publisherLine || "")}</p>
+</div></div></section>
+
+${dock()}
 </div>
 ${briefTpl(root)}
+
+<div class="bs" id="act" role="dialog" aria-modal="true" aria-labelledby="act-h" hidden><div class="bs-bg" data-bs-close></div><div class="bs-p bs-act"><span class="bs-grab" aria-hidden="true"></span><button type="button" class="bs-x" data-bs-close aria-label="বন্ধ করুন">${AI.x}</button><h2 class="vh-sr" id="act-h">আজই করুন</h2><div class="bs-c" data-act-c></div></div></div>
+
+<div class="bs" id="ask" role="dialog" aria-modal="true" aria-labelledby="ask-h" hidden><div class="bs-bg" data-bs-close></div><div class="bs-p bs-ask">
+<div class="ask-h"><span class="bs-grab" aria-hidden="true"></span><div class="ask-hr"><span class="ask-orb" aria-hidden="true">${AI.spark}</span><span class="ask-t"><b id="ask-h">AI-কে জিজ্ঞেস করুন</b><small data-ask-of></small></span><span class="quota" data-quota title="আজ কটা নিজের প্রশ্ন বাকি"><span data-quota-n>৩টি</span><i></i><i></i><i></i></span><button type="button" class="bs-x" data-bs-close aria-label="বন্ধ করুন">${AI.x}</button></div>${WAVE("ask-wave", "#fff", "#5DA9FF")}</div>
+<div class="ask-log" data-ask-log aria-live="polite"></div>
+<div class="ask-f"><div class="chips ask-chips" data-ask-chips></div>
+<form class="ask-in" data-ask-form><label class="ask-box"><span class="vh-sr">আপনার প্রশ্ন</span><input type="text" name="q" maxlength="200" placeholder="নিজের প্রশ্ন লিখুন…" autocomplete="off" enterkeyhint="send"><button type="button" class="ask-mic" data-ask-mic aria-label="বলে প্রশ্ন করুন" hidden>${AI.mic}</button></label><button type="submit" class="ask-send" aria-label="পাঠান">${AI.send}</button></form>
+<p class="ask-n">ব্যক্তিগত তথ্য (ফোন নম্বর, ব্যাংক, OTP, ঠিকানা) লিখবেন না · উত্তর AI-এর, ভুল হতে পারে</p></div>
+</div></div>
+
 <div class="ainst" id="ainst" role="dialog" aria-labelledby="ainst-h" hidden><div class="ainst-h"><img src="${root}assets/app/icon-192.png" alt="" width="48" height="48"><div><b id="ainst-h">অ্যাপ ইনস্টল করুন</b><span>${esc(cfg.siteName)} হোম স্ক্রিনে রাখুন</span></div></div>
 <ul><li>এক ট্যাপে খোলে</li><li>নেট ছাড়াও শেষ খবর</li><li>লগইন লাগে না</li></ul>
 <p class="ainst-ios" data-ios-hint hidden>Safari-র নিচের ${AI.ios} Share বোতামে ট্যাপ করুন, তারপর "Add to Home Screen" বেছে নিন।</p>
-<div class="ainst-act"><button type="button" class="ab ab-line" data-ainst-x>এখন নয়</button><button type="button" class="ab ab-go" data-ainst-go>${AI.down}অ্যাপ ইনস্টল করুন</button></div></div>
-<div class="coach" id="coach" role="dialog" aria-modal="true" aria-labelledby="coach-h" hidden><div class="coach-spot"></div><div class="coach-card">${AI.hand}<p class="coach-n"></p><h2 id="coach-h"></h2><p></p><div class="coach-f"><span class="coach-dots" aria-hidden="true"><i></i><i></i><i></i></span><button type="button" class="coach-skip">বাদ দিন</button><button type="button" class="coach-next">পরের টিপ</button></div></div></div>
+<div class="ainst-act"><button type="button" class="btn-t" data-ainst-x>এখন নয়</button><button type="button" class="btn-v" data-ainst-go>${AI.down}ইনস্টল করুন</button></div></div>
 <div class="atoast" id="atoast" role="status" aria-live="polite"></div>
-${appSheet(root)}
 ${pushSheet()}
 <script src="${root}assets/site.js?v=${VER}" defer></script>
 <script src="${root}assets/daily.js?v=${VER}" defer></script>

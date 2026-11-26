@@ -1043,3 +1043,13 @@ a.own:hover{border-color:var(--violet)}
 @media (max-width:379px){.ac-go{padding:2px 10px 0 12px}.ac-go svg{display:none}}
 @media (min-width:1000px){.appcta{padding:10px 12px 8px 16px}.ac-ic{transform:scale(.8)}.ac-tx b{font-size:18px}}
 @media print{.appcta{display:none}}
+
+/* অ্যাপের ভেতর থেকে খোলা পাতা (Android অ্যাপ / ইনস্টল করা PWA): ওয়েবসাইটের মাথা-পা লুকিয়ে, উপরে "অ্যাপে ফিরুন" */
+.inapp-bar{display:none}
+@media (display-mode:standalone){
+  .util,.mast,.secnav,.ticker,.pstrip,.foot,#install{display:none!important}
+  .inapp-bar{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:56px;padding:env(safe-area-inset-top) 12px 0;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5);border-bottom:1px solid var(--rule)}
+  .ia-back{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 14px 0 10px;border-radius:99px;background:var(--wash);color:var(--violet-ink);font-family:var(--f);font-size:15px;font-weight:700;text-decoration:none}
+  .inapp-bar b{display:inline-flex;align-items:center;gap:8px;font-family:var(--f);font-size:15px;font-weight:700;color:var(--ink)}
+  .inapp-bar img{border-radius:8px}
+}

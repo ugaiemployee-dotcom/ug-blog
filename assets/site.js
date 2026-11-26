@@ -17,6 +17,12 @@
   var PRICE = { free: "ফ্রি", freemium: "আংশিক ফ্রি", paid: "পেইড" };
   var safe = function (s) { return /^[a-z0-9-]*$/.test(s || "") ? s : ""; };
 
+  // ---- অ্যাপের ভেতরের পাতা: "অ্যাপে ফিরুন" আগের পাতাটা অ্যাপ হলে পেছনে যায় (অবস্থা হারায় না) ----
+  var iab = $("[data-ia-back]");
+  if (iab) iab.addEventListener("click", function (e) {
+    try { if (D.referrer && new URL(D.referrer).origin === location.origin && history.length > 1) { e.preventDefault(); history.back(); } } catch (x) {}
+  });
+
   // ---- আজকের তারিখ, ঘড়ি (ভারতীয় সময়), "৩ ঘণ্টা আগে", "নতুন" ছাপ ----
   var DAY = 864e5, IST = 198e5;
   var dl = $("[data-today]");
