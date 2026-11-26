@@ -154,6 +154,7 @@
     if (lead && lead.name && f.elements.name && !f.elements.name.value) f.elements.name.value = lead.name;
     var bad = function (el, msg) {
       err.textContent = msg; err.hidden = false;
+      try { err.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (x) {}
       $$("[aria-invalid]", f).forEach(function (n) { n.removeAttribute("aria-invalid"); });
       if (el) { if (el.setAttribute) el.setAttribute("aria-invalid", "true"); if (el.focus) el.focus(); }
     };

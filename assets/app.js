@@ -52,15 +52,16 @@
   // ---- সারাংশ: কার্ডে যতটা ধরে ততটাই ----
   var fit = function (s) {
     var sum = $(".c-sum", s); if (!sum) return;
-    s.classList.remove("tight1", "tight2");
+    s.classList.remove("tight0", "tight1", "tight2");
     if (!sum.clientHeight && !s.offsetParent) return;
     var p = $("p", sum), lis = $$("li", sum);
     lis.forEach(function (li) { li.hidden = false; });
     if (p) { p.classList.remove("cl"); p.style.webkitLineClamp = ""; }
     var lh = p ? parseFloat(getComputedStyle(p).lineHeight) || 28 : 28;
     // ছোট স্ক্রিনে আগে "আপনার লাভ", তারপর প্রশ্নের কার্ড সরে খবরকে অন্তত দু'লাইন জায়গা দেয়
-    if (sum.clientHeight < lh * 2.2) s.classList.add("tight1");
+    if (sum.clientHeight < lh * 3.2) s.classList.add("tight0");
     if (sum.clientHeight < lh * 2.2) s.classList.add("tight2");
+    if (sum.clientHeight < lh * 2.2) s.classList.add("tight1");
     for (var i = lis.length - 1; i >= 0 && sum.scrollHeight > sum.clientHeight + 1; i--) lis[i].hidden = true;
     if (p && sum.scrollHeight > sum.clientHeight + 1) {
       p.classList.add("cl"); p.style.webkitLineClamp = String(Math.max(1, Math.floor(sum.clientHeight / lh)));
@@ -122,7 +123,11 @@
     if (v === "find") findRender();
     if (v === "today") fillToday();
     if (v === "me") meStats();
-    if (push !== false) { try { history.replaceState(null, "", v === "feed" ? location.pathname + location.search : "#" + v); } catch (e) {} }
+    if (push !== false) { try {
+      if (v === "feed") { if (history.state && history.state.tab) history.back(); else history.replaceState(null, "", location.pathname + location.search); }
+      else if (history.state && history.state.tab) history.replaceState({ tab: v }, "", "#" + v);
+      else history.pushState({ tab: v }, "", "#" + v);
+    } catch (e) {} }
   };
   D.addEventListener("click", function (e) {
     var t = e.target.closest && e.target.closest("[data-tab]");
@@ -167,7 +172,10 @@
     if (!silent && history.state && history.state.bs) { try { history.back(); } catch (e) {} }
     if (bsFocus && bsFocus.focus) try { bsFocus.focus({ preventScroll: true }); } catch (e) {}
   };
-  addEventListener("popstate", function () { if (openBs) closeBs(true); });
+  addEventListener("popstate", function () {
+    if (openBs) { closeBs(true); return; }
+    var h = location.hash.slice(1); showView(/^(find|today|me)$/.test(h) ? h : "feed", false);
+  });
   D.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-bs-close]")) closeBs(); });
   D.addEventListener("keydown", function (e) { if (e.key === "Escape" && openBs) closeBs(); });
   // নিচে টেনে শিট বন্ধ
@@ -290,7 +298,8 @@
     var id = s && s.getAttribute("data-id");
     if (!ASK || !W.fetch || !id || s.getAttribute("data-kind") !== "post" || QA[id] || qaLoading[id] || !navigator.onLine) return Promise.resolve(null);
     qaLoading[id] = 1;
-    return fetch(ASK + "?action=qa&slug=" + encodeURIComponent(id), { headers: { Accept: "application/json" } }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    var getQa = function (n) { return fetch(ASK + "?action=qa&slug=" + encodeURIComponent(id), { headers: { Accept: "application/json" } }).then(function (r) { if (r.ok) return r.json(); if (n && r.status >= 500) return new Promise(function (ok) { setTimeout(ok, 3500); }).then(function () { return getQa(0); }); return null; }); };
+    return getQa(1).then(function (j) {
       var qa = j && Array.isArray(j.qa) ? j.qa.filter(function (x) { return x && typeof x.q === "string" && typeof x.a === "string"; }).slice(0, 3).map(function (x) { return { q: x.q.slice(0, 70), a: x.a.slice(0, 600) }; }) : null;
       if (qa && qa.length) { QA[id] = qa; saveQa(); if (slides[cur] === s) chipsFor(s); if (askSlide === s && openBs === askEl) askChipsRender(); }
       return qa;
@@ -307,7 +316,7 @@
   var quotaPaint = function () {
     var q = $("[data-quota]"); if (!q) return;
     var n = left == null ? perDay : left;
-    $("[data-quota-n]", q).textContent = bn(n) + "টি";
+    $("[data-quota-n]", q).textContent = bn(n) + "টা বাকি";
     $$("i", q).forEach(function (d, i) { d.classList.toggle("off", i >= n); });
     q.setAttribute("aria-label", "আজ আরও " + bn(n) + "টা নিজের প্রশ্ন বাকি");
   };
@@ -341,7 +350,7 @@
     q = String(q || "").replace(/\s+/g, " ").trim();
     if (q.length < 3) { toast("প্রশ্নটা একটু বড় করে লিখুন।"); return; }
     if (/(?:\+?91[\s-]?)?[6-9]\d{9}\b|[\w.+-]+@[\w-]+\.[\w.]+|otp|password|পাসওয়ার্ড|আধার|aadhaar|cvv/i.test(q)) { sysMsg("ব্যক্তিগত তথ্য (ফোন নম্বর, ইমেল, OTP, আধার) প্রশ্নে লিখবেন না। ওটা বাদ দিয়ে আবার লিখুন।"); return; }
-    if (left === 0) { sysMsg("আজকের ৩টে নিজের প্রশ্ন শেষ। কাল সকালে আবার করতে পারবেন। তৈরি প্রশ্নগুলোর উত্তর এখনও দেখা যাবে।"); leadNudge(); return; }
+    if (left === 0) { sysMsg("আজকের ৩টা নিজের প্রশ্ন শেষ। কাল সকালে আবার করতে পারবেন। তৈরি প্রশ্নগুলোর উত্তর এখনও দেখা যাবে।"); leadNudge(); return; }
     if (!navigator.onLine) { sysMsg("নেট নেই। নেট চালু করে আবার পাঠান। তৈরি প্রশ্নগুলোর উত্তর নেট ছাড়াও দেখা যাবে।"); return; }
     var id = askSlide && askSlide.getAttribute("data-id");
     if (!ASK || !id || askSlide.getAttribute("data-kind") !== "post") { sysMsg("এই কার্ডে নিজের প্রশ্ন করা যায় না। কোনো বড় খবরের কার্ডে গিয়ে AI-কে জিজ্ঞেস করুন।"); return; }
@@ -354,7 +363,7 @@
         if (r.s === 200 && typeof j.answer === "string") {
           b.textContent = j.answer; if (typeof j.left === "number") { left = j.left; quotaPaint(); }
           buzz(10); if (left === 0) leadNudge();
-        } else if (j.error === "daily_limit") { left = 0; quotaPaint(); b.textContent = "আজকের ৩টে নিজের প্রশ্ন শেষ। কাল সকালে আবার করতে পারবেন।"; leadNudge(); }
+        } else if (j.error === "daily_limit") { left = 0; quotaPaint(); b.textContent = "আজকের ৩টা নিজের প্রশ্ন শেষ। কাল সকালে আবার করতে পারবেন।"; leadNudge(); }
         else if (j.error === "personal_info") b.textContent = "প্রশ্নে ব্যক্তিগত তথ্য আছে মনে হচ্ছে। ওটা বাদ দিয়ে আবার লিখুন।";
         else if (j.error === "busy") b.textContent = "এখন খুব ভিড়, একটু পরে আবার চেষ্টা করুন। আপনার প্রশ্ন গোনা হয়নি।";
         else b.textContent = "উত্তর আনা গেল না। একটু পরে আবার চেষ্টা করুন।";
@@ -433,7 +442,7 @@
     if (!flist) return;
     var q = norm(fq && fq.value).trim(), out = FD;
     if (fk) out = out.filter(function (x) { return x.k === fk; });
-    if (q) out = out.filter(function (x) { return norm(x.t + " " + x.x).indexOf(q) >= 0; });
+    if (q) { var ws = q.split(/\s+/).filter(Boolean); out = out.filter(function (x) { var t = norm(x.t + " " + x.x); return ws.every(function (w) { return t.indexOf(w) >= 0; }); }); }
     var limit = q || fk ? 40 : 12;
     flist.textContent = "";
     out.slice(0, limit).forEach(function (x) {
@@ -444,7 +453,7 @@
       li.appendChild(a); flist.appendChild(li);
     });
     if (fempty) fempty.hidden = !!out.length;
-    if (fh) fh.textContent = q ? "খোঁজের ফল" : fk ? (TL[fk] || "খবর") : "এখন ট্রেন্ডিং";
+    if (fh) fh.textContent = q ? "খোঁজের ফল" : fk ? (TL[fk] || "খবর") : "নতুন খবর";
     if (fall) fall.hidden = !(q || fk);
     if (fx) fx.hidden = !(fq && fq.value);
   };

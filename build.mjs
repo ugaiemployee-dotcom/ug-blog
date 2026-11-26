@@ -1190,7 +1190,7 @@ ${leadSrc ? `<link rel="preload" as="image" href="${esc(leadSrc)}" fetchpriority
 <main class="feedx" id="feed" tabindex="0" aria-label="আজকের খবরের কার্ড। পরের খবরের জন্য উপরে টানুন।">
 ${list.map((p, i) => appCard(p, i, list.length, root)).join("\n")}
 <section class="slide is-end" id="c-end" data-id="end" data-kind="end" aria-label="আজকের সব খবর শেষ"><div class="endc">
-<span class="e-orb" aria-hidden="true">${AI.check}</span><h2>আজকের সব খবর পড়া শেষ</h2><p>নতুন খবর এলেই এখানে পাবেন। এবার আজকের প্রশ্নটা খেলে নিন।</p>
+<span class="e-orb" aria-hidden="true">${AI.check}</span><h2>আজকের সব খবর পড়া শেষ</h2><p>নতুন খবর এলেই এখানে পাবেন। এবার আজকের কুইজটা খেলে নিন।</p>
 <button type="button" class="btn-v" data-tab="today">${AI.star}আজকের কুইজ আর ফ্রি ক্লাস</button>
 <a class="btn-o" href="${esc(invite)}" target="_blank" rel="noopener" data-share>${ICON.wa}বন্ধুকে পাঠান</a>
 <button type="button" class="btn-t" data-top>${AI.up}আবার প্রথম খবরে যান</button>
@@ -1200,9 +1200,9 @@ ${list.map((p, i) => appCard(p, i, list.length, root)).join("\n")}
 </section>
 
 <section class="view" id="v-find" data-view="find" aria-labelledby="find-h" hidden><div class="vscroll">
-<header class="vhd vhd-find"><div class="vhd-in"><h1 id="find-h">খুঁজুন</h1><label class="srch"><span class="srch-ic">${AI.find}</span><input type="search" data-find-q placeholder="ChatGPT, ফ্রি টুল, প্রতারণা…" enterkeyhint="search" autocomplete="off" aria-label="খবর খুঁজুন"><button type="button" class="srch-x" data-find-x aria-label="মুছুন" hidden>${AI.x}</button></label></div>${WAVE("vhd-wave")}</header>
+<header class="vhd vhd-find"><div class="vhd-in"><h1 id="find-h">খুঁজুন</h1><label class="srch"><span class="srch-ic">${AI.find}</span><input type="search" data-find-q placeholder="ChatGPT, Gemini, ফ্রি টুল…" enterkeyhint="search" autocomplete="off" aria-label="খবর খুঁজুন"><button type="button" class="srch-x" data-find-x aria-label="মুছুন" hidden>${AI.x}</button></label></div>${WAVE("vhd-wave")}</header>
 <div class="tiles" role="group" aria-label="খবরের ধরন">${tiles.map((t) => `<button type="button" class="tile${t.key === "scam-alert" ? " tile-warn" : ""}" data-find-k="${t.key}" aria-pressed="false"><span class="tile-ic">${ticon(t.key)}</span><span>${esc(t.label)}</span></button>`).join("")}</div>
-<div class="fsec-h"><h2 data-find-h>এখন ট্রেন্ডিং</h2><button type="button" class="link" data-find-all hidden>সব দেখুন</button></div>
+<div class="fsec-h"><h2 data-find-h>নতুন খবর</h2><button type="button" class="link" data-find-all hidden>সব দেখুন</button></div>
 <ul class="flist" data-find-list></ul>
 <p class="f-empty" data-find-empty hidden>এই নামে কিছু পাওয়া গেল না। অন্য শব্দে খুঁজে দেখুন, বা <a href="${root}search/">পুরো পত্রিকায় খুঁজুন</a>।</p>
 <script type="application/json" id="find-data">${JSON.stringify(findData).replace(/</g, "\\u003c")}</script>
@@ -1224,7 +1224,7 @@ ${vhead(`<span id="today-h" data-today-h>আজকের পত্রিকা</
 <div class="vpad">
 <div class="stats"><span><b data-st-streak>০</b><small>টানা দিন</small></span><span><b data-st-read>০</b><small>খবর পড়া</small></span><span><b data-st-saved>০</b><small>সেভ করা</small></span></div>
 <div class="card-w invite"><b>বন্ধুদেরও জানান</b><p>রোজের AI খবর সহজ বাংলায়, ফ্রি। আপনার বন্ধু বা পরিবারের কারও কাজে লাগতে পারে।</p><a class="btn-v" href="${esc(invite)}" target="_blank" rel="noopener" data-share>${ICON.wa}বন্ধুকে পাঠান</a></div>
-<div class="card-w me-lead" data-me-lead><b>সার্টিফিকেট আর ফ্রি ক্লাসের খবর পেতে</b><p>নাম আর নম্বর দিলে ৭ দিনের সার্টিফিকেটে আপনার নাম বসবে, আর নতুন ফ্রি ক্লাস শুরু হলে জানিয়ে দেব।</p>${leadForm(root, "class", "জমা দিন", false)}</div>
+<details class="card-w me-lead" data-me-lead><summary><span class="rc-ic">${AI.cap}</span><b>সার্টিফিকেট আর ফ্রি ক্লাসের খবর পেতে নাম দিন</b>${AI.chev}</summary><p>নাম আর নম্বর দিলে ৭ দিনের সার্টিফিকেটে আপনার নাম বসবে, আর নতুন ফ্রি ক্লাস শুরু হলে জানিয়ে দেব।</p>${leadForm(root, "class", "জমা দিন", false)}</details>
 <h2 class="grp">সেটিংস</h2>
 <div class="rows">
 <div class="row"><span class="r-ic">${AI.text}</span><span class="r-t">লেখার মাপ</span><span class="seg" role="radiogroup" aria-label="লেখার মাপ">${[["s", "ছোট"], ["m", "মাঝারি"], ["l", "বড়"]].map(([v, l]) => `<label><input type="radio" name="fs" value="${v}"${v === "m" ? " checked" : ""}><span>${l}</span></label>`).join("")}</span></div>
@@ -1247,7 +1247,7 @@ ${briefTpl(root)}
 <div class="bs" id="act" role="dialog" aria-modal="true" aria-labelledby="act-h" hidden><div class="bs-bg" data-bs-close></div><div class="bs-p bs-act"><span class="bs-grab" aria-hidden="true"></span><button type="button" class="bs-x" data-bs-close aria-label="বন্ধ করুন">${AI.x}</button><h2 class="vh-sr" id="act-h">আজই করুন</h2><div class="bs-c" data-act-c></div></div></div>
 
 <div class="bs" id="ask" role="dialog" aria-modal="true" aria-labelledby="ask-h" hidden><div class="bs-bg" data-bs-close></div><div class="bs-p bs-ask">
-<div class="ask-h"><span class="bs-grab" aria-hidden="true"></span><div class="ask-hr"><span class="ask-orb" aria-hidden="true">${AI.spark}</span><span class="ask-t"><b id="ask-h">AI-কে জিজ্ঞেস করুন</b><small data-ask-of></small></span><span class="quota" data-quota title="আজ কটা নিজের প্রশ্ন বাকি"><span data-quota-n>৩টি</span><i></i><i></i><i></i></span><button type="button" class="bs-x" data-bs-close aria-label="বন্ধ করুন">${AI.x}</button></div>${WAVE("ask-wave", "#fff", "#5DA9FF")}</div>
+<div class="ask-h"><span class="bs-grab" aria-hidden="true"></span><div class="ask-hr"><span class="ask-orb" aria-hidden="true">${AI.spark}</span><span class="ask-t"><b id="ask-h">AI-কে জিজ্ঞেস করুন</b><small data-ask-of></small></span><span class="quota" data-quota title="আজ কটা নিজের প্রশ্ন বাকি"><span data-quota-n>৩টা বাকি</span><i></i><i></i><i></i></span><button type="button" class="bs-x" data-bs-close aria-label="বন্ধ করুন">${AI.x}</button></div>${WAVE("ask-wave", "#fff", "#5DA9FF")}</div>
 <div class="ask-log" data-ask-log aria-live="polite"></div>
 <div class="ask-f"><div class="chips ask-chips" data-ask-chips></div>
 <form class="ask-in" data-ask-form><label class="ask-box"><span class="vh-sr">আপনার প্রশ্ন</span><input type="text" name="q" maxlength="200" placeholder="নিজের প্রশ্ন লিখুন…" autocomplete="off" enterkeyhint="send"><button type="button" class="ask-mic" data-ask-mic aria-label="বলে প্রশ্ন করুন" hidden>${AI.mic}</button></label><button type="submit" class="ask-send" aria-label="পাঠান">${AI.send}</button></form>
